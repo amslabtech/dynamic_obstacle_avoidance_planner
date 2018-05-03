@@ -64,6 +64,11 @@
   <xacro:steering_trans prefix="rear_left"/>
 
   <!-- Gazebo -->
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/mygazebo</robotNamespace>
+    </plugin>
+  </gazebo>
   <xacro:base_gazebo/>
   <xacro:wheel_gazebo prefix="front_right"/>
   <xacro:wheel_gazebo prefix="front_left"/>
