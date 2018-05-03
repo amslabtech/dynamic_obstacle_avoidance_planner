@@ -1,6 +1,7 @@
 <launch>
 
-  <arg name="model" default="$(find mygazebo)/urdf/my_robo.urdf"/>
+  <!--- <arg name="model" default="$(find mygazebo)/urdf/my_robo.urdf"/> -->
+  <arg name="model" default="$(find mygazebo)/robot/fwdis.urdf"/>
   <arg name="gui" default="True"/>
   <arg name="rvizconfig" default="$(find mygazebo)/config/urdf.rviz"/>
 

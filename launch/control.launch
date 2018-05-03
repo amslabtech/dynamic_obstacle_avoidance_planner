@@ -5,14 +5,14 @@
 
   <!-- load the controllers -->
   <node name="controller_spawner" pkg="controller_manager"
-  type="spawner" ns="my_robo" output="screen"
+  type="spawner" ns="mygazebo" output="screen"
   args="joint_state_controller
      diff_drive_controller"/>
 
   <!-- convert joint states to TF transforms for rviz, etc -->
   <node name="robot_state_publisher" pkg="robot_state_publisher"
   type="robot_state_publisher"
-  respawn="false" output="screen" ns="/my_robo">
+  respawn="false" output="screen" ns="/mygazebo">
   </node>
 
 </launch>

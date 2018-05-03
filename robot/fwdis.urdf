@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+
+<robot name="fwdis" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find mygazebo)/urdf/base/base.urdf.xacro"/>
+  <xacro:include filename="$(find mygazebo)/urdf/wheel/wheel.urdf.xacro"/>
+
+  <!-- Link & Joint -->
+  <link name="base_footprint"/>
+
+  <xacro:base parent="base_footprint">
+    <origin xyz="0 0 0"/>
+  </xacro:base>
+
+  <xacro:wheel prefix="front_right" parent="base_link">
+    <origin xyz="0.25 -0.25 0.0" rpy="${M_PI/2} 0 0"/>
+    <axis xyz="0 0 -1"/>
+  </xacro:wheel>
+
+  <xacro:wheel prefix="front_left" parent="base_link">
+    <origin xyz="0.25 0.25 0.0" rpy="${M_PI/2} 0 0"/>
+    <axis xyz="0 0 -1"/>
+  </xacro:wheel>
+
+  <xacro:wheel prefix="rear_right" parent="base_link">
+    <origin xyz="-0.25 -0.25 0.0" rpy="${M_PI/2} 0 0"/>
+    <axis xyz="0 0 -1"/>
+  </xacro:wheel>
+
+  <xacro:wheel prefix="rear_left" parent="base_link">
+    <origin xyz="-0.25 0.25 0.0" rpy="${M_PI/2} 0 0"/>
+    <axis xyz="0 0 -1"/>
+  </xacro:wheel>
+
+  <!-- Transmission -->
+  <xacro:wheel_trans prefix="front_right"/>
+  <xacro:wheel_trans prefix="front_left"/>
+  <xacro:wheel_trans prefix="rear_right"/>
+  <xacro:wheel_trans prefix="rear_left"/>
+
+  <!-- Gazebo -->
+  <xacro:base_gazebo/>
+  <xacro:wheel_gazebo prefix="front_right"/>
+  <xacro:wheel_gazebo prefix="front_left"/>
+  <xacro:wheel_gazebo prefix="rear_right"/>
+  <xacro:wheel_gazebo prefix="rear_left"/>
+</robot>
