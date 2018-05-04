@@ -8,12 +8,12 @@
   <property name="steering_mass" value="5.0"/>
 
   <xacro:macro name="steering" params="prefix parent *joint_origin *joint_axis">
-    <joint name="${prefix}_steering_joint" type="continuous">
+    <joint name="${prefix}_steering_joint" type="revolute">
       <insert_block name="joint_origin"/>
       <parent link="${parent}"/>
       <child link="${prefix}_steering_link"/>
       <insert_block name="joint_axis"/>
-      <limit effort="30" velocity="25"/>
+      <limit effort="30" velocity="25" upper="${M_PI/1.5}" lower="${-M_PI/1.5}"/>
     </joint>
 
     <link name="${prefix}_steering_link">
