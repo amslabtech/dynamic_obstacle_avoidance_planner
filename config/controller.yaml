@@ -4,5 +4,21 @@ mygazebo:
     publish_rate: 50
 
   front_right_steering_joint:
-    type: position_controllers/JointPositionController
+    type: velocity_controllers/JointPositionController
     joint: front_right_steering_joint
+    pid: {p: 1.0, i: 0.0, d: 0.0}
+
+  front_left_steering_joint:
+    type: velocity_controllers/JointPositionController
+    joint: front_left_steering_joint
+    pid: {p: 1.0, i: 0.0, d: 0.0}
+
+  rear_right_steering_joint:
+    type: velocity_controllers/JointPositionController
+    joint: rear_right_steering_joint
+    pid: {p: 1.0, i: 0.0, d: 0.0}
+
+  rear_left_steering_joint:
+    type: velocity_controllers/JointPositionController
+    joint: rear_left_steering_joint
+    pid: {p: 1.0, i: 0.0, d: 0.0}

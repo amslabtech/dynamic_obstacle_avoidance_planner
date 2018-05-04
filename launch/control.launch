@@ -7,7 +7,11 @@
   <node name="controller_spawner" pkg="controller_manager"
   type="spawner" ns="mygazebo" output="screen"
   args="joint_state_controller
-     front_right_steering_joint"/>
+     front_right_steering_joint
+     front_left_steering_joint
+     rear_right_steering_joint
+     rear_left_steering_joint
+     "/>
 
   <!-- convert joint states to TF transforms for rviz, etc -->
   <node name="robot_state_publisher" pkg="robot_state_publisher"

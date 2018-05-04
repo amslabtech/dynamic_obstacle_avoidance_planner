@@ -13,6 +13,7 @@
       <parent link="${parent}"/>
       <child link="${prefix}_steering_link"/>
       <insert_block name="joint_axis"/>
+      <limit effort="10" velocity="25"/>
     </joint>
 
     <link name="${prefix}_steering_link">
@@ -47,10 +48,10 @@
     <transmission name="${prefix}_steering_trans">
       <type>transmission_interface/SimpleTransmission</type>
       <joint name="${prefix}_steering_joint">
-        <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
       </joint>
       <actuator name="${prefix}_steering_motor">
-        <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+        <hardwareInterface>hardware_interface/velocityJointInterface</hardwareInterface>
         <mechanicalReduction>30</mechanicalReduction>
       </actuator>
     </transmission>
