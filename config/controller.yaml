@@ -22,3 +22,19 @@ mygazebo:
     type: velocity_controllers/JointPositionController
     joint: rear_left_steering_joint
     pid: {p: 1.0, i: 0.0, d: 0.0}
+
+  front_right_wheel_joint:
+    type: velocity_controllers/JointVelocityController
+    joint: front_right_wheel_joint
+
+  front_left_wheel_joint:
+    type: velocity_controllers/JointVelocityController
+    joint: front_left_wheel_joint
+
+  rear_right_wheel_joint:
+    type: velocity_controllers/JointVelocityController
+    joint: rear_right_wheel_joint
+
+  rear_left_wheel_joint:
+    type: velocity_controllers/JointVelocityController
+    joint: rear_left_wheel_joint

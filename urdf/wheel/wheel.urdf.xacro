@@ -13,6 +13,7 @@
       <parent link="${parent}"/>
       <child link="${prefix}_wheel_link"/>
       <insert_block name="joint_axis"/>
+      <limit velocity="25" effort="30"/>
     </joint>
 
     <link name="${prefix}_wheel_link">
