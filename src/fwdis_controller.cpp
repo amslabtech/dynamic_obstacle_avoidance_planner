@@ -13,8 +13,6 @@ void velocity_callback(const geometry_msgs::TwistConstPtr &msg)
   velocity_subscribed = true;
 }
 
-std_msgs::Float64 _angle;
-std_msgs::Float64 _velocity;
 
 int main(int argc, char** argv)
 {
@@ -36,14 +34,33 @@ int main(int argc, char** argv)
 
   while(ros::ok()){
     if(velocity_subscribed){
-      if((velocity.linear.x == 0.0) && (velocity.linear.y == 0.0)){
+      std_msgs::Float64 _angle;
+      std_msgs::Float64 _velocity;
+      if((velocity.linear.x == 0.0) && (velocity.linear.y == 0.0) && (velocity.angular.z == 0.0)){
+        //ニュートラル
         _velocity.data = 0;
         frw_pub.publish(_velocity);
         flw_pub.publish(_velocity);
         rrw_pub.publish(_velocity);
         rlw_pub.publish(_velocity);
+      }else if((velocity.linear.x == 0.0) && (velocity.linear.y == 0.0) && (velocity.angular.z != 0.0)){
+        //旋回
+        _angle.data = M_PI / 4.0;
+        frs_pub.publish(_angle);
+        rls_pub.publish(_angle);
+        _angle.data = M_PI / -4.0;
+        fls_pub.publish(_angle);
+        rrs_pub.publish(_angle);
+
+        _velocity.data = velocity.angular.z * (0.5 / sqrt(2)) / WHEEL_RADIUS;
+        frw_pub.publish(_velocity);
+        rrw_pub.publish(_velocity);
+        _velocity.data = -_velocity.data;
+        flw_pub.publish(_velocity);
+        rlw_pub.publish(_velocity);
+
       }else{
-        std::cout << "loop" << std::endl;
+        //平行移動
         _angle.data = atan2(velocity.linear.y, velocity.linear.x);
         bool inverce_flag = false;
         if(_angle.data > M_PI/1.5){
