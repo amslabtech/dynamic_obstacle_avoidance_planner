@@ -27,12 +27,16 @@ int main(int argc, char** argv)
     if(!joy_data.axes.empty()){
       geometry_msgs::Twist velocity;
 
-      if(joy_data.buttons[6] || joy_data.buttons[7]){
-        double omega = (joy_data.axes[5] - joy_data.axes[2]) / 2.0;
-        velocity.angular.z = omega * MAX_ANGLAR_VELOCITY;
+      if((joy_data.axes[1] == 0.0) && (joy_data.axes[0] == 0.0)){
+        if(joy_data.buttons[6] || joy_data.buttons[7]){
+          double omega = (joy_data.axes[5] - joy_data.axes[2]) / 2.0;
+          velocity.angular.z = omega * MAX_ANGLAR_VELOCITY;
+        }
       }else{
         velocity.linear.x = joy_data.axes[1] * MAX_VELOCITY;
         velocity.linear.y = joy_data.axes[0] * MAX_VELOCITY;
+        double omega = (joy_data.axes[5] - joy_data.axes[2]) / 2.0;
+        velocity.angular.z = omega * MAX_ANGLAR_VELOCITY;
       }
 
       velocity_pub.publish(velocity);
