@@ -4,7 +4,7 @@
   <node pkg="mygazebo" name="teleop_joy" type="teleop_joy"/>
 
   <node pkg="joy" name="joy_node" type="joy_node">
-    <param name="dev" value="/dev/input/js1"/>
+    <param name="dev" value="/dev/input/js2"/>
   </node>
 
 </launch>
