@@ -5,6 +5,8 @@
 sensor_msgs::Joy joy_data;
 geometry_msgs::Twist velocity;
 
+const double MAX_VELOCITY = 2.0;//[m/s]
+
 void joy_callback(const sensor_msgs::JoyConstPtr& msg)
 {
   joy_data = *msg;
@@ -23,8 +25,8 @@ int main(int argc, char** argv)
 
   while(ros::ok()){
     if(!joy_data.axes.empty()){
-      velocity.linear.x = joy_data.axes[1] * 25;
-      velocity.linear.y = joy_data.axes[0] * 25;
+      velocity.linear.x = joy_data.axes[1] * MAX_VELOCITY;
+      velocity.linear.y = joy_data.axes[0] * MAX_VELOCITY;
       velocity_pub.publish(velocity);
     }
     ros::spinOnce();

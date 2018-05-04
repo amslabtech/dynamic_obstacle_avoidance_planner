@@ -5,6 +5,8 @@
 geometry_msgs::Twist velocity;
 bool velocity_subscribed = false;
 
+const double WHEEL_RADIUS = 0.075;//[m]
+
 void velocity_callback(const geometry_msgs::TwistConstPtr &msg)
 {
   velocity = *msg;
@@ -44,10 +46,10 @@ int main(int argc, char** argv)
         std::cout << "loop" << std::endl;
         _angle.data = atan2(velocity.linear.y, velocity.linear.x);
         bool inverce_flag = false;
-        if(_angle.data > M_PI/2.0){
+        if(_angle.data > M_PI/1.5){
           _angle.data -= M_PI;
           inverce_flag = true;
-        }else if(_angle.data < -M_PI/2.0){
+        }else if(_angle.data < -M_PI/1.5){
           _angle.data += M_PI;
           inverce_flag = true;
         }
@@ -56,7 +58,7 @@ int main(int argc, char** argv)
         rrs_pub.publish(_angle);
         rls_pub.publish(_angle);
 
-        _velocity.data = sqrt(velocity.linear.x * velocity.linear.x + velocity.linear.y * velocity.linear.y);
+        _velocity.data = sqrt(velocity.linear.x * velocity.linear.x + velocity.linear.y * velocity.linear.y) / WHEEL_RADIUS;
         if(inverce_flag){
           _velocity.data = -_velocity.data;
         }
