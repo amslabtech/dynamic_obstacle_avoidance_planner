@@ -1,0 +1,10 @@
+<launch>
+
+  <node pkg="mygazebo" name="fwdis_controller" type="fwdis_controller"/>
+  <node pkg="mygazebo" name="teleop_joy" type="teleop_joy"/>
+
+  <node pkg="joy" name="joy_node" type="joy_node">
+    <param name="dev" value="/dev/input/js1"/>
+  </node>
+
+</launch>

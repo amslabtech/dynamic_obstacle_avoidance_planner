@@ -25,7 +25,7 @@
       </collision>
       <inertial>
         <origin xyz="0 0 0.5" rpy="0 0 0"/>
-        <box_inertial mass="10.0" height="0.5" width="0.5" depth="0.5"/>
+        <box_inertial mass="5.0" height="0.5" width="0.5" depth="0.5"/>
       </inertial>
     </link>
 
