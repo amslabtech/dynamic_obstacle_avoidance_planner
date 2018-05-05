@@ -2,7 +2,7 @@
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <xacro:include filename="$(find mygazebo)/urdf/common.xacro"/>
+  <xacro:include filename="$(find four_wheel_drive_independent_steering)/urdf/common.xacro"/>
   <xacro:macro name="base" params="parent *joint_origin">
     <joint name="base_link_joint" type="fixed">
       <insert_block name="joint_origin"/>
@@ -14,13 +14,13 @@
       <visual>
         <origin xyz="0.200 -0.630 0.060" rpy="${M_PI/2} 0 ${M_PI/2}"/>
         <geometry>
-          <mesh filename="package://mygazebo/meshes/STL/base.stl" scale="0.001 0.001 0.001"/>
+          <mesh filename="package://four_wheel_drive_independent_steering/meshes/STL/base.stl" scale="0.001 0.001 0.001"/>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0.200 -0.630 0.060" rpy="${M_PI/2} 0 ${M_PI/2}"/>
         <geometry>
-          <mesh filename="package://mygazebo/meshes/STL/base.stl" scale="0.001 0.001 0.001"/>
+          <mesh filename="package://four_wheel_drive_independent_steering/meshes/STL/base.stl" scale="0.001 0.001 0.001"/>
         </geometry>
       </collision>
       <inertial>

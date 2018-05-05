@@ -2,9 +2,9 @@
 
 <robot name="fwdis" xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <xacro:include filename="$(find mygazebo)/urdf/base/base.urdf.xacro"/>
-  <xacro:include filename="$(find mygazebo)/urdf/wheel/wheel.urdf.xacro"/>
-  <xacro:include filename="$(find mygazebo)/urdf/steering/steering.urdf.xacro"/>
+  <xacro:include filename="$(find four_wheel_drive_independent_steering)/urdf/base/base.urdf.xacro"/>
+  <xacro:include filename="$(find four_wheel_drive_independent_steering)/urdf/wheel/wheel.urdf.xacro"/>
+  <xacro:include filename="$(find four_wheel_drive_independent_steering)/urdf/steering/steering.urdf.xacro"/>
 
   <!-- Link & Joint -->
   <link name="base_footprint"/>
@@ -66,7 +66,7 @@
   <!-- Gazebo -->
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-      <robotNamespace>/mygazebo</robotNamespace>
+      <robotNamespace>/fwdis</robotNamespace>
     </plugin>
   </gazebo>
   <xacro:base_gazebo/>

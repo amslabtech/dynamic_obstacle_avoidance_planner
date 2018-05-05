@@ -1,9 +1,9 @@
 <launch>
 
-  <!--- <arg name="model" default="$(find mygazebo)/urdf/my_robo.urdf"/> -->
-  <arg name="model" default="$(find mygazebo)/robot/fwdis.urdf"/>
+  <!--- <arg name="model" default="$(find four_wheel_drive_independent_steering)/urdf/my_robo.urdf"/> -->
+  <arg name="model" default="$(find four_wheel_drive_independent_steering)/robot/fwdis.urdf"/>
   <arg name="gui" default="True"/>
-  <arg name="rvizconfig" default="$(find mygazebo)/config/urdf.rviz"/>
+  <arg name="rvizconfig" default="$(find four_wheel_drive_independent_steering)/config/urdf.rviz"/>
 
   <param name="robot_description" command="$(find xacro)/xacro.py $(arg model)"/>
   <param name="use_gui" value="$(arg gui)"/>

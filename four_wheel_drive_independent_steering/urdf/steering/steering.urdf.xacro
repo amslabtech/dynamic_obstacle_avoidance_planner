@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <xacro:include filename="$(find mygazebo)/urdf/common.xacro"/>
+  <xacro:include filename="$(find four_wheel_drive_independent_steering)/urdf/common.xacro"/>
 
   <property name="steering_radius" value="0.100"/>
   <property name="steering_width" value="0.100"/>

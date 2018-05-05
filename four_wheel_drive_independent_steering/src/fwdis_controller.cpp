@@ -21,16 +21,16 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "fwdis_controller");
   ros::NodeHandle nh;
 
-  ros::Publisher frw_pub = nh.advertise<std_msgs::Float64>("/mygazebo/front_right_wheel_joint/command", 100);
-  ros::Publisher flw_pub = nh.advertise<std_msgs::Float64>("/mygazebo/front_left_wheel_joint/command", 100);
-  ros::Publisher rrw_pub = nh.advertise<std_msgs::Float64>("/mygazebo/rear_right_wheel_joint/command", 100);
-  ros::Publisher rlw_pub = nh.advertise<std_msgs::Float64>("/mygazebo/rear_left_wheel_joint/command", 100);
-  ros::Publisher frs_pub = nh.advertise<std_msgs::Float64>("/mygazebo/front_right_steering_joint/command", 100);
-  ros::Publisher fls_pub = nh.advertise<std_msgs::Float64>("/mygazebo/front_left_steering_joint/command", 100);
-  ros::Publisher rrs_pub = nh.advertise<std_msgs::Float64>("/mygazebo/rear_right_steering_joint/command", 100);
-  ros::Publisher rls_pub = nh.advertise<std_msgs::Float64>("/mygazebo/rear_left_steering_joint/command", 100);
+  ros::Publisher frw_pub = nh.advertise<std_msgs::Float64>("/fwdis/front_right_wheel_joint/command", 100);
+  ros::Publisher flw_pub = nh.advertise<std_msgs::Float64>("/fwdis/front_left_wheel_joint/command", 100);
+  ros::Publisher rrw_pub = nh.advertise<std_msgs::Float64>("/fwdis/rear_right_wheel_joint/command", 100);
+  ros::Publisher rlw_pub = nh.advertise<std_msgs::Float64>("/fwdis/rear_left_wheel_joint/command", 100);
+  ros::Publisher frs_pub = nh.advertise<std_msgs::Float64>("/fwdis/front_right_steering_joint/command", 100);
+  ros::Publisher fls_pub = nh.advertise<std_msgs::Float64>("/fwdis/front_left_steering_joint/command", 100);
+  ros::Publisher rrs_pub = nh.advertise<std_msgs::Float64>("/fwdis/rear_right_steering_joint/command", 100);
+  ros::Publisher rls_pub = nh.advertise<std_msgs::Float64>("/fwdis/rear_left_steering_joint/command", 100);
 
-  ros::Subscriber velocity_sub = nh.subscribe("/mygazebo/velocity", 100, velocity_callback);
+  ros::Subscriber velocity_sub = nh.subscribe("/fwdis/velocity", 100, velocity_callback);
 
   ros::Rate loop_rate(10);
 

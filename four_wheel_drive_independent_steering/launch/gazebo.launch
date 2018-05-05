@@ -1,5 +1,5 @@
 <launch>
-  <arg name="model" default="$(find mygazebo)/robot/fwdis.urdf"/>
+  <arg name="model" default="$(find four_wheel_drive_independent_steering)/robot/fwdis.urdf"/>
 
   <arg name="paused" default="false"/>
   <arg name="use_sim_time" default="true"/>
@@ -17,10 +17,10 @@
 
   <param name="robot_description" command="$(find xacro)/xacro.py $(arg model)"/>
 
-  <include file="$(find mygazebo)/launch/control.launch"/>
+  <include file="$(find four_wheel_drive_independent_steering)/launch/control.launch"/>
 
   <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-    args="-urdf -model mygazebo -param robot_description"/>
+    args="-urdf -model fwdis -param robot_description"/>
 
 
 </launch>

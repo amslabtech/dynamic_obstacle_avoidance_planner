@@ -1,11 +1,11 @@
 <launch>
 
   <!-- Load joint controller configurations from YAML file to parameter server -->
-  <rosparam file="$(find mygazebo)/config/controller.yaml" command="load"/>
+  <rosparam file="$(find four_wheel_drive_independent_steering)/config/controller.yaml" command="load"/>
 
   <!-- load the controllers -->
   <node name="controller_spawner" pkg="controller_manager"
-  type="spawner" ns="mygazebo" output="screen"
+  type="spawner" ns="fwdis" output="screen"
   args="joint_state_controller
      front_right_steering_joint
      front_left_steering_joint
@@ -20,7 +20,7 @@
   <!-- convert joint states to TF transforms for rviz, etc -->
   <node name="robot_state_publisher" pkg="robot_state_publisher"
   type="robot_state_publisher"
-  respawn="false" output="screen" ns="/mygazebo">
+  respawn="false" output="screen" ns="/fwdis">
   </node>
 
 </launch>
