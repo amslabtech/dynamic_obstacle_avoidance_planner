@@ -67,68 +67,138 @@ int main(int argc, char** argv)
 
       }else if((velocity.linear.x != 0) && (velocity.angular.z != 0.0)){
         //カーブ
-        std_msgs::Float64 _velocity;
-        _velocity.data = velocity.linear.x / WHEEL_RADIUS;
-        frw_pub.publish(_velocity);
-        flw_pub.publish(_velocity);
-        rrw_pub.publish(_velocity);
-        rlw_pub.publish(_velocity);
+        std_msgs::Float64 _velocity_fl;
+        std_msgs::Float64 _velocity_fr;
+        std_msgs::Float64 _velocity_rl;
+        std_msgs::Float64 _velocity_rr;
 
         std_msgs::Float64 _angle_fl;
         std_msgs::Float64 _angle_fr;
         std_msgs::Float64 _angle_rl;
         std_msgs::Float64 _angle_rr;
 
+        const double STEERING_ANGLE_LIMIT = M_PI / 4.0;
+
         if(velocity.linear.x > 0.0){
+          //前進
           if(velocity.angular.z > 0.0){
-            _angle_fl.data = asin(WHEEL_BASE * velocity.angular.z / 2.0 / velocity.linear.x);
-            if(_angle_fl.data > M_PI / 4.0){
-              _angle_fl.data = M_PI / 4.0;
-            }else if(_angle_fl.data < -M_PI / 4.0){
-             _angle_fl.data = -M_PI / 4.0;
+            //左
+            double vx = velocity.linear.x;
+            double omega = velocity.angular.z;
+            double radius_in = vx / omega - TREAD / 2.0;
+            double radius_limit = WHEEL_BASE / (2 * sin(STEERING_ANGLE_LIMIT));
+            if(radius_in < radius_limit){
+              omega = vx / (radius_limit + TREAD / 2.0);
+              radius_in = vx / omega  - TREAD / 2.0;
             }
-            float val = tan(_angle_fl.data);
-            _angle_fr.data = atan(val / (2.0 * val + 1));
+            double value = asin(WHEEL_BASE / (2 * radius_in));
+            _angle_fl.data = asin(value);
+            if(_angle_fl.data > STEERING_ANGLE_LIMIT){
+              _angle_fl.data = STEERING_ANGLE_LIMIT;
+            }else if(_angle_fl.data < 0.0){
+              _angle_fl.data = 0.0;
+            }
+            _angle_fr.data = atan(tan(_angle_fl.data) / (2 * tan(_angle_fl.data) + 1));
             _angle_rl.data = -_angle_fl.data;
             _angle_rr.data = -_angle_fr.data;
+
+            _velocity_fl.data = vx - TREAD * omega / 2.0;
+            _velocity_fl.data /= WHEEL_RADIUS;
+            _velocity_fr.data = vx + TREAD * omega / 2.0;
+            _velocity_fr.data /= WHEEL_RADIUS;
+            _velocity_rl.data = _velocity_fl.data;
+            _velocity_rr.data = _velocity_fr.data;
           }else{
-            _angle_fr.data = -asin(WHEEL_BASE * -velocity.angular.z / 2.0 / velocity.linear.x);
-            if(_angle_fr.data > M_PI / 4.0){
-              _angle_fr.data = M_PI / 4.0;
-            }else if(_angle_fr.data < -M_PI / 4.0){
-             _angle_fr.data = -M_PI / 4.0;
+            //右
+            double vx = velocity.linear.x;
+            double omega = -velocity.angular.z;
+            double radius_in = vx / omega - TREAD / 2.0;
+            double radius_limit = WHEEL_BASE / (2 * sin(STEERING_ANGLE_LIMIT));
+            if(radius_in < radius_limit){
+              omega = vx / (radius_limit + TREAD / 2.0);
+              radius_in = vx / omega  - TREAD / 2.0;
             }
-            float val = tan(_angle_fr.data);
-            _angle_fl.data = -atan(val / (2.0 * val + 1));
-            _angle_rr.data = -_angle_fl.data;
-            _angle_rl.data = -_angle_fr.data;
+            double value = asin(WHEEL_BASE / (2 * radius_in));
+            _angle_fr.data = -asin(value);
+            if(_angle_fr.data < -STEERING_ANGLE_LIMIT){
+              _angle_fr.data = -STEERING_ANGLE_LIMIT;
+            }else if(_angle_fl.data > 0.0){
+              _angle_fr.data = 0.0;
+            }
+            _angle_fl.data = -atan(tan(-_angle_fr.data) / (2 * tan(-_angle_fr.data) + 1));
+            _angle_rl.data = -_angle_fl.data;
+            _angle_rr.data = -_angle_fr.data;
+
+            _velocity_fl.data = vx + TREAD * omega / 2.0;
+            _velocity_fl.data /= WHEEL_RADIUS;
+            _velocity_fr.data = vx - TREAD * omega / 2.0;
+            _velocity_fr.data /= WHEEL_RADIUS;
+            _velocity_rl.data = _velocity_fl.data;
+            _velocity_rr.data = _velocity_fr.data;
           }
         }else{
+          //後退
           if(velocity.angular.z > 0.0){
-            _angle_fl.data = asin(WHEEL_BASE * velocity.angular.z / 2.0 / -velocity.linear.x);
-            if(_angle_fl.data > M_PI / 4.0){
-              _angle_fl.data = M_PI / 4.0;
-            }else if(_angle_fl.data < -M_PI / 4.0){
-             _angle_fl.data = -M_PI / 4.0;
+            //左
+            double vx = -velocity.linear.x;
+            double omega = velocity.angular.z;
+            double radius_in = vx / omega - TREAD / 2.0;
+            double radius_limit = WHEEL_BASE / (2 * sin(STEERING_ANGLE_LIMIT));
+            if(radius_in < radius_limit){
+              omega = vx / (radius_limit + TREAD / 2.0);
+              radius_in = vx / omega  - TREAD / 2.0;
             }
-            float val = tan(_angle_fl.data);
-            _angle_fr.data = atan(val / (2.0 * val + 1));
+            double value = asin(WHEEL_BASE / (2 * radius_in));
+            _angle_fl.data = asin(value);
+            if(_angle_fl.data > STEERING_ANGLE_LIMIT){
+              _angle_fl.data = STEERING_ANGLE_LIMIT;
+            }else if(_angle_fl.data < 0.0){
+              _angle_fl.data = 0.0;
+            }
+            _angle_fr.data = atan(tan(_angle_fl.data) / (2 * tan(_angle_fl.data) + 1));
             _angle_rl.data = -_angle_fl.data;
             _angle_rr.data = -_angle_fr.data;
+
+            _velocity_fl.data = vx - TREAD * omega / 2.0;
+            _velocity_fl.data /= -WHEEL_RADIUS;
+            _velocity_fr.data = vx + TREAD * omega / 2.0;
+            _velocity_fr.data /= -WHEEL_RADIUS;
+            _velocity_rl.data = _velocity_fl.data;
+            _velocity_rr.data = _velocity_fr.data;
           }else{
-            _angle_fr.data = -asin(WHEEL_BASE * -velocity.angular.z / 2.0 / -velocity.linear.x);
-            if(_angle_fr.data > M_PI / 4.0){
-              _angle_fr.data = M_PI / 4.0;
-            }else if(_angle_fr.data < -M_PI / 4.0){
-             _angle_fr.data = -M_PI / 4.0;
+            //右
+            double vx = -velocity.linear.x;
+            double omega = -velocity.angular.z;
+            double radius_in = vx / omega - TREAD / 2.0;
+            double radius_limit = WHEEL_BASE / (2 * sin(STEERING_ANGLE_LIMIT));
+            if(radius_in < radius_limit){
+              omega = vx / (radius_limit + TREAD / 2.0);
+              radius_in = vx / omega  - TREAD / 2.0;
             }
-            float val = tan(_angle_fr.data);
-            _angle_fl.data = -atan(val / (2.0 * val + 1));
-            _angle_rr.data = -_angle_fl.data;
-            _angle_rl.data = -_angle_fr.data;
+            double value = asin(WHEEL_BASE / (2 * radius_in));
+            _angle_fr.data = -asin(value);
+            if(_angle_fr.data < -STEERING_ANGLE_LIMIT){
+              _angle_fr.data = -STEERING_ANGLE_LIMIT;
+            }else if(_angle_fl.data > 0.0){
+              _angle_fr.data = 0.0;
+            }
+            _angle_fl.data = -atan(tan(-_angle_fr.data) / (2 * tan(-_angle_fr.data) + 1));
+            _angle_rl.data = -_angle_fl.data;
+            _angle_rr.data = -_angle_fr.data;
+
+            _velocity_fl.data = vx + TREAD * omega / 2.0;
+            _velocity_fl.data /= -WHEEL_RADIUS;
+            _velocity_fr.data = vx - TREAD * omega / 2.0;
+            _velocity_fr.data /= -WHEEL_RADIUS;
+            _velocity_rl.data = _velocity_fl.data;
+            _velocity_rr.data = _velocity_fr.data;
           }
         }
 
+        frw_pub.publish(_velocity_fr);
+        flw_pub.publish(_velocity_fl);
+        rrw_pub.publish(_velocity_rr);
+        rlw_pub.publish(_velocity_rl);
         frs_pub.publish(_angle_fr);
         fls_pub.publish(_angle_fl);
         rrs_pub.publish(_angle_rr);
