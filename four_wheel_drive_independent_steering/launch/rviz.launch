@@ -1,0 +1,7 @@
+<launch>
+
+  <arg name="rvizconfig" default="$(find four_wheel_drive_independent_steering)/config/urdf.rviz"/>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true"/>
+
+</launch>
