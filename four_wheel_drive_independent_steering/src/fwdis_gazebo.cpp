@@ -36,10 +36,10 @@ bool joint_subscribed = false;
 
 const double WHEEL_RADIUS = 0.075;
 const double WHEEL_BASE = 0.50;
-const double L_2 = WHEEL_BASE / 2.0;
 const double TREAD = 0.50;
-const double B_2 = TREAD / 2.0;
-const double INTERVAL = 0.1;
+const double RADIUS = sqrt(pow(WHEEL_BASE, 2) + pow(TREAD, 2)) / 2.0;
+const double THETA = atan(TREAD / WHEEL_BASE);
+const double INTERVAL = 0.01;
 
 Eigen::MatrixXd forward_matrix;
 Eigen::MatrixXd inversed_matrix;
@@ -106,14 +106,14 @@ int main(int argc, char** argv)
   std::cout << "initialize matrix" << std::endl;
 
   forward_matrix.resize(8, 3);
-  forward_matrix << 1.0, 0.0,  B_2,
-                    0.0, 1.0,  L_2,
-                    1.0, 0.0, -B_2,
-                    0.0, 1.0,  L_2,
-                    1.0, 0.0, -B_2,
-                    0.0, 1.0, -L_2,
-                    1.0, 0.0,  B_2,
-                    0.0, 1.0, -L_2;
+  forward_matrix << 1.0, 0.0,  RADIUS * sin(THETA),
+                    0.0, 1.0,  RADIUS * cos(THETA),
+                    1.0, 0.0, -RADIUS * sin(THETA),
+                    0.0, 1.0,  RADIUS * cos(THETA),
+                    1.0, 0.0, -RADIUS * sin(THETA),
+                    0.0, 1.0, -RADIUS * cos(THETA),
+                    1.0, 0.0,  RADIUS * sin(THETA),
+                    0.0, 1.0, -RADIUS * cos(THETA);
 
 
   std::cout << "forward:" << std::endl;
@@ -127,7 +127,7 @@ int main(int argc, char** argv)
   std::cout << "inversed:" << std::endl;
   std::cout << inversed_matrix << std::endl;
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(1.0 / INTERVAL);
 
   while(ros::ok()){
     frw.data = command.front_right_wheel_velocity;
