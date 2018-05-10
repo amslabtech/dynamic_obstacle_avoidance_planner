@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /RobotModel1/Status1
         - /TF1/Frames1
         - /TF1/Tree1
         - /LaserScan1
@@ -30,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -91,11 +90,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        laser:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         rear_left_steering_link:
           Alpha: 1
           Show Axes: false
@@ -139,8 +133,6 @@ Visualization Manager:
           Value: false
         front_right_wheel_link:
           Value: false
-        laser:
-          Value: true
         odom:
           Value: true
         rear_left_steering_link:
@@ -166,8 +158,6 @@ Visualization Manager:
               front_right_steering_link:
                 front_right_wheel_link:
                   {}
-              laser:
-                {}
               rear_left_steering_link:
                 rear_left_wheel_link:
                   {}
@@ -210,7 +200,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: laser
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -231,7 +221,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 17.9856434
+      Distance: 16.9718323
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
