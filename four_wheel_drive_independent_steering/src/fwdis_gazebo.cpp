@@ -100,7 +100,7 @@ int main(int argc, char** argv)
   tf::TransformBroadcaster odom_broadcaster;
 
   odometry.header.frame_id = "odom";
-  odometry.child_frame_id = "base_link";
+  odometry.child_frame_id = "base_footprint";
   odometry.pose.pose.orientation = tf::createQuaternionMsgFromYaw(0);
 
   std::cout << "initialize matrix" << std::endl;
