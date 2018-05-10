@@ -13,7 +13,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   message_generation
+  cmake_modules
 )
+
+find_package(Eigen REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -121,6 +124,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
