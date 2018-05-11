@@ -241,6 +241,7 @@ double evaluate(nav_msgs::Path path)
   double dx = goal.pose.position.x - path.poses[length].pose.position.x;
   double dy = goal.pose.position.y - path.poses[length].pose.position.y;
   double distance = dx * dx + dy * dy;
+  distance += fabs(tf::getYaw(goal.pose.orientation) - tf::getYaw(path.poses[length].pose.orientation));
   return distance;
 }
 
