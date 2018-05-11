@@ -1,0 +1,7 @@
+<launch>
+
+<node pkg="four_wheel_drive_independent_steering" name="fwdis_controller" type="fwdis_controller"/>
+
+<node pkg="four_wheel_drive_independent_steering" name="fwdis_gazebo" type="fwdis_gazebo"/>
+
+</launch>
