@@ -13,8 +13,8 @@ double MAX_ANGULAR_VELOCITY;
 double MAX_ANGULAR_ACCELERATION;
 double VELOCITY_RESOLUTION;
 double ANGULAR_VELOCITY_RESOLUTION;
-const double INTERVAL = 0.100;
-const double DT = 0.01;
+double INTERVAL;
+double DT;
 double SIMULATE_TIME;
 double ROBOT_RADIUS;
 double GOAL_XY_TOLERANCE;
@@ -64,6 +64,8 @@ int main(int argc, char** argv)
   local_nh.getParam("MAX_ANGULAR_ACCELERATION", MAX_ANGULAR_ACCELERATION);
   local_nh.getParam("VELOCITY_RESOLUTION", VELOCITY_RESOLUTION);
   local_nh.getParam("ANGULAR_VELOCITY_RESOLUTION", ANGULAR_VELOCITY_RESOLUTION);
+  local_nh.getParam("INTERVAL", INTERVAL);
+  local_nh.getParam("DT", DT);
   local_nh.getParam("SIMULATE_TIME", SIMULATE_TIME);
   local_nh.getParam("ROBOT_RADIUS", ROBOT_RADIUS);
   local_nh.getParam("GOAL_XY_TOLERANCE", GOAL_XY_TOLERANCE);
@@ -78,6 +80,8 @@ int main(int argc, char** argv)
   std::cout << MAX_ANGULAR_ACCELERATION << std::endl;
   std::cout << VELOCITY_RESOLUTION << std::endl;
   std::cout << ANGULAR_VELOCITY_RESOLUTION << std::endl;
+  std::cout << INTERVAL << std::endl;
+  std::cout << DT << std::endl;
   std::cout << SIMULATE_TIME << std::endl;
   std::cout << ROBOT_RADIUS << std::endl;
   std::cout << GOAL_XY_TOLERANCE << std::endl;
