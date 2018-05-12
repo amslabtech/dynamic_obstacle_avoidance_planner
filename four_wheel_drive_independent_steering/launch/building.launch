@@ -1,0 +1,8 @@
+<launch>
+  <arg name="model" default="$(find four_wheel_drive_independent_steering)/urdf/building/building_simple.urdf.xacro"/>
+
+  <param name="robot_description2" command="$(find xacro)/xacro.py $(arg model)"/>
+
+  <node name="building_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-urdf -model building_simple -param robot_description2"/>
+
+</launch>
