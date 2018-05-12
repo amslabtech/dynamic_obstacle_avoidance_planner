@@ -36,6 +36,7 @@ geometry_msgs::PoseStamped goal;
 bool goal_subscribed = false;
 geometry_msgs::Twist velocity;
 std::vector<std::vector<std::vector<double> > > cost;
+geometry_msgs::PoseArray local_path;
 
 
 void goal_callback(const geometry_msgs::PoseStampedConstPtr &msg)
@@ -91,6 +92,8 @@ int main(int argc, char** argv)
 
   ros::Publisher goal_pub = nh.advertise<geometry_msgs::PoseStamped>("/fwdis/local_goal/debug", 100);
 
+  ros::Publisher path_pub = nh.advertise<geometry_msgs::PoseArray>("/fwdis/local_path", 100);
+
   tf::TransformListener listener;
   tf::StampedTransform _transform;
   geometry_msgs::TransformStamped transform;
@@ -102,6 +105,8 @@ int main(int argc, char** argv)
   _goal.header.frame_id = "odom";
   _goal.pose.position.x = 1;
   _goal.pose.orientation.z = 1;
+
+  local_path.header.frame_id = "base_link";
 
   ros::Rate loop_rate(10);
 
@@ -136,6 +141,22 @@ int main(int argc, char** argv)
         velocity.linear.y = 0;
       }
       velocity_pub.publish(velocity);
+
+      local_path.poses.clear();
+      geometry_msgs::Pose pose;
+      pose.position.x = 0;
+      pose.position.y = 0;
+      pose.orientation = tf::createQuaternionMsgFromYaw(0);
+      int step_time = SIMULATE_TIME / (10 * DT);
+      for(int t=0;t<step_time;t++){
+        double yaw = tf::getYaw(pose.orientation);
+        pose.position.x += (velocity.linear.x * cos(yaw) - velocity.linear.y * sin(yaw)) * (10 * DT);
+        pose.position.y += (velocity.linear.x * sin(yaw) + velocity.linear.y * cos(yaw)) * (10 * DT);
+        pose.orientation = tf::createQuaternionMsgFromYaw(yaw + velocity.angular.z * (10 * DT));
+        local_path.poses.push_back(pose);
+      }
+      path_pub.publish(local_path);
+
       std::cout << "v: " << velocity.linear.x << ", " << velocity.linear.y << ", " << velocity.angular.z << std::endl;
     }
 
