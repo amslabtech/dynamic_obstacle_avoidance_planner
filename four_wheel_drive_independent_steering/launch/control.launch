@@ -6,7 +6,9 @@
   <!-- load the controllers -->
   <node name="controller_spawner" pkg="controller_manager"
   type="spawner" ns="fwdis" output="screen"
-  args="joint_state_controller
+  args="
+     joint_state_controller
+     joint_state_controller
      front_right_steering_joint
      front_left_steering_joint
      rear_right_steering_joint
