@@ -236,6 +236,10 @@ void generate_paths(void)
         double vx = window_vx_min + i * VELOCITY_RESOLUTION;
         double vy = window_vy_min + j * VELOCITY_RESOLUTION;
         double omega = window_omega_min + k * ANGULAR_VELOCITY_RESOLUTION;
+        if(vx * vx + vy * vy > MAX_VELOCITY * MAX_VELOCITY){
+          cost[i][j][k] = -1;
+          continue;
+        }
         nav_msgs::Path path;
         path.header.frame_id = "base_link";
         geometry_msgs::PoseStamped pose;
@@ -282,11 +286,13 @@ geometry_msgs::Twist get_velocity(void)
   for(int i=0;i<cost.size();i++){
     for(int j=0;j<cost[i].size();j++){
       for(int k=0;k<cost[i][j].size();k++){
-        if(cost[i][j][k] < min_cost){
-          min_i = i;
-          min_j = j;
-          min_k = k;
-          min_cost = cost[i][j][k];
+        if(cost[i][j][k] > 0){
+          if(cost[i][j][k] < min_cost){
+            min_i = i;
+            min_j = j;
+            min_k = k;
+            min_cost = cost[i][j][k];
+          }
         }
       }
     }
