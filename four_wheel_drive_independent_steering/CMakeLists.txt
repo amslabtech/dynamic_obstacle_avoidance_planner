@@ -146,6 +146,7 @@ add_executable(teleop_joy src/teleop_joy.cpp)
 add_executable(fwdis_gazebo src/fwdis_gazebo.cpp)
 add_executable(holonomic_dwa src/holonomic_dwa.cpp)
 add_executable(sin_curve src/sin_curve.cpp)
+add_executable(path_to_local_goal src/path_to_local_goal.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -177,6 +178,10 @@ target_link_libraries(holonomic_dwa
 target_link_libraries(sin_curve
   ${catkin_LIBRARIES}
 )
+target_link_libraries(path_to_local_goal
+  ${catkin_LIBRARIES}
+)
+
 
 #############
 ## Install ##
