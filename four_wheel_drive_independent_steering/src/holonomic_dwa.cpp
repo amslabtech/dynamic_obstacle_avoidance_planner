@@ -24,6 +24,8 @@ double ALPHA;
 double BETA;
 double GAMMA;
 
+double GOAL_DISTANCE;
+
 double window_vx_max = MAX_VELOCITY;
 double window_vx_min = -MAX_VELOCITY;
 double window_vy_max = MAX_VELOCITY;
@@ -33,21 +35,23 @@ double window_omega_min = -MAX_ANGULAR_VELOCITY;
 
 geometry_msgs::PoseStamped _goal;
 geometry_msgs::PoseStamped goal;
-bool goal_subscribed = false;
 geometry_msgs::Twist velocity;
 std::vector<std::vector<std::vector<double> > > cost;
 geometry_msgs::PoseArray local_path;
+nav_msgs::Path global_path;
+geometry_msgs::PoseStamped odometry;
 
-
-void goal_callback(const geometry_msgs::PoseStampedConstPtr &msg)
+void path_callback(const nav_msgs::PathConstPtr& msg)
 {
-  _goal = *msg;
-  goal_subscribed = true;
+  global_path = *msg;
 }
 
 void calculate_dynamic_window(void);
 void generate_paths(void);
-double evaluate(nav_msgs::Path);
+double evaluate_distance_to_local_goal(nav_msgs::Path);
+double evaluate_distance_to_global_path(nav_msgs::Path);
+double calcurate_distance(geometry_msgs::Pose, geometry_msgs::Pose);
+
 geometry_msgs::Twist get_velocity(void);
 
 int main(int argc, char** argv)
@@ -73,6 +77,7 @@ int main(int argc, char** argv)
   local_nh.getParam("ALPHA", ALPHA);
   local_nh.getParam("BETA", BETA);
   local_nh.getParam("GAMMA", GAMMA);
+  local_nh.getParam("GOAL_DISTANCE", GOAL_DISTANCE);
 
   std::cout << MAX_VELOCITY << std::endl;
   std::cout << MAX_ACCELERATION << std::endl;
@@ -89,14 +94,15 @@ int main(int argc, char** argv)
   std::cout << ALPHA << std::endl;
   std::cout << BETA << std::endl;
   std::cout << GAMMA << std::endl;
+  std::cout << GOAL_DISTANCE << std::endl;
 
   ros::Publisher velocity_pub = nh.advertise<geometry_msgs::Twist>("/fwdis/velocity", 100);
 
-  ros::Subscriber goal_sub = nh.subscribe("/fwdis/local_goal", 100, goal_callback);
-
-  ros::Publisher goal_pub = nh.advertise<geometry_msgs::PoseStamped>("/fwdis/local_goal/debug", 100);
-
   ros::Publisher path_pub = nh.advertise<geometry_msgs::PoseArray>("/fwdis/local_path", 100);
+
+  ros::Publisher goal_pub = nh.advertise<geometry_msgs::PoseStamped>("/fwdis/local_goal", 100);
+
+  ros::Subscriber path_sub = nh.subscribe("/path", 100, path_callback);
 
   tf::TransformListener listener;
   tf::StampedTransform _transform;
@@ -119,13 +125,30 @@ int main(int argc, char** argv)
     try{
       listener.lookupTransform("odom", "base_link", ros::Time(0), _transform);
       tf::transformStampedTFToMsg(_transform, transform);
+      odometry.header = transform.header;
+      odometry.pose.position.x = transform.transform.translation.x;
+      odometry.pose.position.y = transform.transform.translation.y;
+      odometry.pose.position.z = transform.transform.translation.z;
+      odometry.pose.orientation = transform.transform.rotation;
+
       transformed = true;
     }catch(tf::TransformException ex){
       ROS_ERROR("%s", ex.what());
       ros::Duration(1.0).sleep();
     }
-
-    if(transformed && goal_subscribed){
+    if(!global_path.poses.empty() && transformed){
+      // local goal を決める部分
+      try{
+        for(int i=global_path.poses.size()-1;i>=0;i--){
+          if(calcurate_distance(global_path.poses[i].pose, odometry.pose) < GOAL_DISTANCE){
+            _goal = global_path.poses[i];
+            break;
+          }
+        }
+      }catch(tf::TransformException ex){
+        ROS_ERROR("%s", ex.what());
+        ros::Duration(1.0).sleep();
+      }
       try{
         listener.transformPose("base_link", ros::Time(0), _goal, "odom", goal);
       }catch(tf::TransformException ex){
@@ -254,7 +277,8 @@ void generate_paths(void)
           pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw + omega * DT);
           path.poses.push_back(pose);
         }
-        cost[i][j][k] = evaluate(path);
+        cost[i][j][k] = ALPHA * evaluate_distance_to_local_goal(path);
+        cost[i][j][k] += BETA * evaluate_distance_to_global_path(path);
         //std::cout << cost[i][j][k] << ", ";
       }
       //std::cout << ":" << std::endl;
@@ -264,9 +288,10 @@ void generate_paths(void)
   std::cout << "generation end" << std::endl;
 }
 
-double evaluate(nav_msgs::Path path)
+double evaluate_distance_to_local_goal(nav_msgs::Path path)
 {
   int length = path.poses.size() - 1;
+  //double distance = calcurate_distance(goal.pose, path.poses[length].pose);
   double dx = goal.pose.position.x - path.poses[length].pose.position.x;
   double dy = goal.pose.position.y - path.poses[length].pose.position.y;
   double distance = dx * dx + dy * dy;
@@ -304,4 +329,14 @@ geometry_msgs::Twist get_velocity(void)
   _velocity.linear.y = window_vy_min + min_j * VELOCITY_RESOLUTION;
   _velocity.angular.z = window_omega_min + min_k * ANGULAR_VELOCITY_RESOLUTION;
   return _velocity;
+}
+
+double calcurate_distance(geometry_msgs::Pose a, geometry_msgs::Pose b)
+{
+  return sqrt((a.position.x - b.position.x) * (a.position.x - b.position.x) + (a.position.y - b.position.y) * (a.position.y - b.position.y));
+}
+
+double evaluate_distance_to_global_path(nav_msgs::Path local_path)
+{
+  return 0;
 }

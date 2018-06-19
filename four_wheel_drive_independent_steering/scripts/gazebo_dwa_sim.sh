@@ -6,7 +6,11 @@ sleep 1s
 
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering gazebo.launch" --geometry=40x12+450+0
 
-sleep 5s
+sleep 1s
+
+gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering rviz.launch" --geometry=40x12+450+300
+
+sleep 1s
 
 gnome-terminal -e "/opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering fwdis_controller" --geometry=40x12+850+0
 
@@ -20,9 +24,6 @@ gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_s
 
 sleep 1s
 
-gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering rviz.launch" --geometry=40x12+450+300
-
-sleep 1s
 
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch --screen four_wheel_drive_independent_steering holonomic_dwa.launch" --geometry=40x12+850+300
 

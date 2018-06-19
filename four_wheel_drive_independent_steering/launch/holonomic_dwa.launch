@@ -10,13 +10,14 @@
     <param name="ANGULAR_VELOCITY_RESOLUTION" value="0.20"/>
     <param name="INTERVAL" value="0.1"/>
     <param name="DT" value="0.02"/>
-    <param name="SIMULATE_TIME" value="0.3"/>
+    <param name="SIMULATE_TIME" value="0.5"/>
     <param name="ROBOT_RADIUS" value="0.40"/>
     <param name="GOAL_XY_TOLERANCE" value="0.15"/>
     <param name="GOAL_YAW_TOLERANCE" value="0.15"/>
     <param name="ALPHA" value="1.0"/>
     <param name="BETA" value="1.0"/>
     <param name="GAMMA" value="1.0"/>
+    <param name="GOAL_DISTANCE" value="1.0"/>
   </node>
 
 </launch>
