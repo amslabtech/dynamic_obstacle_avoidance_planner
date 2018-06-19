@@ -14,7 +14,7 @@
     <param name="ROBOT_RADIUS" value="0.40"/>
     <param name="GOAL_XY_TOLERANCE" value="0.15"/>
     <param name="GOAL_YAW_TOLERANCE" value="0.15"/>
-    <param name="ALPHA" value="1.0"/>
+    <param name="ALPHA" value="10.0"/>
     <param name="BETA" value="1.0"/>
     <param name="GAMMA" value="1.0"/>
     <param name="GOAL_DISTANCE" value="1.0"/>

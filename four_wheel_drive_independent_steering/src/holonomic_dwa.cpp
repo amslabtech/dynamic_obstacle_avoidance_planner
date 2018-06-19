@@ -338,5 +338,13 @@ double calcurate_distance(geometry_msgs::Pose a, geometry_msgs::Pose b)
 
 double evaluate_distance_to_global_path(nav_msgs::Path local_path)
 {
-  return 0;
+  double min_distance = 100;
+  int local_path_length = local_path.poses.size() - 1;
+  for(int i=0;i<global_path.poses.size();i++){
+    double distance = calcurate_distance(local_path.poses[local_path_length].pose, global_path.poses[i].pose);
+    if(distance < min_distance){
+      min_distance = distance;
+    }
+  }
+  return min_distance;
 }
