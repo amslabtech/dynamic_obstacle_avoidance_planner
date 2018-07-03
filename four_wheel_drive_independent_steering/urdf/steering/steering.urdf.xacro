@@ -13,7 +13,7 @@
       <parent link="${parent}"/>
       <child link="${prefix}_steering_link"/>
       <insert_block name="joint_axis"/>
-      <limit effort="30" velocity="30" upper="${M_PI/1.5}" lower="${-M_PI/1.5}"/>
+      <limit effort="2.323" velocity="30" upper="${M_PI/1.5}" lower="${-M_PI/1.5}"/>
     </joint>
 
     <link name="${prefix}_steering_link">
