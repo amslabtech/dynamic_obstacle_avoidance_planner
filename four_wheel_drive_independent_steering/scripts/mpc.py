@@ -3,7 +3,7 @@
 
 # mpc
 import time
-from cvxpy import *
+import cvxpy
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -19,6 +19,21 @@ import math
 
 global_path = []
 
+WHEEL_RADIUS = 0.100#[m]
+WHEEL_BASE = 0.040#[m]
+TREAD = 0.040#[m]
+RADIUS = math.sqrt(WHEEL_BASE**2 + TREAD**2) / 2.0
+THETA = math.atan(TREAD / WHEEL_BASE)
+MAX_OMEGA = 30#[rad/s]
+MAX_STEERING_ANGLE = math.pi / 1.5#[rad]
+n_state = 3#6   # 状態の数(x, y, theta, vx, vy, omega)
+m_state = 3#8   # 制御入力の数(w1w, w1s, w2w, w2s, w3w, w3s, w4w, w4s)
+T = 20  # 何ステップ先まで予測するかを決める
+delta_t = 0.1
+# 目標値
+target_theta = 0
+target_v = 2.0
+
 def path_callback(data):
     global_path = data
 
@@ -30,6 +45,40 @@ def get_matrix(dt, theta_t):
     ])
   return A
 
+def get_optimized_value():
+  x = cvxpy.Variable(n_state, T+1)
+  u = cvxpy.Variable(m_state, T)
+
+  cost = 0.0
+  constraints = []
+
+  for t in range(T):
+    cost += cvxpy.sum_squares(cost_arr*x[:,t+1]) + cvxpy.sum_squares(0.1*u[:,t])
+    constraints += [x[:,t+1] == x[:,t] + A*u[:,t]]
+
+  prob = cvxpy.Problem(cvxpy.Minimize(cost), constraints)
+
+  start = time.time()
+  prob.solve(verbose=False)
+  elapsed_time = time.time() - start
+
+  if result == float("inf"):
+    print("Cannot optimize")
+    import sys
+    sys.exit()
+
+  if prob.status == cvxpy.OPTIMAL or prob.status == cvxpy.OPTIMAL_INACCURATE:
+    # optimized value array
+    ox = np.array(x.value[0, :]).flatten()
+    oy = np.array(x.value[1, :]).flatten()
+    oyaw = np.array(x.value[2, :]).flatten()
+    ovx = np.array(u.value[0, :]).flatten()
+    ovy = np.array(u.value[1, :]).flatten()
+    ow = np.array(u.value[2, :]).flatten()
+
+  return ox, oy, oyaw, ovx, ovy, ow
+
+
 def process():
   rospy.init_node('mpc', anonymous=True)
 
@@ -37,24 +86,6 @@ def process():
   rospy.Subscriber("/path", Path, path_callback)
 
   r = rospy.Rate(10)
-
-  n_state = 3#6   # 状態の数(x, y, theta, vx, vy, omega)
-  m_state = 3#8   # 制御入力の数(w1w, w1s, w2w, w2s, w3w, w3s, w4w, w4s)
-  T = 20  # 何ステップ先まで予測するかを決める
-
-  #simulation parameter
-  delta_t = 0.1
-
-  WHEEL_RADIUS = 0.100#[m]
-  WHEEL_BASE = 0.040#[m]
-  TREAD = 0.040#[m]
-  RADIUS = math.sqrt(WHEEL_BASE**2 + TREAD**2) / 2.0
-  THETA = math.atan(TREAD / WHEEL_BASE)
-  MAX_OMEGA = 30#[rad/s]
-  MAX_STEERING_ANGLE = math.pi / 1.5#[rad]
-
-  target_theta = 0
-  target_v = 2.0
 
   # Model Parameter
   forward_matrix = np.array([
@@ -69,9 +100,6 @@ def process():
     ])
   inversed_matrix = np.linalg.pinv(forward_matrix)
 
-  x = Variable(n_state, T+1)
-  u = Variable(m_state, T)
-
   cost_arr = np.array([
     [1.0, 0.0, 0.0, 0.0],
     [0.0, 1.0, 0.0, 0.0],
@@ -79,41 +107,9 @@ def process():
     [0.0, 0.0, 0.0, 0.1]
     ])
 
-  states = []
-
   while not rospy.is_shutdown():
-    states = []
-    for t in range(T):
-      cost = sum_squares(cost_arr*x[:,t+1]) + sum_squares(0.1*u[:,t])
-      constr = [x[:,t+1] == x[:,t] + A*u[:,t]]
-      states.append( Problem(Minimize(cost), constr) )
-    # sums problem objectives and concatenates constraints.
-    prob = sum(states)
-    prob.constraints += [x[:,T] == 0, x[:,0] == x_0]
 
-    start = time.time()
-    result=prob.solve(verbose=False)
-    elapsed_time = time.time() - start
-
-    if result == float("inf"):
-      print("Cannot optimize")
-      import sys
-      sys.exit()
-
-    # optimized value array
-    ox = np.array(x.value[0, :]).flatten()
-    oy = np.array(x.value[1, :]).flatten()
-    oyaw = np.array(x.value[2, :]).flatten()
-    ovx = np.array(u.value[0, :]).flatten()
-    ovy = np.array(u.value[1, :]).flatten()
-    ow = np.array(u.value[2, :]).flatten()
-
-    # 最適とされる制御入力の配列を取得
-    good_u_arr = np.array(u[0,:].value[0,:])[0]
-
-    # 制御入力を入れて、次の状態を得る
-    x_next = np.dot(A, x_0) + B * good_u_arr[0]
-    x_0 = x_next
+    ox, oy, oyaw, ovx, ovy, ow = get_optimized_value()
 
     rospy.spin()
     r.sleep()
