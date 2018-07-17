@@ -22,6 +22,14 @@ global_path = []
 def path_callback(data):
     global_path = data
 
+def get_matrix(dt, theta_t):
+  A = np.array([
+    [dt * math.cos(theta_t), -dt * math.sin(theta_t), 0],
+    [dt * math.sin(theta_t),  dt * math.cos(theta_t), 0],
+    [0, 0, 1]
+    ])
+  return A
+
 def process():
   rospy.init_node('mpc', anonymous=True)
 
@@ -30,8 +38,8 @@ def process():
 
   r = rospy.Rate(10)
 
-  n_state = 6   # 状態の数(x, y, theta, vx, vy, omega)
-  m_state = 8   # 制御入力の数(w1w, w1s, w2w, w2s, w3w, w3s, w4w, w4s)
+  n_state = 3#6   # 状態の数(x, y, theta, vx, vy, omega)
+  m_state = 3#8   # 制御入力の数(w1w, w1s, w2w, w2s, w3w, w3s, w4w, w4s)
   T = 20  # 何ステップ先まで予測するかを決める
 
   #simulation parameter
@@ -72,61 +80,41 @@ def process():
     ])
 
   states = []
-  for t in range(T):
-    # コスト関数の値が小さくなるような配列uを求める
-    #cost = sum_squares(cost_arr*x[:,t+1]) + sum_squares(0.1*u[:,t])
-    # 制約式（線形方程式と制御入力の限界値）を与える
-    #constr = [x[:,t+1] == A*x[:,t] + B*u[:,t], norm(u[:,t], 'inf') <= 20.0]
-    constr = [x[:,t+1] == A*x[:,t] + B*u[:,t], norm(u[:,t], 'inf') <= 20.0]
-    states.append( Problem(Minimize(cost), constr) )
-  # sums problem objectives and concatenates constraints.
-  prob = sum(states)
-
-  prob.constraints += [x[:,0] == x_0]
-
-  start = time.time()
-  result=prob.solve(verbose=True)
-  elapsed_time = time.time() - start
-  print("calc time:{0} [sec]".format(elapsed_time))
-
-  # 発散した場合は制御不能として終了
-  if result == float("inf"):
-    print("Cannot optimize")
-    import sys
-    sys.exit()
 
   while not rospy.is_shutdown():
-    cnt = 0
-    # 制御1000回分行う
-    while (cnt < 1000) and (not rospy.is_shutdown()):
-      states = []
-      for t in range(T):
-        cost = sum_squares(cost_arr*x[:,t+1]) + sum_squares(0.1*u[:,t])
-        constr = [x[:,t+1] == A*x[:,t] + B*u[:,t], norm(u[:,t], 'inf') <= 20.0]
-        states.append( Problem(Minimize(cost), constr) )
-      # sums problem objectives and concatenates constraints.
-      prob = sum(states)
-      prob.constraints += [x[:,T] == 0, x[:,0] == x_0]
+    states = []
+    for t in range(T):
+      cost = sum_squares(cost_arr*x[:,t+1]) + sum_squares(0.1*u[:,t])
+      constr = [x[:,t+1] == x[:,t] + A*u[:,t]]
+      states.append( Problem(Minimize(cost), constr) )
+    # sums problem objectives and concatenates constraints.
+    prob = sum(states)
+    prob.constraints += [x[:,T] == 0, x[:,0] == x_0]
 
-      start = time.time()
-      result=prob.solve(verbose=False)
-      elapsed_time = time.time() - start
+    start = time.time()
+    result=prob.solve(verbose=False)
+    elapsed_time = time.time() - start
 
-      if result == float("inf"):
-        print("Cannot optimize")
-        import sys
-        sys.exit()
+    if result == float("inf"):
+      print("Cannot optimize")
+      import sys
+      sys.exit()
 
-      # 最適とされる制御入力の配列を取得
-      good_u_arr = np.array(u[0,:].value[0,:])[0]
+    # optimized value array
+    ox = np.array(x.value[0, :]).flatten()
+    oy = np.array(x.value[1, :]).flatten()
+    oyaw = np.array(x.value[2, :]).flatten()
+    ovx = np.array(u.value[0, :]).flatten()
+    ovy = np.array(u.value[1, :]).flatten()
+    ow = np.array(u.value[2, :]).flatten()
 
-      # 制御入力を入れて、次の状態を得る
-      x_next = np.dot(A, x_0) + B * good_u_arr[0]
-      x_0 = x_next
+    # 最適とされる制御入力の配列を取得
+    good_u_arr = np.array(u[0,:].value[0,:])[0]
 
-      cnt += 1
+    # 制御入力を入れて、次の状態を得る
+    x_next = np.dot(A, x_0) + B * good_u_arr[0]
+    x_0 = x_next
 
-      print(x_next.reshape(-1))
     rospy.spin()
     r.sleep()
 
