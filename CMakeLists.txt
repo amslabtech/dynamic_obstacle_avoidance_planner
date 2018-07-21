@@ -17,6 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Eigen REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(IPOPT ipopt REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -125,6 +127,7 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN_INCLUDE_DIRS}
+  ${IPOPT_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -147,6 +150,7 @@ add_executable(fwdis_gazebo src/fwdis_gazebo.cpp)
 add_executable(holonomic_dwa src/holonomic_dwa.cpp)
 add_executable(sin_curve src/sin_curve.cpp)
 add_executable(path_to_local_goal src/path_to_local_goal.cpp)
+add_executable(mpc_path_tracker src/mpc_path_tracker)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -180,6 +184,10 @@ target_link_libraries(sin_curve
 )
 target_link_libraries(path_to_local_goal
   ${catkin_LIBRARIES}
+)
+target_link_libraries(mpc_path_tracker
+  ${catkin_LIBRARIES}
+  ${IPOPT_LIBRARIES}
 )
 
 
