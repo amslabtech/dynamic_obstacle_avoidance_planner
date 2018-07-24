@@ -2,6 +2,9 @@
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Twist.h>
+#include <tf/tf.h>
+#include <tf/transform_listener.h>
 
 //ipopt
 #include <Eigen/Core>
@@ -29,6 +32,24 @@ public:
 
 };
 
+class MPCPathTracker
+{
+public:
+  MPCPathTracker(void);
+
+  void path_callback(const nav_msgs::PathConstPtr&);
+
+  void process(void);
+
+private:
+  ros::NodeHandle nh;
+  ros::Publisher velocity_pub;
+  ros::Subscriber path_sub;
+  MPC mpc;
+  nav_msgs::Path path;
+
+};
+
 //ホライゾン長さ
 const int T = 10;
 //周期
@@ -45,14 +66,14 @@ size_t omega_start = vy_start + T - 1;
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "mpc_path_tracker");
-  ros::NodeHandle nh;
   ros::NodeHandle local_nh("~");
 
-  MPC mpc;
+  MPCPathTracker mpc_path_tracker;
 
   ros::Rate loop_rate(10);
 
   while(ros::ok()){
+    mpc_path_tracker.process();
 
     ros::spinOnce();
     loop_rate.sleep();
@@ -204,5 +225,24 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     fg[2 + x_start + i] = x1 - (x0 + vx0 * CppAD::cos(yaw0) * DT - vy0 * CppAD::sin(yaw0) * DT);
     fg[2 + y_start + i] = y1 - (y0 + vx0 * CppAD::sin(yaw0) * DT + vy0 * CppAD::cos(yaw0) * DT);
     fg[2 + yaw_start + i] = CppAD::atan2(CppAD::sin(yaw0 + omega0 * DT), CppAD::cos(yaw0 + omega0 * DT));
+  }
+}
+
+MPCPathTracker::MPCPathTracker(void)
+{
+  velocity_pub = nh.advertise<geometry_msgs::Twist>("/velocity", 100);
+  path_sub = nh.subscribe("/path", 100, &MPCPathTracker::path_callback, this);
+  Eigen::VectorXd dummy_vec = Eigen::VectorXd::Random(1);
+}
+
+void MPCPathTracker::path_callback(const nav_msgs::PathConstPtr& msg)
+{
+  path = *msg;
+}
+
+void MPCPathTracker::process(void)
+{
+  if(!path.poses.empty()){
+
   }
 }
