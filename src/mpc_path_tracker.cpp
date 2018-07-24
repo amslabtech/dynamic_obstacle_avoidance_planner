@@ -5,6 +5,7 @@
 #include <geometry_msgs/Twist.h>
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
+#include <geometry_msgs/TransformStamped.h>
 
 //ipopt
 #include <Eigen/Core>
@@ -47,6 +48,10 @@ private:
   ros::Subscriber path_sub;
   MPC mpc;
   nav_msgs::Path path;
+  tf::TransformListener listener;
+  geometry_msgs::PoseStamped pose;
+  tf::StampedTransform _transform;
+  geometry_msgs::TransformStamped transform;
 
 };
 
@@ -62,6 +67,9 @@ size_t yaw_start = y_start + T;
 size_t vx_start = yaw_start + T;
 size_t vy_start = vx_start + T;
 size_t omega_start = vy_start + T - 1;
+
+double min_distance(nav_msgs::Path&, geometry_msgs::PoseStamped&);
+double get_distance(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&);
 
 int main(int argc, char** argv)
 {
@@ -242,7 +250,39 @@ void MPCPathTracker::path_callback(const nav_msgs::PathConstPtr& msg)
 
 void MPCPathTracker::process(void)
 {
-  if(!path.poses.empty()){
+  bool transformed = false;
+  try{
+    listener.lookupTransform("odom", "base_link", ros::Time(0), _transform);
+    tf::transformStampedTFToMsg(_transform, transform);
+    pose.header = transform.header;
+    pose.pose.position.x = transform.transform.translation.x;
+    pose.pose.position.y = transform.transform.translation.y;
+    pose.pose.position.z = transform.transform.translation.z;
+    pose.pose.orientation = transform.transform.rotation;
+    transformed = true;
+  }catch(tf::TransformException &ex){
+    std::cout << ex.what() << std::endl;
+  }
+
+  if(!path.poses.empty() && transformed){
 
   }
+}
+
+double min_distance(nav_msgs::Path& path, geometry_msgs::PoseStamped& pose)
+{
+  int length = path.poses.size();
+  double min_distance = 100;
+  for(int i=0;i<length;i++){
+    double distance = get_distance(path.poses[i], pose);
+    if(min_distance > distance){
+      min_distance = distance;
+    }
+  }
+  return min_distance;
+}
+
+double get_distance(geometry_msgs::PoseStamped& pose0, geometry_msgs::PoseStamped& pose1)
+{
+  return sqrt((pose0.pose.position.x - pose1.pose.position.x) * (pose0.pose.position.x - pose1.pose.position.x) + (pose0.pose.position.y - pose1.pose.position.y) * (pose0.pose.position.y - pose1.pose.position.y));
 }
