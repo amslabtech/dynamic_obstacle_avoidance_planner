@@ -260,6 +260,14 @@ void MPCPathTracker::process(void)
   }
 
   if(!path.poses.empty() && transformed){
+    Eigen::VectorXd state;
+    state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation);
+    auto result = mpc.solve(state);
+    geometry_msgs::Twist velocity;
+    velocity.linear.x = result[0];
+    velocity.linear.y = result[1];
+    velocity.angular.z = result[2];
+    velocity_pub.publish(velocity);
 
   }
 }
