@@ -18,14 +18,12 @@ class MPC{
 public:
   MPC();
 
-  std::vector<double> solve(Eigen::VectorXd, Eigen::VectorXd);
+  std::vector<double> solve(Eigen::VectorXd);
 };
 
 class FG_eval{
 public:
-  FG_eval(Eigen::VectorXd);
-
-  Eigen::VectorXd coeffs;
+  FG_eval(void);
 
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
 
@@ -91,7 +89,7 @@ int main(int argc, char** argv)
 
 MPC::MPC(){}
 
-std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
+std::vector<double> MPC::solve(Eigen::VectorXd state)
 {
   /*
    * state:現在の値
@@ -158,7 +156,7 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
   constraints_upper_bound[y_start] = y;
   constraints_upper_bound[yaw_start] = yaw;
 
-  FG_eval fg_eval(coeffs);
+  FG_eval fg_eval;
 
   std::string options;
   options += "Integer print_level  0\n";
@@ -192,10 +190,7 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
   return result;
 }
 
-FG_eval::FG_eval(Eigen::VectorXd coeffs)
-{
-  this->coeffs = coeffs;
-}
+FG_eval::FG_eval(void){}
 
 void FG_eval::operator()(ADvector& fg, const ADvector& vars)
 {
