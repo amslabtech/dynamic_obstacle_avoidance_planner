@@ -50,6 +50,9 @@ private:
   geometry_msgs::PoseStamped pose;
   tf::StampedTransform _transform;
   geometry_msgs::TransformStamped transform;
+  Eigen::VectorXd path_x;
+  Eigen::VectorXd path_y;
+  Eigen::VectorXd path_yaw;
 
 };
 
@@ -224,6 +227,9 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     AD<double> vy0 = vars[vy_start + i];
     AD<double> omega0 = vars[omega_start + i];
 
+    AD<double> v0 = CppAD::sqrt(vx0 * vx0 + vy0 * vy0);
+    AD<double> psi0 = CppAD::atan2(vy0, vx0);
+
     //制約
     fg[2 + x_start + i] = x1 - (x0 + vx0 * CppAD::cos(yaw0) * DT - vy0 * CppAD::sin(yaw0) * DT);
     fg[2 + y_start + i] = y1 - (y0 + vx0 * CppAD::sin(yaw0) * DT + vy0 * CppAD::cos(yaw0) * DT);
@@ -235,7 +241,9 @@ MPCPathTracker::MPCPathTracker(void)
 {
   velocity_pub = nh.advertise<geometry_msgs::Twist>("/velocity", 100);
   path_sub = nh.subscribe("/path", 100, &MPCPathTracker::path_callback, this);
-  Eigen::VectorXd dummy_vec = Eigen::VectorXd::Random(1);
+  path_x = Eigen::VectorXd::Zero(T);
+  path_y = Eigen::VectorXd::Zero(T);
+  path_yaw = Eigen::VectorXd::Zero(T);
 }
 
 void MPCPathTracker::path_callback(const nav_msgs::PathConstPtr& msg)
