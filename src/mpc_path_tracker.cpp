@@ -48,6 +48,7 @@ public:
   void path_callback(const nav_msgs::PathConstPtr&);
 
   void process(void);
+  void path_to_vector(void);
 
 private:
   ros::NodeHandle nh;
@@ -291,6 +292,7 @@ void MPCPathTracker::process(void)
   if(!path.poses.empty() && transformed){
     Eigen::VectorXd state;
     state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation);
+    path_to_vector();
     auto result = mpc.solve(state);
     geometry_msgs::Twist velocity;
     velocity.linear.x = result[0];
@@ -298,6 +300,17 @@ void MPCPathTracker::process(void)
     velocity.angular.z = result[2];
     velocity_pub.publish(velocity);
 
+  }
+}
+
+void MPCPathTracker::path_to_vector(void)
+{
+  for(int i=0;i<T;i++){
+    if(i*4<T){
+      path_x[i] = path.poses[i*4].pose.position.x;
+      path_y[i] = path.poses[i*4].pose.position.y;
+      path_yaw[i] = tf::getYaw(path.poses[i*4].pose.orientation);
+    }
   }
 }
 
