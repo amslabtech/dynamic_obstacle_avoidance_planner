@@ -19,15 +19,24 @@ public:
   MPC();
 
   std::vector<double> solve(Eigen::VectorXd);
+  //state, ref_x, ref_y, ref_yaw
+  std::vector<double> solve(Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd);
+
 };
 
 class FG_eval{
 public:
   FG_eval(void);
+  FG_eval(Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd);
 
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
 
   void operator()(ADvector&, const ADvector&);
+
+private:
+  Eigen::VectorXd ref_x;
+  Eigen::VectorXd ref_y;
+  Eigen::VectorXd ref_yaw;
 
 };
 
@@ -91,6 +100,11 @@ int main(int argc, char** argv)
 }
 
 MPC::MPC(){}
+
+std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eigen::VectorXd ref_y, Eigen::VectorXd ref_yaw)
+{
+  return solve(state);
+}
 
 std::vector<double> MPC::solve(Eigen::VectorXd state)
 {
@@ -194,6 +208,13 @@ std::vector<double> MPC::solve(Eigen::VectorXd state)
 }
 
 FG_eval::FG_eval(void){}
+
+FG_eval::FG_eval(Eigen::VectorXd ref_x, Eigen::VectorXd ref_y, Eigen::VectorXd ref_yaw)
+{
+  this->ref_x = ref_x;
+  this->ref_y = ref_y;
+  this->ref_yaw = ref_yaw;
+}
 
 void FG_eval::operator()(ADvector& fg, const ADvector& vars)
 {
