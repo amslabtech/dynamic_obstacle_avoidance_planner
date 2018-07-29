@@ -231,7 +231,7 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   }
   // input
   for(int i=0;i<T-2;i++){
-    fg[0] += CppAD::pow(VREF - CppAD::sqrt(CppAD::pow(vars[vx_start + i], 2) + CppAD::pow(vars[vy_start + i], 2)), 2);
+    fg[0] += CppAD::pow(VREF - (CppAD::sqrt(CppAD::pow(vars[vx_start + i], 2) + CppAD::pow(vars[vy_start + i], 2))), 2);
   }
 
   //constraint
@@ -248,10 +248,14 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     AD<double> x1 = vars[x_start + i + 1];
     AD<double> y1 = vars[y_start + i + 1];
     AD<double> yaw1 = vars[yaw_start + i + 1];
+    AD<double> cte1 = vars[cte_start + i + 1];
+    AD<double> e_theta1 = vars[e_theta_start + i + 1];
     //t
     AD<double> x0 = vars[x_start + i];
     AD<double> y0 = vars[y_start + i];
     AD<double> yaw0 = vars[yaw_start + i];
+    AD<double> cte0 = vars[cte_start + i];
+    AD<double> e_theta0 = vars[e_theta_start + i];
     //入力ホライゾンはt+1を考慮しない
     AD<double> vx0 = vars[vx_start + i];
     AD<double> vy0 = vars[vy_start + i];
