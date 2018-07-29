@@ -18,7 +18,7 @@ class MPC{
 public:
   MPC();
 
-  //state, ref_x, ref_y, ref_yaw
+  // state, ref_x, ref_y, ref_yaw
   std::vector<double> solve(Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd);
 
 };
@@ -64,16 +64,21 @@ private:
 
 };
 
-//ホライゾン長さ
+// ホライゾン長さ
 const int T = 10;
-//周期
-const double DT = 0.1;
+// 周期
+const double DT = 0.1;// [s]
+// 目標速度
+const double VREF = 3.0;// [m/s]
 
-//simulation parameters
+// state
 size_t x_start = 0;
 size_t y_start = x_start + T;
 size_t yaw_start = y_start + T;
-size_t vx_start = yaw_start + T;
+size_t cte_start = yaw_start + T;
+size_t e_theta_start = cte_start + T;
+// input
+size_t vx_start = e_theta_start + T;
 size_t vy_start = vx_start + T;
 size_t omega_start = vy_start + T - 1;
 
@@ -103,7 +108,7 @@ MPC::MPC(){}
 std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eigen::VectorXd ref_y, Eigen::VectorXd ref_yaw)
 {
   /*
-   * state:現在の値
+   * state:x, y, yaw, cte, e_theta
    */
   bool ok = true;
   size_t i;
@@ -112,11 +117,13 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   double x = state[0];
   double y = state[1];
   double yaw = state[2];
+  double cte = state[3];
+  double e_theta = state[4];
 
-  //3(x, y, yaw), 3(vx, vy, omega)
-  size_t n_variables = 3 * T + 3 * (T - 1);
+  // 5(x, y, yaw, cte, e_theta), 3(vx, vy, omega)
+  size_t n_variables = 5 * T + 3 * (T - 1);
 
-  size_t n_constraints = 3 * T;
+  size_t n_constraints = 5 * T;
 
   Dvector vars(n_variables);
   for(int i=0;i<n_variables;i++){
@@ -126,12 +133,14 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   vars[x_start] = x;
   vars[y_start] = y;
   vars[yaw_start] = yaw;
+  vars[cte_start] = cte;
+  vars[e_theta_start] = e_theta;
 
   Dvector vars_lower_bound(n_variables);
   Dvector vars_upper_bound(n_variables);
 
   for(int i=0;i<vx_start;i++){
-    //x, y, yaw
+    //x, y, yaw, cte, e_theta
     vars_lower_bound[i] = -1.0e19;
     vars_upper_bound[i] = 1.0e19;
   }
@@ -161,10 +170,14 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   constraints_lower_bound[x_start] = x;
   constraints_lower_bound[y_start] = y;
   constraints_lower_bound[yaw_start] = yaw;
+  constraints_lower_bound[cte_start] = cte;
+  constraints_lower_bound[e_theta_start] = e_theta;
 
   constraints_upper_bound[x_start] = x;
   constraints_upper_bound[y_start] = y;
   constraints_upper_bound[yaw_start] = yaw;
+  constraints_upper_bound[cte_start] = cte;
+  constraints_upper_bound[e_theta_start] = e_theta;
 
   FG_eval fg_eval(ref_x, ref_y, ref_yaw);
 
@@ -213,7 +226,9 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   fg[0] = 0;
 
   for(int i=0;i<T-1;i++){
-    //fg[0] += vars[i];
+    fg[0] += CppAD::pow(vars[e_theta_start + i], 2);
+    fg[0] += CppAD::pow(vars[cte_start + i], 2);
+    fg[0] += CppAD::pow(VREF - CppAD::sqrt(CppAD::pow(vars[vx_start + i], 2) + CppAD::pow(vars[vy_start + i], 2)), 2);
   }
 
   //constraint
