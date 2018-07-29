@@ -222,12 +222,15 @@ FG_eval::FG_eval(Eigen::VectorXd ref_x, Eigen::VectorXd ref_y, Eigen::VectorXd r
 
 void FG_eval::operator()(ADvector& fg, const ADvector& vars)
 {
-  //cost
+  // cost
   fg[0] = 0;
-
+  // state
   for(int i=0;i<T-1;i++){
     fg[0] += CppAD::pow(vars[e_theta_start + i], 2);
     fg[0] += CppAD::pow(vars[cte_start + i], 2);
+  }
+  // input
+  for(int i=0;i<T-2;i++){
     fg[0] += CppAD::pow(VREF - CppAD::sqrt(CppAD::pow(vars[vx_start + i], 2) + CppAD::pow(vars[vy_start + i], 2)), 2);
   }
 
