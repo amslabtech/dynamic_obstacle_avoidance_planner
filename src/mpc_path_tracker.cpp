@@ -18,7 +18,6 @@ class MPC{
 public:
   MPC();
 
-  std::vector<double> solve(Eigen::VectorXd);
   //state, ref_x, ref_y, ref_yaw
   std::vector<double> solve(Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd);
 
@@ -26,7 +25,6 @@ public:
 
 class FG_eval{
 public:
-  FG_eval(void);
   FG_eval(Eigen::VectorXd, Eigen::VectorXd, Eigen::VectorXd);
 
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
@@ -104,14 +102,8 @@ MPC::MPC(){}
 
 std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eigen::VectorXd ref_y, Eigen::VectorXd ref_yaw)
 {
-  return solve(state);
-}
-
-std::vector<double> MPC::solve(Eigen::VectorXd state)
-{
   /*
    * state:現在の値
-   * coeffs:係数行列
    */
   bool ok = true;
   size_t i;
@@ -174,7 +166,7 @@ std::vector<double> MPC::solve(Eigen::VectorXd state)
   constraints_upper_bound[y_start] = y;
   constraints_upper_bound[yaw_start] = yaw;
 
-  FG_eval fg_eval;
+  FG_eval fg_eval(ref_x, ref_y, ref_yaw);
 
   std::string options;
   options += "Integer print_level  0\n";
@@ -207,8 +199,6 @@ std::vector<double> MPC::solve(Eigen::VectorXd state)
   }
   return result;
 }
-
-FG_eval::FG_eval(void){}
 
 FG_eval::FG_eval(Eigen::VectorXd ref_x, Eigen::VectorXd ref_y, Eigen::VectorXd ref_yaw)
 {
@@ -293,7 +283,7 @@ void MPCPathTracker::process(void)
     Eigen::VectorXd state;
     state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation);
     path_to_vector();
-    auto result = mpc.solve(state);
+    auto result = mpc.solve(state, path_x, path_y, path_yaw);
     geometry_msgs::Twist velocity;
     velocity.linear.x = result[0];
     velocity.linear.y = result[1];
