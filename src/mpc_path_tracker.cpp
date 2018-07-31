@@ -76,8 +76,8 @@ size_t x_start = 0;
 size_t y_start = x_start + T;
 size_t yaw_start = y_start + T;
 // input
-size_t vx_start = yaw_start + T;
-size_t vy_start = vx_start + T;
+size_t vx_start = yaw_start + T - 1;
+size_t vy_start = vx_start + T - 1;
 size_t omega_start = vy_start + T - 1;
 
 double min_distance(nav_msgs::Path&, geometry_msgs::PoseStamped&);
@@ -139,16 +139,16 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     vars_upper_bound[i] = 1.0e19;
   }
   for(int i=vx_start;i<vy_start;i++){
-    vars_lower_bound[i] = 3.0;
-    vars_upper_bound[i] = -3.0;
+    vars_lower_bound[i] = -3.0;
+    vars_upper_bound[i] = 3.0;
   }
   for(int i=vy_start;i<omega_start;i++){
-    vars_lower_bound[i] = 3.0;
-    vars_upper_bound[i] = -3.0;
+    vars_lower_bound[i] = -3.0;
+    vars_upper_bound[i] = 3.0;
   }
   for(int i=omega_start;i<n_variables;i++){
-    vars_lower_bound[i] = 5.0;
-    vars_upper_bound[i] = -5.0;
+    vars_lower_bound[i] = -5.0;
+    vars_upper_bound[i] = 5.0;
   }
 
   //等式制約
@@ -181,11 +181,14 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
 
   CppAD::ipopt::solve_result<Dvector> solution;
 
+  std::cout << "optimization start" << std::endl;
   CppAD::ipopt::solve<Dvector, FG_eval>(
       options, vars, vars_lower_bound, vars_upper_bound, constraints_lower_bound,
       constraints_upper_bound, fg_eval, solution);
 
+  std::cout << "optimization end" << std::endl;
   ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
+  std::cout << solution.status << std::endl;
 
   auto cost = solution.obj_value;
   std::cout << "Cost " << cost << std::endl;
@@ -212,6 +215,7 @@ FG_eval::FG_eval(Eigen::VectorXd ref_x, Eigen::VectorXd ref_y, Eigen::VectorXd r
 
 void FG_eval::operator()(ADvector& fg, const ADvector& vars)
 {
+  std::cout << "FG_eval() start" << std::endl;
   // cost
   fg[0] = 0;
   // state
@@ -227,14 +231,14 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     fg[0] += CppAD::pow(VREF - (CppAD::sqrt(CppAD::pow(vars[vx_start + i], 2) + CppAD::pow(vars[vy_start + i], 2))), 2);
   }
 
+  std::cout << "constrains start" << std::endl;
   //constraint
   //初期状態
   fg[1 + x_start] = vars[x_start];
   fg[1 + y_start] = vars[y_start];
   fg[1 + yaw_start] = vars[yaw_start];
-  fg[1 + vx_start] = vars[vx_start];
-  fg[1 + vy_start] = vars[vy_start];
-  fg[1 + omega_start] = vars[omega_start];
+
+  std::cout << "constraints loop start" << std::endl;
 
   for(int i=0;i<T-1;i++){
     //t+1
@@ -250,14 +254,15 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     AD<double> vy0 = vars[vy_start + i];
     AD<double> omega0 = vars[omega_start + i];
 
-    AD<double> v0 = CppAD::sqrt(vx0 * vx0 + vy0 * vy0);
-    AD<double> psi0 = CppAD::atan2(vy0, vx0);
+    //AD<double> v0 = CppAD::sqrt(vx0 * vx0 + vy0 * vy0);
+    //AD<double> psi0 = CppAD::atan2(vy0, vx0);
 
     //制約
     fg[2 + x_start + i] = x1 - (x0 + vx0 * CppAD::cos(yaw0) * DT - vy0 * CppAD::sin(yaw0) * DT);
     fg[2 + y_start + i] = y1 - (y0 + vx0 * CppAD::sin(yaw0) * DT + vy0 * CppAD::cos(yaw0) * DT);
-    fg[2 + yaw_start + i] = CppAD::atan2(CppAD::sin(yaw0 + omega0 * DT), CppAD::cos(yaw0 + omega0 * DT));
+    fg[2 + yaw_start + i] = yaw1 - CppAD::atan2(CppAD::sin(yaw0 + omega0 * DT), CppAD::cos(yaw0 + omega0 * DT));
   }
+  std::cout << "FG_eval() end" << std::endl;
 }
 
 MPCPathTracker::MPCPathTracker(void)
@@ -291,14 +296,19 @@ void MPCPathTracker::process(void)
   }
 
   if(!path.poses.empty() && transformed){
-    Eigen::VectorXd state;
+    std::cout << pose << std::endl;
+    Eigen::VectorXd state(3);
     state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation);
+    std::cout << "path to vector" << std::endl;
     path_to_vector();
+    std::cout << "solving" << std::endl;
     auto result = mpc.solve(state, path_x, path_y, path_yaw);
+    std::cout << "solved" << std::endl;
     geometry_msgs::Twist velocity;
     velocity.linear.x = result[0];
     velocity.linear.y = result[1];
     velocity.angular.z = result[2];
+    std::cout << velocity << std::endl;
     velocity_pub.publish(velocity);
 
   }
@@ -307,7 +317,7 @@ void MPCPathTracker::process(void)
 void MPCPathTracker::path_to_vector(void)
 {
   for(int i=0;i<T;i++){
-    if(i*4<T){
+    if(i*4<path.poses.size()){
       path_x[i] = path.poses[i*4].pose.position.x;
       path_y[i] = path.poses[i*4].pose.position.y;
       path_yaw[i] = tf::getYaw(path.poses[i*4].pose.orientation);
