@@ -242,7 +242,7 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   for(int i=0;i<T-2;i++){
     // 速度
     //fg[0] += CppAD::pow(VREF - CppAD::sqrt(CppAD::pow(vars[vx_start + i], 2) +  CppAD::pow(vars[vy_start + i], 2)), 2);
-    fg[0] += CppAD::pow(VREF - CppAD::pow(vars[vx_start + i], 2) + CppAD::pow(vars[vy_start + i], 2), 2);
+    fg[0] += CppAD::pow(VREF * VREF - CppAD::pow(vars[vx_start + i], 2) - CppAD::pow(vars[vy_start + i], 2), 2);
   }
 
   std::cout << "constrains start" << std::endl;
