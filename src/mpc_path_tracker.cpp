@@ -76,7 +76,7 @@ size_t x_start = 0;
 size_t y_start = x_start + T;
 size_t yaw_start = y_start + T;
 // input
-size_t vx_start = yaw_start + T - 1;
+size_t vx_start = yaw_start + T;
 size_t vy_start = vx_start + T - 1;
 size_t omega_start = vy_start + T - 1;
 
@@ -115,6 +115,15 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   double x = state[0];
   double y = state[1];
   double yaw = state[2];
+
+  std::cout << "--- state ---" << std::endl;
+  std::cout << state << std::endl;
+  std::cout << "--- path_x ---" << std::endl;
+  std::cout << ref_x << std::endl;
+  std::cout << "--- path_y ---" << std::endl;
+  std::cout << ref_y << std::endl;
+  std::cout << "--- path_yaw ---" << std::endl;
+  std::cout << ref_yaw << std::endl;
 
   // 3(x, y, yaw), 3(vx, vy, omega)
   size_t n_variables = 3 * T + 3 * (T - 1);
@@ -203,6 +212,10 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     result.push_back(solution.x[y_start+i+1]);
     result.push_back(solution.x[yaw_start+i+1]);
   }
+  std::cout << "--- result ---" << std::endl;
+  for(int i=0;i<result.size();i++){
+    std::cout << result[i] << std::endl;
+  }
   return result;
 }
 
@@ -226,9 +239,10 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     fg[0] += CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
   }
   // input
-  for(int i=0;i<T-1;i++){
+  for(int i=0;i<T-2;i++){
     // 速度
-    fg[0] += CppAD::pow(VREF - (CppAD::sqrt(CppAD::pow(vars[vx_start + i], 2) + CppAD::pow(vars[vy_start + i], 2))), 2);
+    //fg[0] += CppAD::pow(VREF - CppAD::sqrt(CppAD::pow(vars[vx_start + i], 2) +  CppAD::pow(vars[vy_start + i], 2)), 2);
+    fg[0] += CppAD::pow(VREF - CppAD::pow(vars[vx_start + i], 2) + CppAD::pow(vars[vy_start + i], 2), 2);
   }
 
   std::cout << "constrains start" << std::endl;
@@ -260,7 +274,8 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     //制約
     fg[2 + x_start + i] = x1 - (x0 + vx0 * CppAD::cos(yaw0) * DT - vy0 * CppAD::sin(yaw0) * DT);
     fg[2 + y_start + i] = y1 - (y0 + vx0 * CppAD::sin(yaw0) * DT + vy0 * CppAD::cos(yaw0) * DT);
-    fg[2 + yaw_start + i] = yaw1 - CppAD::atan2(CppAD::sin(yaw0 + omega0 * DT), CppAD::cos(yaw0 + omega0 * DT));
+    //fg[2 + yaw_start + i] = yaw1 - CppAD::atan2(CppAD::sin(yaw0 + omega0 * DT), CppAD::cos(yaw0 + omega0 * DT));
+    fg[2 + yaw_start + i] = yaw1 - (yaw0 + omega0 * DT);
   }
   std::cout << "FG_eval() end" << std::endl;
 }
