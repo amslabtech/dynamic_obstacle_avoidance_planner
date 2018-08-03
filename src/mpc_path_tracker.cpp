@@ -331,11 +331,17 @@ void MPCPathTracker::process(void)
 
 void MPCPathTracker::path_to_vector(void)
 {
+  int index = 0;
   for(int i=0;i<T;i++){
     if(i*4<path.poses.size()){
-      path_x[i] = path.poses[i*4].pose.position.x;
-      path_y[i] = path.poses[i*4].pose.position.y;
-      path_yaw[i] = tf::getYaw(path.poses[i*4].pose.orientation);
+      index = i*4;
+      path_x[i] = path.poses[index].pose.position.x;
+      path_y[i] = path.poses[index].pose.position.y;
+      path_yaw[i] = tf::getYaw(path.poses[index].pose.orientation);
+    }else{
+      path_x[i] = path.poses[path.poses.size() - 1].pose.position.x;
+      path_y[i] = path.poses[path.poses.size() - 1].pose.position.y;
+      path_yaw[i] = tf::getYaw(path.poses[path.poses.size() - 1].pose.orientation);
     }
   }
 }
