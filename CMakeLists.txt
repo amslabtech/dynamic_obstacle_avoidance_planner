@@ -57,6 +57,7 @@ pkg_check_modules(IPOPT ipopt REQUIRED)
 add_message_files(
   FILES
   FourWheelDriveIndependentSteering.msg
+  PoseStampedArray.msg
 #   Message1.msg
 #   Message2.msg
 )
@@ -79,6 +80,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  geometry_msgs
 )
 
 ################################################
@@ -151,6 +153,7 @@ add_executable(holonomic_dwa src/holonomic_dwa.cpp)
 add_executable(sin_curve src/sin_curve.cpp)
 add_executable(path_to_local_goal src/path_to_local_goal.cpp)
 add_executable(mpc_path_tracker src/mpc_path_tracker)
+add_executable(diff_drive_sim src/diff_drive_sim)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -188,6 +191,9 @@ target_link_libraries(path_to_local_goal
 target_link_libraries(mpc_path_tracker
   ${catkin_LIBRARIES}
   ${IPOPT_LIBRARIES}
+)
+target_link_libraries(diff_drive_sim
+  ${catkin_LIBRARIES}
 )
 
 
