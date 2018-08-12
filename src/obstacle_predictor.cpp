@@ -51,7 +51,7 @@ int main(int argc, char** argv)
         for(int i=0;i<NUM;i++){
           std::string frame = "obs" + std::to_string(i);
           listener.lookupTransform("map", frame, ros::Time(0), _transform);
-          std::cout << "obs" + std::to_string(i) + " receibed" << std::endl;
+          std::cout << "obs" + std::to_string(i) + " received" << std::endl;
           geometry_msgs::TransformStamped transform;
           tf::transformStampedTFToMsg(_transform, transform);
           geometry_msgs::Pose pose;
