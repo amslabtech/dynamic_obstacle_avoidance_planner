@@ -2,6 +2,7 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/tf.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <std_msgs/Int32.h>
 
 std::vector<geometry_msgs::TransformStamped> obs_list;
 
@@ -20,6 +21,8 @@ int main(int argc, char** argv)
   ros::NodeHandle local_nh("~");
 
   local_nh.getParam("NUM", NUM);
+
+  ros::Publisher obs_num_pub = nh.advertise<std_msgs::Int32>("/obs_num", 100);
 
   obs_list.resize(NUM);
 
@@ -44,6 +47,11 @@ int main(int argc, char** argv)
       update(i, 0.5, 0.5);
     }
     obs_broadcaster.sendTransform(obs_list);
+
+    std_msgs::Int32 num;
+    num.data = NUM;
+    obs_num_pub.publish(num);
+
     ros::spinOnce();
     loop_rate.sleep();
   }
