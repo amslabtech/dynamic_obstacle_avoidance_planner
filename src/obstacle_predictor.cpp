@@ -40,6 +40,8 @@ int main(int argc, char** argv)
 
   bool first_transform = true;
 
+  predicted_pathes.header.frame_id = "map";
+
   ros::Rate loop_rate(10);
 
   while(ros::ok()){
@@ -73,9 +75,62 @@ int main(int argc, char** argv)
           velocity.linear.y = (current_poses.poses[i].position.y - previous_poses.poses[i].position.y) / DT;
           velocity.angular.z = (tf::getYaw(current_poses.poses[i].orientation) - tf::getYaw(previous_poses.poses[i].orientation)) / DT;
           current_velocities.push_back(velocity);
-          std::cout << "obs" + i << std::endl;
-          std::cout << velocity << std::endl;
+          //std::cout << "obs" + i << std::endl;
+          //std::cout << velocity << std::endl;
         }
+        if(previous_velocities.size() == 0){
+          previous_velocities = current_velocities;
+        }
+        std::cout << "===predict path===" << std::endl;
+        predicted_pathes.poses.clear();
+        // 速度・角速度維持する場合の推定
+        for(int i=0;i<NUM;i++){
+          predicted_pathes.poses.push_back(current_poses.poses[i]);
+          double vx = current_velocities[i].linear.x;
+          double vy = current_velocities[i].linear.y;
+          double v = sqrt(vx*vx + vy*vy);
+          double omega = current_velocities[i].angular.z;
+          double yaw = tf::getYaw(current_poses.poses[i].orientation);
+          for(int j=0;j<PREDICTION_STEP;j++){
+            geometry_msgs::Pose pose;
+            pose.position.x = predicted_pathes.poses[i*(PREDICTION_STEP+1)+j].position.x + vx * DT;
+            pose.position.y = predicted_pathes.poses[i*(PREDICTION_STEP+1)+j].position.y + vy * DT;
+            yaw += omega * DT;
+            yaw = atan2(sin(yaw), cos(yaw));
+            pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
+            vx = v * cos(yaw);
+            vy = v * sin(yaw);
+            v = sqrt(vx*vx + vy*vy);
+            omega = omega;
+            predicted_pathes.poses.push_back(pose);
+          }
+        }
+        // 角速度変化させる場合の推定
+        const int SIZE_OF_LINEAR_PATH = predicted_pathes.poses.size();
+        for(int i=0;i<NUM;i++){
+          predicted_pathes.poses.push_back(current_poses.poses[i]);
+          double vx = current_velocities[i].linear.x;
+          double vy = current_velocities[i].linear.y;
+          double v = sqrt(vx*vx + vy*vy);
+          double omega = current_velocities[i].angular.z;
+          double d_omega = (current_velocities[i].angular.z - previous_velocities[i].angular.z) / DT;
+          double yaw = tf::getYaw(current_poses.poses[i].orientation);
+          for(int j=0;j<PREDICTION_STEP;j++){
+            geometry_msgs::Pose pose;
+            pose.position.x = predicted_pathes.poses[i*(PREDICTION_STEP+1)+j+SIZE_OF_LINEAR_PATH].position.x + vx * DT;
+            pose.position.y = predicted_pathes.poses[i*(PREDICTION_STEP+1)+j+SIZE_OF_LINEAR_PATH].position.y + vy * DT;
+            yaw += omega * DT;
+            yaw = atan2(sin(yaw), cos(yaw));
+            pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
+            vx = v * cos(yaw);
+            vy = v * sin(yaw);
+            v = sqrt(vx*vx + vy*vy);
+            omega = omega + d_omega * DT;
+            predicted_pathes.poses.push_back(pose);
+          }
+        }
+        std::cout << predicted_pathes.poses.size() << std::endl;
+        predicted_pathes_pub.publish(predicted_pathes);
       }
       previous_velocities = current_velocities;
       current_velocities.clear();
