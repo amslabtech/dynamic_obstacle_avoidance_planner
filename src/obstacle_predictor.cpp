@@ -83,13 +83,13 @@ int main(int argc, char** argv)
         }
         std::cout << "===predict path===" << std::endl;
         predicted_pathes.poses.clear();
-        // 速度・角速度維持する場合の推定
+        // v=const, omega=0
         for(int i=0;i<NUM;i++){
           predicted_pathes.poses.push_back(current_poses.poses[i]);
           double vx = current_velocities[i].linear.x;
           double vy = current_velocities[i].linear.y;
           double v = sqrt(vx*vx + vy*vy);
-          double omega = current_velocities[i].angular.z;
+          double omega = 0;
           double yaw = tf::getYaw(current_poses.poses[i].orientation);
           for(int j=0;j<PREDICTION_STEP;j++){
             geometry_msgs::Pose pose;
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
             predicted_pathes.poses.push_back(pose);
           }
         }
-        // 角速度変化させる場合の推定
+        // v=const, omega=const
         const int SIZE_OF_LINEAR_PATH = predicted_pathes.poses.size();
         for(int i=0;i<NUM;i++){
           predicted_pathes.poses.push_back(current_poses.poses[i]);
@@ -113,7 +113,6 @@ int main(int argc, char** argv)
           double vy = current_velocities[i].linear.y;
           double v = sqrt(vx*vx + vy*vy);
           double omega = current_velocities[i].angular.z;
-          double d_omega = (current_velocities[i].angular.z - previous_velocities[i].angular.z) / DT;
           double yaw = tf::getYaw(current_poses.poses[i].orientation);
           for(int j=0;j<PREDICTION_STEP;j++){
             geometry_msgs::Pose pose;
@@ -125,7 +124,7 @@ int main(int argc, char** argv)
             vx = v * cos(yaw);
             vy = v * sin(yaw);
             v = sqrt(vx*vx + vy*vy);
-            omega = omega + d_omega * DT;
+            omega = omega;
             predicted_pathes.poses.push_back(pose);
           }
         }
