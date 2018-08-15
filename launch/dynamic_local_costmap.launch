@@ -1,0 +1,8 @@
+<launch>
+
+  <node pkg="four_wheel_drive_independent_steering" name="dynamic_local_costmap" type="dynamic_local_costmap" output="screen">
+
+  </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_local_costmap" args="0 0 0 0 0 0 base_link local_costmap 100"/>
+</launch>
