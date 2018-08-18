@@ -4,6 +4,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseArray.h>
 
 class Cell
 {
@@ -25,6 +26,9 @@ public:
 
 };
 
+geometry_msgs::PoseArray waypoints;
+geometry_msgs::PoseStamped waypoint0;// from
+geometry_msgs::PoseStamped waypoint1;// to
 nav_msgs::OccupancyGrid local_costmap;
 nav_msgs::Path path;
 // for a*
@@ -39,7 +43,15 @@ int get_heuristic(int, int);
 
 double MARGIN_WALL;
 
+bool waypoints_received = false;
+
 void calculate_astar(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&);
+void intersection_on_map(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&);
+// from dynamic_local_costmap.cpp
+bool predict_intersection(geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose);
+// from dynamic_local_costmap.cpp
+void predict_intersection_point(geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::PoseStamped&);
+
 
 void map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
 {
@@ -109,6 +121,14 @@ void map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
   std::cout << "map callback end" << std::endl;
 }
 
+void waypoints_callback(const geometry_msgs::PoseArrayConstPtr& msg)
+{
+  waypoints = *msg;
+  if(waypoints.poses.size()==2){
+    waypoints_received = true;
+  }
+}
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "avoidance_path_planner");
@@ -120,28 +140,44 @@ int main(int argc, char** argv)
   ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("/intermediate_path", 100);
 
   ros::Subscriber map_sub = nh.subscribe("/local_costmap", 100, map_callback);
+  ros::Subscriber waypoints_sub = nh.subscribe("/waypoints", 100, waypoints_callback);
 
   tf::TransformListener listener;
 
   ros::Rate loop_rate(10);
 
   while(ros::ok()){
-    if(!local_costmap.data.empty()){
-      std::cout << "=== avoidance path planner ===" << std::endl;
+    std::cout << "=== avoidance path planner ===" << std::endl;
+    if(!local_costmap.data.empty() && waypoints_received){
       ros::Time start_time = ros::Time::now();
-      geometry_msgs::PoseStamped start;
-      start.header.frame_id = "local_costmap";
-      start.pose.position.x = 0;
-      start.pose.position.y = 0;
-      start.pose.orientation = tf::createQuaternionMsgFromYaw(0);
-      geometry_msgs::PoseStamped goal;
-      goal.header.frame_id = "local_costmap";
-      goal.pose.position.x = 4;
-      goal.pose.position.y = 0;
-      goal.pose.orientation = tf::createQuaternionMsgFromYaw(0);
-      calculate_astar(start, goal);
-      path_pub.publish(path);
-      std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
+
+      std::cout << "=== transform waypoints ===" << std::endl;
+      geometry_msgs::PoseStamped _waypoint0;
+      _waypoint0.header = waypoints.header;
+      _waypoint0.pose = waypoints.poses[0];
+      geometry_msgs::PoseStamped _waypoint1;
+      _waypoint1.header = waypoints.header;
+      _waypoint1.pose = waypoints.poses[1];
+      bool transformed = false;
+      try{
+        listener.transformPose("local_costmap", _waypoint0, waypoint0);
+        listener.transformPose("local_costmap", _waypoint1, waypoint1);
+        transformed = true;
+      }catch(tf::TransformException ex){
+        std::cout << ex.what() << std::endl;
+      }
+
+      if(transformed){
+        geometry_msgs::PoseStamped start;
+        geometry_msgs::PoseStamped goal;
+        intersection_on_map(start, goal);
+        // 始点は原点
+        start.pose.position.x = 0;
+        start.pose.position.y = 0;
+        calculate_astar(start, goal);
+        path_pub.publish(path);
+        std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
+      }
     }
     ros::spinOnce();
     loop_rate.sleep();
@@ -404,3 +440,105 @@ void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStam
 
   std::cout << "path generated!" << std::endl;
 }
+
+void intersection_on_map(geometry_msgs::PoseStamped& out0, geometry_msgs::PoseStamped& out1)
+{
+  // costmapの四隅
+  geometry_msgs::Pose pose_fr;
+  pose_fr.position.x = local_costmap.info.origin.position.x + local_costmap.info.resolution * local_costmap.info.width;
+  pose_fr.position.y = local_costmap.info.origin.position.y;
+  geometry_msgs::Pose pose_fl;
+  pose_fl.position.x = local_costmap.info.origin.position.x + local_costmap.info.resolution * local_costmap.info.width;
+  pose_fl.position.y = local_costmap.info.origin.position.y + local_costmap.info.resolution * local_costmap.info.height;
+  geometry_msgs::Pose pose_rr;
+  pose_rr.position.x = local_costmap.info.origin.position.x;
+  pose_rr.position.y = local_costmap.info.origin.position.y;
+  geometry_msgs::Pose pose_rl;
+  pose_rl.position.x = local_costmap.info.origin.position.x;
+  pose_rl.position.y = local_costmap.info.origin.position.y + local_costmap.info.resolution * local_costmap.info.height;
+  // 交差位置の計算
+  std::vector<geometry_msgs::PoseStamped> out;
+  out.resize(2);
+  out[0].header.frame_id = "local_costmap";
+  out[0].pose.orientation = tf::createQuaternionMsgFromYaw(0);
+  out[1] = out[0];
+  int i=0;
+  if(predict_intersection(pose_rl, pose_rr, waypoint0.pose, waypoint1.pose)){
+    predict_intersection_point(pose_rl, pose_rr, waypoint0.pose, waypoint1.pose, out[i]);
+    i++;
+  }
+  if(predict_intersection(pose_fl, pose_fr, waypoint0.pose, waypoint1.pose)){
+    predict_intersection_point(pose_fl, pose_fr, waypoint0.pose, waypoint1.pose, out[i]);
+    i++;
+  }
+  if(i<2){
+    if(predict_intersection(pose_fr, pose_rr, waypoint0.pose, waypoint1.pose)){
+      predict_intersection_point(pose_fr, pose_rr, waypoint0.pose, waypoint1.pose, out[i]);
+      i++;
+    }
+  }
+  if(i<2){
+    if(predict_intersection(pose_fl, pose_rl, waypoint0.pose, waypoint1.pose)){
+      predict_intersection_point(pose_fl, pose_rl, waypoint0.pose, waypoint1.pose, out[i]);
+      i++;
+    }
+  }
+  // waypoint0と両交点までの距離
+  double distance0 = (waypoint0.pose.position.x - out[0].pose.position.x)*(waypoint0.pose.position.x - out[0].pose.position.x) + (waypoint0.pose.position.y - out[0].pose.position.y)*(waypoint0.pose.position.y - out[0].pose.position.y);
+  double distance1 = (waypoint0.pose.position.x - out[1].pose.position.x)*(waypoint0.pose.position.x - out[1].pose.position.x) + (waypoint0.pose.position.y - out[1].pose.position.y)*(waypoint0.pose.position.y - out[1].pose.position.y);
+  if(distance0 > distance1){
+    geometry_msgs::PoseStamped temp;
+    temp = out[0];
+    out[0] = out[1];
+    out[1] = temp;
+  }
+  out0 = out[0];
+  if(get_i_from_x(out0.pose.position.x) >= local_costmap.info.width){
+    out0.pose.position.x = (local_costmap.info.width - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.x;
+  }else if(get_i_from_x(out0.pose.position.x) < 0){
+    out0.pose.position.x = local_costmap.info.origin.position.x;
+  }
+  if(get_j_from_y(out0.pose.position.y) >= local_costmap.info.height){
+    out0.pose.position.y = (local_costmap.info.height - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.y;
+  }else if(get_j_from_y(out0.pose.position.x) < 0){
+    out0.pose.position.y = local_costmap.info.origin.position.y;
+  }
+  out1 = out[1];
+  if(get_i_from_x(out1.pose.position.x) >= local_costmap.info.width){
+    out1.pose.position.x = (local_costmap.info.width - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.x;
+  }else if(get_i_from_x(out1.pose.position.x) < 0){
+    out1.pose.position.x = local_costmap.info.origin.position.x;
+  }
+  if(get_j_from_y(out1.pose.position.y) >= local_costmap.info.height){
+    out1.pose.position.y = (local_costmap.info.height - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.y;
+  }else if(get_j_from_y(out1.pose.position.x) < 0){
+    out1.pose.position.y = local_costmap.info.origin.position.y;
+  }
+}
+
+/*
+ * P1(a->b), P2(c->d)の衝突判定
+ * https://qiita.com/ykob/items/ab7f30c43a0ed52d16f2
+ */
+bool predict_intersection(geometry_msgs::Pose a, geometry_msgs::Pose b, geometry_msgs::Pose c, geometry_msgs::Pose d)
+{
+  double ta = (c.position.x - d.position.x) * (a.position.y - c.position.y) + (c.position.y - d.position.y) * (c.position.x - a.position.x);
+  double tb = (c.position.x - d.position.x) * (b.position.y - c.position.y) + (c.position.y - d.position.y) * (c.position.x - b.position.x);
+  double tc = (a.position.x - b.position.x) * (c.position.y - a.position.y) + (a.position.y - b.position.y) * (a.position.x - c.position.x);
+  double td = (a.position.x - b.position.x) * (d.position.y - a.position.y) + (a.position.y - b.position.y) * (a.position.x - d.position.x);
+  return tc * td <= 0 && ta * tb <= 0;
+}
+
+/*
+ * P1(a->b), P2(c->d)の衝突位置
+ * http://www.hiramine.com/programming/graphics/2d_segmentintersection.html
+ */
+void predict_intersection_point(geometry_msgs::Pose a, geometry_msgs::Pose b, geometry_msgs::Pose c, geometry_msgs::Pose d, geometry_msgs::PoseStamped& result)
+{
+  double denominator = (b.position.x - a.position.x) * (d.position.y - c.position.y) - (b.position.y - a.position.y) * (d.position.x - c.position.x);
+  double r = ((d.position.y - c.position.y) * (c.position.x - a.position.x) - (d.position.x - c.position.x) * (c.position.y - a.position.y)) / denominator;
+  //double s = ((b.position.y - a.position.y) * (c.position.x - a.position.x) - (b.position.x - a.position.x) * (c.position.y - a.position.y)) / denominator;
+  result.pose.position.x = a.position.x + r * (b.position.x - a.position.x);
+  result.pose.position.y = a.position.y + r * (b.position.y - a.position.y);
+}
+

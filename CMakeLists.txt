@@ -152,12 +152,13 @@ add_executable(fwdis_gazebo src/fwdis_gazebo.cpp)
 add_executable(holonomic_dwa src/holonomic_dwa.cpp)
 add_executable(sin_curve src/sin_curve.cpp)
 add_executable(path_to_local_goal src/path_to_local_goal.cpp)
-add_executable(mpc_path_tracker src/mpc_path_tracker)
-add_executable(diff_drive_sim src/diff_drive_sim)
-add_executable(obstacle_predictor src/obstacle_predictor)
-add_executable(robot_predictor src/robot_predictor)
-add_executable(dynamic_local_costmap src/dynamic_local_costmap)
-add_executable(avoidance_path_planner src/avoidance_path_planner)
+add_executable(mpc_path_tracker src/mpc_path_tracker.cpp)
+add_executable(diff_drive_sim src/diff_drive_sim.cpp)
+add_executable(obstacle_predictor src/obstacle_predictor.cpp)
+add_executable(robot_predictor src/robot_predictor.cpp)
+add_executable(dynamic_local_costmap src/dynamic_local_costmap.cpp)
+add_executable(avoidance_path_planner src/avoidance_path_planner.cpp)
+add_executable(waypoints_test src/waypoints_test.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -209,6 +210,9 @@ target_link_libraries(dynamic_local_costmap
   ${catkin_LIBRARIES}
 )
 target_link_libraries(avoidance_path_planner
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(waypoints_test
   ${catkin_LIBRARIES}
 )
 

@@ -28,3 +28,7 @@ sleep 1s
 
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering avoidance_path_planner.launch" --geometry=45x12+0+476 &
 sleep 1s
+
+# for test
+gnome-terminal -e "/opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering waypoints_test" --geometry=45x12+475+476 &
+sleep 1s
