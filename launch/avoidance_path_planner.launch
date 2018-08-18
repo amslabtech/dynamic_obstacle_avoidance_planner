@@ -1,0 +1,7 @@
+<launch>
+
+  <node pkg="four_wheel_drive_independent_steering" name="avoidance_path_planner" type="avoidance_path_planner" output="screen">
+    <param name="MARGIN_WALL" value="0.40"/>
+  </node>
+
+</launch>

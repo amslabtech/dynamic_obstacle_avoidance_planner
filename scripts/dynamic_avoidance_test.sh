@@ -25,3 +25,6 @@ sleep 1s
 
 gnome-terminal -e "/opt/ros/kinetic/bin/rosrun rviz rviz -d ../config/dynamic_avoidance.rviz" --geometry=45x12+1315+250 &
 sleep 1s
+
+gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering avoidance_path_planner.launch" --geometry=45x12+0+476 &
+sleep 1s

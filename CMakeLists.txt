@@ -157,6 +157,7 @@ add_executable(diff_drive_sim src/diff_drive_sim)
 add_executable(obstacle_predictor src/obstacle_predictor)
 add_executable(robot_predictor src/robot_predictor)
 add_executable(dynamic_local_costmap src/dynamic_local_costmap)
+add_executable(avoidance_path_planner src/avoidance_path_planner)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -205,6 +206,9 @@ target_link_libraries(robot_predictor
   ${catkin_LIBRARIES}
 )
 target_link_libraries(dynamic_local_costmap
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(avoidance_path_planner
   ${catkin_LIBRARIES}
 )
 
