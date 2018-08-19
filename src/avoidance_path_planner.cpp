@@ -483,36 +483,61 @@ void intersection_on_map(geometry_msgs::PoseStamped& out0, geometry_msgs::PoseSt
       i++;
     }
   }
+  if(i==2){
   // waypoint0と両交点までの距離
-  double distance0 = (waypoint0.pose.position.x - out[0].pose.position.x)*(waypoint0.pose.position.x - out[0].pose.position.x) + (waypoint0.pose.position.y - out[0].pose.position.y)*(waypoint0.pose.position.y - out[0].pose.position.y);
-  double distance1 = (waypoint0.pose.position.x - out[1].pose.position.x)*(waypoint0.pose.position.x - out[1].pose.position.x) + (waypoint0.pose.position.y - out[1].pose.position.y)*(waypoint0.pose.position.y - out[1].pose.position.y);
-  if(distance0 > distance1){
-    geometry_msgs::PoseStamped temp;
-    temp = out[0];
-    out[0] = out[1];
-    out[1] = temp;
-  }
-  out0 = out[0];
-  if(get_i_from_x(out0.pose.position.x) >= local_costmap.info.width){
-    out0.pose.position.x = (local_costmap.info.width - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.x;
-  }else if(get_i_from_x(out0.pose.position.x) < 0){
-    out0.pose.position.x = local_costmap.info.origin.position.x;
-  }
-  if(get_j_from_y(out0.pose.position.y) >= local_costmap.info.height){
-    out0.pose.position.y = (local_costmap.info.height - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.y;
-  }else if(get_j_from_y(out0.pose.position.x) < 0){
-    out0.pose.position.y = local_costmap.info.origin.position.y;
-  }
-  out1 = out[1];
-  if(get_i_from_x(out1.pose.position.x) >= local_costmap.info.width){
-    out1.pose.position.x = (local_costmap.info.width - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.x;
-  }else if(get_i_from_x(out1.pose.position.x) < 0){
-    out1.pose.position.x = local_costmap.info.origin.position.x;
-  }
-  if(get_j_from_y(out1.pose.position.y) >= local_costmap.info.height){
-    out1.pose.position.y = (local_costmap.info.height - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.y;
-  }else if(get_j_from_y(out1.pose.position.x) < 0){
-    out1.pose.position.y = local_costmap.info.origin.position.y;
+    double distance0 = (waypoint0.pose.position.x - out[0].pose.position.x)*(waypoint0.pose.position.x - out[0].pose.position.x) + (waypoint0.pose.position.y - out[0].pose.position.y)*(waypoint0.pose.position.y - out[0].pose.position.y);
+    double distance1 = (waypoint0.pose.position.x - out[1].pose.position.x)*(waypoint0.pose.position.x - out[1].pose.position.x) + (waypoint0.pose.position.y - out[1].pose.position.y)*(waypoint0.pose.position.y - out[1].pose.position.y);
+    if(distance0 > distance1){
+      geometry_msgs::PoseStamped temp;
+      temp = out[0];
+      out[0] = out[1];
+      out[1] = temp;
+    }
+    out0 = out[0];
+    if(get_i_from_x(out0.pose.position.x) >= local_costmap.info.width){
+      out0.pose.position.x = (local_costmap.info.width - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.x;
+    }else if(get_i_from_x(out0.pose.position.x) < 0){
+      out0.pose.position.x = local_costmap.info.origin.position.x;
+    }
+    if(get_j_from_y(out0.pose.position.y) >= local_costmap.info.height){
+      out0.pose.position.y = (local_costmap.info.height - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.y;
+    }else if(get_j_from_y(out0.pose.position.x) < 0){
+      out0.pose.position.y = local_costmap.info.origin.position.y;
+    }
+    out1 = out[1];
+    if(get_i_from_x(out1.pose.position.x) >= local_costmap.info.width){
+      out1.pose.position.x = (local_costmap.info.width - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.x;
+    }else if(get_i_from_x(out1.pose.position.x) < 0){
+      out1.pose.position.x = local_costmap.info.origin.position.x;
+    }
+    if(get_j_from_y(out1.pose.position.y) >= local_costmap.info.height){
+      out1.pose.position.y = (local_costmap.info.height - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.y;
+    }else if(get_j_from_y(out1.pose.position.x) < 0){
+      out1.pose.position.y = local_costmap.info.origin.position.y;
+    }
+  }else if(i==1){
+    // どちらか一方のwaypointがcostmap内
+    if((waypoint0.pose.position.x >= local_costmap.info.origin.position.x) && (waypoint0.pose.position.x <= local_costmap.info.origin.position.x + local_costmap.info.height * local_costmap.info.resolution) && (waypoint0.pose.position.y >= local_costmap.info.origin.position.y) && (waypoint0.pose.position.y <= local_costmap.info.origin.position.y + local_costmap.info.width * local_costmap.info.resolution)){
+      // waypoint0がcostmap内の場合
+      out1 = out[0];
+      if(get_i_from_x(out1.pose.position.x) >= local_costmap.info.width){
+        out1.pose.position.x = (local_costmap.info.width - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.x;
+      }else if(get_i_from_x(out1.pose.position.x) < 0){
+        out1.pose.position.x = local_costmap.info.origin.position.x;
+      }
+      if(get_j_from_y(out1.pose.position.y) >= local_costmap.info.height){
+        out1.pose.position.y = (local_costmap.info.height - 1) * local_costmap.info.resolution + local_costmap.info.origin.position.y;
+      }else if(get_j_from_y(out1.pose.position.x) < 0){
+        out1.pose.position.y = local_costmap.info.origin.position.y;
+      }
+    }else{
+      // waypoint1がcostmap内の場合
+      out1 = waypoint1;
+    }
+
+  }else{
+    std::cout << "no intersection" << std::endl;
+    out1 = waypoint1;
   }
 }
 
