@@ -71,25 +71,25 @@ int main(int argc, char** argv)
       for(int i=0;i<PREDICTION_STEP;i++){
         for(int j=0;j<obs_num;j++){
           // 衝突判定(左)
-          if(predict_intersection(robot_path.poses[i], robot_path.poses[i+PREDICTION_STEP], obstacle_pathes.poses[j*(PREDICTION_STEP)+i], obstacle_pathes.poses[j*(PREDICTION_STEP)+i+obs_num*(PREDICTION_STEP)])){
+          if(predict_intersection(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)])){
             std::cout << "cross collision at robot left:" << i << std::endl;;
             geometry_msgs::PoseStamped collision_pose;
             collision_pose.pose.orientation = robot_path.poses[i].orientation;
             collision_pose.header.frame_id = "map";
             // 衝突位置の計算(左)
-            predict_intersection_point(robot_path.poses[i], robot_path.poses[i+PREDICTION_STEP], obstacle_pathes.poses[j*(PREDICTION_STEP)+i], obstacle_pathes.poses[j*(PREDICTION_STEP)+i+obs_num*(PREDICTION_STEP)], collision_pose);
+            predict_intersection_point(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)], collision_pose);
             geometry_msgs::PoseStamped _collision_pose;
             listener.transformPose("local_costmap", collision_pose, _collision_pose);
             set_cost(_collision_pose, RADIUS, i);
           }
           // 衝突判定(右)
-          if(predict_intersection(robot_path.poses[i], robot_path.poses[i+PREDICTION_STEP*2], obstacle_pathes.poses[j*(PREDICTION_STEP*2)+i], obstacle_pathes.poses[j*(PREDICTION_STEP)+i+obs_num*(PREDICTION_STEP)])){
+          if(predict_intersection(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)*2], obstacle_pathes.poses[j*(PREDICTION_STEP+1)*2+i], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)])){
             std::cout << "cross collision at robot right:" << i << std::endl;;
             geometry_msgs::PoseStamped collision_pose;
             collision_pose.pose.orientation = robot_path.poses[i].orientation;
             collision_pose.header.frame_id = "map";
             // 衝突位置の計算(右)
-            predict_intersection_point(robot_path.poses[i], robot_path.poses[i+PREDICTION_STEP*2], obstacle_pathes.poses[j*(PREDICTION_STEP)+i], obstacle_pathes.poses[j*(PREDICTION_STEP)+i+obs_num*(PREDICTION_STEP)], collision_pose);
+            predict_intersection_point(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)*2], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)], collision_pose);
             geometry_msgs::PoseStamped _collision_pose;
             listener.transformPose("local_costmap", collision_pose, _collision_pose);
             set_cost(_collision_pose, RADIUS, i);
@@ -99,12 +99,14 @@ int main(int argc, char** argv)
       // 接近
       for(int i=0;i<PREDICTION_STEP;i++){
         for(int j=0;j<obs_num;j++){
+          // ロボット予測進路
           for(int k=0;k<3;k++){
+            // 障害物予測進路
             for(int l=0;l<2;l++){
-              if(predict_approaching(robot_path.poses[i+k*PREDICTION_STEP], obstacle_pathes.poses[j*PREDICTION_STEP+i+obs_num*PREDICTION_STEP*l])){
+              if(predict_approaching(robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)*l])){
                 //std::cout << "approaching collision step:" << i << std::endl;
                 geometry_msgs::PoseStamped collision_pose;
-                collision_pose.pose = robot_path.poses[i+k*PREDICTION_STEP];
+                collision_pose.pose = robot_path.poses[i+k*(PREDICTION_STEP+1)];
                 collision_pose.header.frame_id = "map";
                 geometry_msgs::PoseStamped _collision_pose;
                 listener.transformPose("local_costmap", collision_pose, _collision_pose);
@@ -176,6 +178,7 @@ bool predict_approaching(geometry_msgs::Pose p1, geometry_msgs::Pose p2)
 
 void set_cost(geometry_msgs::PoseStamped collision_pose, double radius, int step)
 {
+  std::cout << "cost: " << PREDICTION_STEP - step + 1 << std::endl;
   double x = collision_pose.pose.position.x;
   double y = collision_pose.pose.position.y;
   for(int i=0;i<local_costmap.info.height;i++){
@@ -186,7 +189,7 @@ void set_cost(geometry_msgs::PoseStamped collision_pose, double radius, int step
         // 適当
         double cost = PREDICTION_STEP - step + 1;
         if(local_costmap.data[local_costmap.info.width * j + i] < cost){
-          std::cout << i << ", " << j << std::endl;
+          //std::cout << i << ", " << j << std::endl;
           local_costmap.data[local_costmap.info.width * j + i] = cost;
         }
       }
