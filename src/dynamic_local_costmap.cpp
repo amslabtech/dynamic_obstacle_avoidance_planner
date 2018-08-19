@@ -183,8 +183,12 @@ void set_cost(geometry_msgs::PoseStamped collision_pose, double radius, int step
       double _x = i * local_costmap.info.resolution + local_costmap.info.origin.position.x;
       double _y = j * local_costmap.info.resolution + local_costmap.info.origin.position.y;
       if((x-_x)*(x-_x)+(y-_y)*(y-_y) < radius*radius){
-        std::cout << i << ", " << j << std::endl;
-        local_costmap.data[local_costmap.info.width * j + i] = PREDICTION_STEP - step + 1;
+        // 適当
+        double cost = PREDICTION_STEP - step + 1;
+        if(local_costmap.data[local_costmap.info.width * j + i] < cost){
+          std::cout << i << ", " << j << std::endl;
+          local_costmap.data[local_costmap.info.width * j + i] = cost;
+        }
       }
     }
   }
