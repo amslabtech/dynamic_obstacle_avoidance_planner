@@ -76,6 +76,9 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
+        base_link:
+          local_costmap:
+            {}
         map:
           obs0:
             {}
@@ -88,9 +91,7 @@ Visualization Manager:
           obs4:
             {}
           odom:
-            base_link:
-              local_costmap:
-                {}
+            {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -178,7 +179,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: local_costmap
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
