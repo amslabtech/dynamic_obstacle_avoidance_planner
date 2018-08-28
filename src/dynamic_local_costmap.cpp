@@ -64,6 +64,7 @@ int main(int argc, char** argv)
 
   while(ros::ok()){
     if(!robot_path.poses.empty() && !obstacle_pathes.poses.empty()){
+      ros::Time start_time = ros::Time::now();
       tf::StampedTransform transform;
       bool transformed = false;
       try{
@@ -92,7 +93,7 @@ int main(int argc, char** argv)
               set_cost(_collision_pose, RADIUS, i);
             }
             // 衝突判定(右)
-            if(predict_intersection(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)*2], obstacle_pathes.poses[j*(PREDICTION_STEP+1)*2+i], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)])){
+            if(predict_intersection(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)*2], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)])){
               std::cout << "cross collision at robot right:" << i << std::endl;;
               geometry_msgs::PoseStamped collision_pose;
               collision_pose.pose.orientation = robot_path.poses[i].orientation;
@@ -113,7 +114,7 @@ int main(int argc, char** argv)
               // 障害物予測進路
               for(int l=0;l<2;l++){
                 if(predict_approaching(robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_pathes.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)*l])){
-                  //std::cout << "approaching collision step:" << i << std::endl;
+                  std::cout << "approaching collision step:" << i << std::endl;
                   geometry_msgs::PoseStamped collision_pose;
                   collision_pose.pose = robot_path.poses[i+k*(PREDICTION_STEP+1)];
                   collision_pose.header.frame_id = "map";
@@ -127,6 +128,7 @@ int main(int argc, char** argv)
         }
         std::cout << "===publish costmap===" << std::endl;
         costmap_pub.publish(local_costmap);
+        std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
       }else{
           std::cout << "path not received" << std::endl;
       }
@@ -197,7 +199,7 @@ void set_cost(geometry_msgs::PoseStamped collision_pose, double radius, int step
       double _y = j * local_costmap.info.resolution + local_costmap.info.origin.position.y;
       if((x-_x)*(x-_x)+(y-_y)*(y-_y) < radius*radius){
         // 適当
-        double cost = PREDICTION_STEP - step + 1;
+        double cost = 100 - step + 1;
         if(local_costmap.data[local_costmap.info.width * j + i] < cost){
           //std::cout << i << ", " << j << std::endl;
           local_costmap.data[local_costmap.info.width * j + i] = cost;
