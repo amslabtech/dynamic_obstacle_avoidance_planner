@@ -55,12 +55,13 @@ int get_distance_to_global_path(int, int);
 
 void map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
 {
-  std::cout << "===map callback===" << std::endl;
+  //std::cout << "===map callback===" << std::endl;
+  ros::Time start_time = ros::Time::now();
   local_costmap = *msg;
-  std::cout << local_costmap.data.size() << std::endl;
+  //std::cout << local_costmap.data.size() << std::endl;
 
   int MARGIN_WALL_STEP = 254 / (MARGIN_WALL / local_costmap.info.resolution);
-  std::cout << "MARGIN_WALL_STEP:" << MARGIN_WALL_STEP << std::endl;
+  //std::cout << "MARGIN_WALL_STEP:" << MARGIN_WALL_STEP << std::endl;
 
   std::vector<int> wall_list;
 
@@ -75,7 +76,7 @@ void map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
       cells[i].cost = 254;
     }
   }
-  std::cout << "wall:" <<  wall_list.size() << std::endl;
+  //std::cout << "wall:" <<  wall_list.size() << std::endl;
   int i=0;
   while(ros::ok()){
     if(i==wall_list.size()){
@@ -118,7 +119,8 @@ void map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
     }
     i++;
   }
-  std::cout << "map callback end" << std::endl;
+  //std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
+  //std::cout << "map callback end" << std::endl;
 }
 
 void waypoints_callback(const geometry_msgs::PoseArrayConstPtr& msg)
@@ -139,8 +141,8 @@ int main(int argc, char** argv)
 
   ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("/intermediate_path", 100);
 
-  ros::Subscriber map_sub = nh.subscribe("/local_costmap", 100, map_callback);
-  ros::Subscriber waypoints_sub = nh.subscribe("/waypoints", 100, waypoints_callback);
+  ros::Subscriber map_sub = nh.subscribe("/local_costmap", 5, map_callback);
+  ros::Subscriber waypoints_sub = nh.subscribe("/waypoints", 5, waypoints_callback);
 
   tf::TransformListener listener;
 
@@ -174,6 +176,7 @@ int main(int argc, char** argv)
         // 始点は原点
         start.pose.position.x = 0;
         start.pose.position.y = 0;
+        start.pose.orientation = tf::createQuaternionMsgFromYaw(0);
         calculate_astar(start, goal);
         path_pub.publish(path);
         std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
@@ -229,7 +232,7 @@ void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStam
   std::cout << "to " << _goal.pose.position.x << ", " << _goal.pose.position.y << ", " << tf::getYaw(_goal.pose.orientation) << ", " << goal_index << std::endl;
   std::cout << goal_i << ", " << goal_j << std::endl;
   open_list.push_back(start_index);
-  cells[open_list[0]].sum = cells[open_list[0]].step + get_heuristic(start_i - goal_i, start_j - goal_j) + get_distance_to_global_path(start_i, start_j);
+  cells[open_list[0]].sum = cells[open_list[0]].step + get_heuristic(start_i - goal_i, start_j - goal_j);// + get_distance_to_global_path(start_i, start_j);
   while(!open_list.empty() && ros::ok()){
     int n_index = open_list[0];
     int n = cells[n_index].sum;//cells[n_index].step + get_heuristic(goal_i - _i, goal_j - _j);
@@ -257,7 +260,7 @@ void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStam
       if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
         if(!cells[_index].is_wall){
           cells[_index].step = cells[n_index].step + 1;
-          cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-_i, goal_j-(_j-1)) + get_distance_to_global_path(_i, _j-1);
+          cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-_i, goal_j-(_j-1));// + get_distance_to_global_path(_i, _j-1);
           cells[_index].parent_index = n_index;
           open_list.push_back(_index);
         }
@@ -276,7 +279,7 @@ void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStam
       if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
         if(!cells[_index].is_wall){
           cells[_index].step = cells[n_index].step + 1;
-          cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-_i, goal_j-(_j+1)) + get_distance_to_global_path(_i, _j+1);;
+          cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-_i, goal_j-(_j+1));// + get_distance_to_global_path(_i, _j+1);;
           cells[_index].parent_index = n_index;
           open_list.push_back(_index);
         }
@@ -296,7 +299,7 @@ void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStam
       if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
         if(!cells[_index].is_wall){
           cells[_index].step = cells[n_index].step + 1;
-          cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-_j) + get_distance_to_global_path(_i+1, _j);
+          cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-_j);// + get_distance_to_global_path(_i+1, _j);
           cells[_index].parent_index = n_index;
           open_list.push_back(_index);
         }
@@ -315,7 +318,7 @@ void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStam
         if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
           if(!cells[_index].is_wall){
             cells[_index].step = cells[n_index].step + 1;
-            cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-(_j-1)) + get_distance_to_global_path(_i+1, _j-1);
+            cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-(_j-1));// + get_distance_to_global_path(_i+1, _j-1);
             cells[_index].parent_index = n_index;
             open_list.push_back(_index);
           }
@@ -335,7 +338,7 @@ void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStam
         if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
           if(!cells[_index].is_wall){
             cells[_index].step = cells[n_index].step + 1;
-            cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-(_j+1)) + get_distance_to_global_path(_i+1, _j+1);
+            cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-(_j+1));// + get_distance_to_global_path(_i+1, _j+1);
             cells[_index].parent_index = n_index;
             open_list.push_back(_index);
           }
@@ -357,7 +360,7 @@ void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStam
       if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
         if(!cells[_index].is_wall){
           cells[_index].step = cells[n_index].step + 1;
-          cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-_j) + get_distance_to_global_path(_i-1, _j);
+          cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-_j);// + get_distance_to_global_path(_i-1, _j);
           cells[_index].parent_index = n_index;
           open_list.push_back(_index);
         }
@@ -376,7 +379,7 @@ void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStam
         if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
           if(!cells[_index].is_wall){
             cells[_index].step = cells[n_index].step + 1;
-            cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-(_j-1)) + get_distance_to_global_path(_i-1, _j-1);
+            cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-(_j-1));// + get_distance_to_global_path(_i-1, _j-1);
             cells[_index].parent_index = n_index;
             open_list.push_back(_index);
           }
@@ -396,7 +399,7 @@ void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStam
         if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
           if(!cells[_index].is_wall){
             cells[_index].step = cells[n_index].step + 1;
-            cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-(_j+1)) + get_distance_to_global_path(_i-1, _j+1);
+            cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-(_j+1));// + get_distance_to_global_path(_i-1, _j+1);
             cells[_index].parent_index = n_index;
             open_list.push_back(_index);
           }
