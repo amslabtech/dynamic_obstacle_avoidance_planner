@@ -60,14 +60,6 @@ Visualization Manager:
           Value: true
         obs0:
           Value: true
-        obs1:
-          Value: true
-        obs2:
-          Value: true
-        obs3:
-          Value: true
-        obs4:
-          Value: true
         odom:
           Value: true
       Marker Scale: 1
@@ -76,22 +68,13 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        base_link:
-          local_costmap:
-            {}
         map:
           obs0:
             {}
-          obs1:
-            {}
-          obs2:
-            {}
-          obs3:
-            {}
-          obs4:
-            {}
           odom:
-            {}
+            base_link:
+              local_costmap:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -111,7 +94,7 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Alpha: 1
-      Arrow Length: 0.300000012
+      Arrow Length: 0.0500000007
       Axes Length: 0.300000012
       Axes Radius: 0.00999999978
       Class: rviz/PoseArray
@@ -139,13 +122,13 @@ Visualization Manager:
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
-      Color: 25; 255; 0
+      Color: 0; 0; 255
       Enabled: true
       Head Diameter: 0.300000012
       Head Length: 0.200000003
       Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
+      Line Style: Billboards
+      Line Width: 0.100000001
       Name: Path
       Offset:
         X: 0
@@ -200,16 +183,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 36.2997971
+      Distance: 65.4654694
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.0368340388
-        Y: -0.334076852
-        Z: -22.69314
+        X: 0.531235576
+        Y: -1.66202307
+        Z: -22.6924095
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false

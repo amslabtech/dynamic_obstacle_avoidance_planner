@@ -65,11 +65,11 @@ private:
 };
 
 // ホライゾン長さ
-const int T = 5;
+const int T = 10;
 // 周期
 const double DT = 0.1;// [s]
 // 目標速度
-const double VREF = 0.5;// [m/s]
+const double VREF = 1.0;// [m/s]
 
 // state
 size_t x_start = 0;
@@ -147,8 +147,8 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     vars_upper_bound[i] = 1.0e19;
   }
   for(int i=vx_start;i<omega_start;i++){
-    vars_lower_bound[i] = -2.0;
-    vars_upper_bound[i] = 2.0;
+    vars_lower_bound[i] = 0;
+    vars_upper_bound[i] = VREF;
   }
   for(int i=omega_start;i<n_variables;i++){
     vars_lower_bound[i] = -4.0;
@@ -228,7 +228,7 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   // state
   for(int i=0;i<T-1;i++){
     // pathとの距離
-    fg[0] += 10 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
+    fg[0] += 100 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
     // 向き
     fg[0] += 0.1 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
   }
@@ -236,6 +236,8 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   for(int i=0;i<T-2;i++){
     // 速度
     fg[0] += 1 * CppAD::pow(VREF - vars[vx_start + i], 2);
+    // 角速度
+    fg[0] += 10 * CppAD::pow(vars[omega_start + i], 2);
   }
 
   std::cout << "constrains start" << std::endl;
