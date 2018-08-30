@@ -167,7 +167,7 @@ bool predict_intersection(geometry_msgs::Pose a, geometry_msgs::Pose b, geometry
   double tb = (c.position.x - d.position.x) * (b.position.y - c.position.y) + (c.position.y - d.position.y) * (c.position.x - b.position.x);
   double tc = (a.position.x - b.position.x) * (c.position.y - a.position.y) + (a.position.y - b.position.y) * (a.position.x - c.position.x);
   double td = (a.position.x - b.position.x) * (d.position.y - a.position.y) + (a.position.y - b.position.y) * (a.position.x - d.position.x);
-  return tc * td <= 0 && ta * tb <= 0;
+  return tc * td < 0 && ta * tb < 0;
 }
 
 /*
