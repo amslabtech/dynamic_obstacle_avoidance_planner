@@ -18,9 +18,9 @@ public:
     parent_index = -1;
   }
 
-  int cost;
+  double cost;
   int step;
-  int sum;
+  double sum;
   int parent_index;
   bool is_wall;
 
@@ -31,6 +31,8 @@ geometry_msgs::PoseStamped waypoint0;// from
 geometry_msgs::PoseStamped waypoint1;// to
 nav_msgs::OccupancyGrid local_costmap;
 nav_msgs::Path path;
+nav_msgs::Path path2;// 比較用2本目
+nav_msgs::Path previous_path;
 // for a*
 std::vector<Cell> cells;
 std::vector<int> open_list;
@@ -40,12 +42,13 @@ int get_i_from_x(double);
 int get_j_from_y(double);
 int get_index(double, double);
 int get_heuristic(int, int);
+double get_similarity(nav_msgs::Path&, nav_msgs::Path&);
 
 double MARGIN_WALL;
 
 bool waypoints_received = false;
 
-void calculate_astar(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&);
+double calculate_astar(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&, nav_msgs::Path&);
 void intersection_on_map(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&);
 // from dynamic_local_costmap.cpp
 bool predict_intersection(geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose);
@@ -71,7 +74,7 @@ void map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
     cells[i].is_wall = (local_costmap.data[i]==255);
     cells[i].sum = -1;
     cells[i].parent_index = -1;
-    cells[i].cost = local_costmap.data[i];
+    cells[i].cost = 2 * local_costmap.data[i];
     if(cells[i].is_wall){
       wall_list.push_back(i);
       cells[i].cost = 254;
@@ -142,10 +145,15 @@ int main(int argc, char** argv)
 
   ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("/intermediate_path", 100);
 
+  // path2用
+  ros::Publisher path2_pub = nh.advertise<nav_msgs::Path>("/intermediate_path2", 100);
+
   ros::Subscriber map_sub = nh.subscribe("/local_costmap", 5, map_callback);
   ros::Subscriber waypoints_sub = nh.subscribe("/waypoints", 5, waypoints_callback);
 
   tf::TransformListener listener;
+
+  bool first_flag = true;
 
   ros::Rate loop_rate(10);
 
@@ -178,8 +186,35 @@ int main(int argc, char** argv)
         start.pose.position.x = 0;
         start.pose.position.y = 0;
         start.pose.orientation = tf::createQuaternionMsgFromYaw(0);
-        calculate_astar(start, goal);
-        path_pub.publish(path);
+        double cost1 = calculate_astar(start, goal, path);
+        /**************************/
+        // path2の処理
+        cells[get_index(path.poses[1].pose.position.x, path.poses[1].pose.position.y)].is_wall = true;
+        for(int i=2;i<path.poses.size();i++){
+          cells[get_index(path.poses[i].pose.position.x, path.poses[i].pose.position.y)].cost += 5;
+        }
+        double cost2 = calculate_astar(start, goal, path2);
+        /**************************/
+        if(first_flag){
+          previous_path = path;
+          first_flag = false;
+        }else{
+          if(cost1 == cost2){
+            // costが同じ場合
+            double value1 = get_similarity(previous_path, path);
+            double value2 = get_similarity(previous_path, path2);
+            if(value1 <= value2){
+              previous_path = path;
+            }else{
+              previous_path = path2;
+            }
+          }else if(cost1 < cost2){
+            previous_path = path;
+          }else{
+            previous_path = path2;
+          }
+        }
+        path_pub.publish(previous_path);
         std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
       }
     }
@@ -209,7 +244,7 @@ int get_heuristic(int diff_x, int diff_y)
   return sqrt(diff_x*diff_x + diff_y*diff_y);
 }
 
-void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStamped& _goal)
+double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStamped& _goal, nav_msgs::Path& _path)
 {
   open_list.clear();
   close_list.clear();
@@ -418,31 +453,34 @@ void calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStam
 
     }
   }
-  nav_msgs::Path _path;
-  _path.header.frame_id = "local_costmap";
+  nav_msgs::Path temp_path;
+  temp_path.header.frame_id = "local_costmap";
   int path_index = goal_index;
   geometry_msgs::PoseStamped path_pose;
   path_pose.pose.orientation.w = 1;
   path_pose.header.frame_id = "local_costmap";
+  double total_cost = 0;
   while(1){
+    total_cost += cells[path_index].sum;
     path_pose.pose.position.x = (path_index % local_costmap.info.width) * local_costmap.info.resolution + local_costmap.info.origin.position.x;
     path_pose.pose.position.y = (path_index - (path_index % local_costmap.info.width)) / local_costmap.info.width * local_costmap.info.resolution + local_costmap.info.origin.position.y;
     path_pose.pose.orientation = _goal.pose.orientation;
     //std::cout << path_pose.pose.position.x << ", " << path_pose.pose.position.y << ", " << path_index << ", " << cells[path_index].cost << ", " << (int)local_costmap.data[path_index] << std::endl;
     //std::cout << cells[path_index].cost << std::endl;
-    _path.poses.push_back(path_pose);
+    temp_path.poses.push_back(path_pose);
     path_index = cells[path_index].parent_index;
     //std::cout << "next:" << path_index << std::endl;
     if(path_index < 0){
-      std::reverse(_path.poses.begin(), _path.poses.end());
-      path = _path;
+      std::reverse(temp_path.poses.begin(), temp_path.poses.end());
+      _path = temp_path;
       std::cout << "=== path length ===" << std::endl;
-      std::cout << path.poses.size() << std::endl;
-      break;
+      std::cout << _path.poses.size() << std::endl;
+      std::cout << "=== path cost ===" << std::endl;
+      std::cout << total_cost << std::endl;
+      std::cout << "path generated!" << std::endl;
+      return total_cost;
     }
   }
-
-  std::cout << "path generated!" << std::endl;
 }
 
 void intersection_on_map(geometry_msgs::PoseStamped& out0, geometry_msgs::PoseStamped& out1)
@@ -586,5 +624,16 @@ int get_distance_to_global_path(int i, int j)
   int b2 = b * b;
   int r2 = a2 + b2;
   int f1 = a * (y1 - j) - b * (x1 - i);
-  return 0.1 * (f1 * f1 ) / (double)r2;
+  return 0.5 * (f1 * f1 ) / (double)r2;
+}
+
+double get_similarity(nav_msgs::Path& _path1, nav_msgs::Path& _path2)
+{
+  double sum = 0;
+  for(int i=0;(i<_path1.poses.size()) && (i<_path2.poses.size());i++){
+    double dx = _path1.poses[i].pose.position.x - _path2.poses[i].pose.position.x;
+    double dy = _path1.poses[i].pose.position.y - _path2.poses[i].pose.position.y;
+    sum += dx * dx + dy * dy;
+  }
+  return sum;
 }

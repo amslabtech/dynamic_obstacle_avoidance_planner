@@ -45,7 +45,7 @@ int main(int argc, char** argv)
   while(ros::ok()){
     // 速度
     for(int i=0;i<NUM;i++){
-      update(i, 0.5, 0);
+      update(i, 0.5, 0.5);
     }
     obs_broadcaster.sendTransform(obs_list);
 

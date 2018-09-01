@@ -199,7 +199,7 @@ void set_cost(geometry_msgs::PoseStamped collision_pose, double radius, int step
       double _y = j * local_costmap.info.resolution + local_costmap.info.origin.position.y;
       if((x-_x)*(x-_x)+(y-_y)*(y-_y) < radius*radius){
         // 適当
-        double cost = 100 - step + 1;
+        double cost = 128 - step + 1;
         if(local_costmap.data[local_costmap.info.width * j + i] < cost){
           //std::cout << i << ", " << j << std::endl;
           local_costmap.data[local_costmap.info.width * j + i] = cost;
