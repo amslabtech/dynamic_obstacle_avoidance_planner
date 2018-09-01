@@ -13,7 +13,7 @@ const int NUM_OF_PATH = 2;// obs1つあたりpath2本
 
 int NUM = 0;
 
-geometry_msgs::PoseArray predicted_pathes;
+geometry_msgs::PoseArray predicted_paths;
 geometry_msgs::PoseArray current_poses;
 geometry_msgs::PoseArray previous_poses;
 
@@ -33,14 +33,14 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::NodeHandle local_nh("~");
 
-  ros::Publisher predicted_pathes_pub = nh.advertise<geometry_msgs::PoseArray>("/predicted_pathes", 100);
+  ros::Publisher predicted_paths_pub = nh.advertise<geometry_msgs::PoseArray>("/predicted_paths", 100);
   ros::Subscriber obs_num_sub = nh.subscribe("/obs_num", 100, obs_num_callback);
 
   tf::TransformListener listener;
 
   bool first_transform = true;
 
-  predicted_pathes.header.frame_id = "map";
+  predicted_paths.header.frame_id = "map";
 
   ros::Rate loop_rate(10);
 
@@ -82,10 +82,10 @@ int main(int argc, char** argv)
           previous_velocities = current_velocities;
         }
         std::cout << "===predict path===" << std::endl;
-        predicted_pathes.poses.clear();
+        predicted_paths.poses.clear();
         // v=const, omega=0
         for(int i=0;i<NUM;i++){
-          predicted_pathes.poses.push_back(current_poses.poses[i]);
+          predicted_paths.poses.push_back(current_poses.poses[i]);
           double vx = current_velocities[i].linear.x;
           double vy = current_velocities[i].linear.y;
           double v = sqrt(vx*vx + vy*vy);
@@ -93,8 +93,8 @@ int main(int argc, char** argv)
           double yaw = tf::getYaw(current_poses.poses[i].orientation);
           for(int j=0;j<PREDICTION_STEP;j++){
             geometry_msgs::Pose pose;
-            pose.position.x = predicted_pathes.poses[i*(PREDICTION_STEP+1)+j].position.x + vx * DT;
-            pose.position.y = predicted_pathes.poses[i*(PREDICTION_STEP+1)+j].position.y + vy * DT;
+            pose.position.x = predicted_paths.poses[i*(PREDICTION_STEP+1)+j].position.x + vx * DT;
+            pose.position.y = predicted_paths.poses[i*(PREDICTION_STEP+1)+j].position.y + vy * DT;
             yaw += omega * DT;
             yaw = atan2(sin(yaw), cos(yaw));
             pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
@@ -102,13 +102,13 @@ int main(int argc, char** argv)
             vy = v * sin(yaw);
             v = sqrt(vx*vx + vy*vy);
             omega = omega;
-            predicted_pathes.poses.push_back(pose);
+            predicted_paths.poses.push_back(pose);
           }
         }
         // v=const, omega=const
-        const int SIZE_OF_LINEAR_PATH = predicted_pathes.poses.size();
+        const int SIZE_OF_LINEAR_PATH = predicted_paths.poses.size();
         for(int i=0;i<NUM;i++){
-          predicted_pathes.poses.push_back(current_poses.poses[i]);
+          predicted_paths.poses.push_back(current_poses.poses[i]);
           double vx = current_velocities[i].linear.x;
           double vy = current_velocities[i].linear.y;
           double v = sqrt(vx*vx + vy*vy);
@@ -116,8 +116,8 @@ int main(int argc, char** argv)
           double yaw = tf::getYaw(current_poses.poses[i].orientation);
           for(int j=0;j<PREDICTION_STEP;j++){
             geometry_msgs::Pose pose;
-            pose.position.x = predicted_pathes.poses[i*(PREDICTION_STEP+1)+j+SIZE_OF_LINEAR_PATH].position.x + vx * DT;
-            pose.position.y = predicted_pathes.poses[i*(PREDICTION_STEP+1)+j+SIZE_OF_LINEAR_PATH].position.y + vy * DT;
+            pose.position.x = predicted_paths.poses[i*(PREDICTION_STEP+1)+j+SIZE_OF_LINEAR_PATH].position.x + vx * DT;
+            pose.position.y = predicted_paths.poses[i*(PREDICTION_STEP+1)+j+SIZE_OF_LINEAR_PATH].position.y + vy * DT;
             yaw += omega * DT;
             yaw = atan2(sin(yaw), cos(yaw));
             pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
@@ -125,11 +125,11 @@ int main(int argc, char** argv)
             vy = v * sin(yaw);
             v = sqrt(vx*vx + vy*vy);
             omega = omega;
-            predicted_pathes.poses.push_back(pose);
+            predicted_paths.poses.push_back(pose);
           }
         }
-        std::cout << predicted_pathes.poses.size() << std::endl;
-        predicted_pathes_pub.publish(predicted_pathes);
+        std::cout << predicted_paths.poses.size() << std::endl;
+        predicted_paths_pub.publish(predicted_paths);
       }
       previous_velocities = current_velocities;
       current_velocities.clear();
