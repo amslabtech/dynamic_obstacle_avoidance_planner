@@ -42,7 +42,7 @@ int get_i_from_x(double);
 int get_j_from_y(double);
 int get_index(double, double);
 int get_heuristic(int, int);
-double get_similarity(nav_msgs::Path&, nav_msgs::Path&);
+double get_difference(nav_msgs::Path&, nav_msgs::Path&);
 
 double MARGIN_WALL;
 
@@ -74,6 +74,7 @@ void map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
     cells[i].is_wall = (local_costmap.data[i]==255);
     cells[i].sum = -1;
     cells[i].parent_index = -1;
+    //???
     cells[i].cost = 2 * local_costmap.data[i];
     if(cells[i].is_wall){
       wall_list.push_back(i);
@@ -190,8 +191,9 @@ int main(int argc, char** argv)
         /**************************/
         // path2の処理
         cells[get_index(path.poses[1].pose.position.x, path.poses[1].pose.position.y)].is_wall = true;
-        for(int i=2;i<path.poses.size();i++){
-          cells[get_index(path.poses[i].pose.position.x, path.poses[i].pose.position.y)].cost += 5;
+        for(int i=2;i<path.poses.size()-1;i++){
+          //cells[get_index(path.poses[i].pose.position.x, path.poses[i].pose.position.y)].cost += 5;
+          cells[get_index(path.poses[i].pose.position.x, path.poses[i].pose.position.y)].is_wall = true;
         }
         double cost2 = calculate_astar(start, goal, path2);
         /**************************/
@@ -199,10 +201,11 @@ int main(int argc, char** argv)
           previous_path = path;
           first_flag = false;
         }else{
+          /*
           if(cost1 == cost2){
             // costが同じ場合
-            double value1 = get_similarity(previous_path, path);
-            double value2 = get_similarity(previous_path, path2);
+            double value1 = get_difference(previous_path, path);
+            double value2 = get_difference(previous_path, path2);
             if(value1 <= value2){
               previous_path = path;
             }else{
@@ -213,6 +216,16 @@ int main(int argc, char** argv)
           }else{
             previous_path = path2;
           }
+          */
+          double value1 = get_difference(previous_path, path);
+          double value2 = get_difference(previous_path, path2);
+          if(value1 <= value2){
+            previous_path = path;
+          }else{
+            previous_path = path2;
+          }
+          std::cout << "=== difference ===" << std::endl;
+          std::cout << value1 << ", " << value2 << std::endl;
         }
         path_pub.publish(previous_path);
         std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
@@ -263,10 +276,12 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
   int goal_i = get_i_from_x(_goal.pose.position.x);
   int goal_j = get_j_from_y(_goal.pose.position.y);
   std::cout << "calculating path" << std::endl;
+  /*
   std::cout << "from " << _start.pose.position.x << ", " << _start.pose.position.y << ", " << tf::getYaw(_start.pose.orientation) << ", " << start_index << std::endl;
   std::cout << start_i << ", " << start_j << std::endl;
   std::cout << "to " << _goal.pose.position.x << ", " << _goal.pose.position.y << ", " << tf::getYaw(_goal.pose.orientation) << ", " << goal_index << std::endl;
   std::cout << goal_i << ", " << goal_j << std::endl;
+  */
   open_list.push_back(start_index);
   cells[open_list[0]].sum = cells[open_list[0]].step + get_heuristic(start_i - goal_i, start_j - goal_j) + get_distance_to_global_path(start_i, start_j);
   while(!open_list.empty() && ros::ok()){
@@ -627,7 +642,7 @@ int get_distance_to_global_path(int i, int j)
   return 0.5 * (f1 * f1 ) / (double)r2;
 }
 
-double get_similarity(nav_msgs::Path& _path1, nav_msgs::Path& _path2)
+double get_difference(nav_msgs::Path& _path1, nav_msgs::Path& _path2)
 {
   double sum = 0;
   for(int i=0;(i<_path1.poses.size()) && (i<_path2.poses.size());i++){

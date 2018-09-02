@@ -35,17 +35,19 @@ int main(int argc, char** argv)
     set_pose(i, 0, 0, 0);
   }
   set_pose(0, 10, 0, M_PI);
+  /*
   set_pose(1, 10, 1, M_PI);
   set_pose(2, 5, -1, M_PI);
   set_pose(3, 5, 1, M_PI);
   set_pose(4, 10, -1, M_PI);
+  */
 
   ros::Rate loop_rate(10);
 
   while(ros::ok()){
     // 速度
     for(int i=0;i<NUM;i++){
-      update(i, 0.5, 0.5);
+      update(i, 0.5, 0.0);
     }
     obs_broadcaster.sendTransform(obs_list);
 
