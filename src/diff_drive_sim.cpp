@@ -7,6 +7,7 @@
 std::vector<geometry_msgs::TransformStamped> obs_list;
 
 const double DT = 0.1;//[s]
+const double HZ = 10;
 
 int NUM;
 
@@ -34,7 +35,7 @@ int main(int argc, char** argv)
     obs_list[i].child_frame_id = "obs" + std::to_string(i);
     set_pose(i, 0, 0, 0);
   }
-  set_pose(0, 10, 0, M_PI);
+  set_pose(0, 10, 0.2, M_PI);
   /*
   set_pose(1, 10, 1, M_PI);
   set_pose(2, 5, -1, M_PI);
@@ -42,7 +43,7 @@ int main(int argc, char** argv)
   set_pose(4, 10, -1, M_PI);
   */
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(HZ);
 
   while(ros::ok()){
     // 速度
@@ -83,7 +84,7 @@ void update(int index, double v, double omega)
 {
   obs_list[index].header.stamp = ros::Time::now();
   double yaw = tf::getYaw(obs_list[index].transform.rotation);
-  obs_list[index].transform.translation.x += v * cos(yaw) * DT;
-  obs_list[index].transform.translation.y += v * sin(yaw) * DT;
-  obs_list[index].transform.rotation = tf::createQuaternionMsgFromYaw(yaw + omega * DT);
+  obs_list[index].transform.translation.x += v * cos(yaw) / HZ;
+  obs_list[index].transform.translation.y += v * sin(yaw) / HZ;
+  obs_list[index].transform.rotation = tf::createQuaternionMsgFromYaw(yaw + omega / HZ);
 }

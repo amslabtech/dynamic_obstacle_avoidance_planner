@@ -46,7 +46,10 @@ double get_difference(nav_msgs::Path&, nav_msgs::Path&);
 
 double MARGIN_WALL;
 
+const double HZ = 10;
+
 bool waypoints_received = false;
+bool map_received = false;
 
 double calculate_astar(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&, nav_msgs::Path&);
 void intersection_on_map(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&);
@@ -59,73 +62,26 @@ int get_distance_to_global_path(int, int);
 void map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
 {
   //std::cout << "===map callback===" << std::endl;
-  ros::Time start_time = ros::Time::now();
+  //ros::Time start_time = ros::Time::now();
   local_costmap = *msg;
   //std::cout << local_costmap.data.size() << std::endl;
 
-  int MARGIN_WALL_STEP = 254 / (MARGIN_WALL / local_costmap.info.resolution);
-  //std::cout << "MARGIN_WALL_STEP:" << MARGIN_WALL_STEP << std::endl;
-
-  std::vector<int> wall_list;
+  //std::vector<int> wall_list;
 
   cells.clear();
   cells.resize(local_costmap.info.height*local_costmap.info.width);
   for(int i=0;i<local_costmap.info.height*local_costmap.info.width;i++){
-    cells[i].is_wall = (local_costmap.data[i]==255);
+    cells[i].is_wall = (local_costmap.data[i]==100);
     cells[i].sum = -1;
     cells[i].parent_index = -1;
-    //???
-    cells[i].cost = 2 * local_costmap.data[i];
+    cells[i].cost = local_costmap.data[i];
     if(cells[i].is_wall){
-      wall_list.push_back(i);
       cells[i].cost = 254;
     }
   }
-  //std::cout << "wall:" <<  wall_list.size() << std::endl;
-  int i=0;
-  while(ros::ok()){
-    if(i==wall_list.size()){
-      break;
-    }
-    int cost = cells[wall_list[i]].cost;
-    if(cost < MARGIN_WALL_STEP){
-      std::cout << "end" << cost << std::endl;
-      break;
-    }
-    int _i = wall_list[i] % local_costmap.info.width;
-    int _j = (wall_list[i] - _i) / local_costmap.info.height;
-    if(_i-1>0){
-      int index = (_i-1) + (_j) * local_costmap.info.width;
-      if(cells[index].cost < cost){
-        cells[index].cost = cost - MARGIN_WALL_STEP;
-        wall_list.push_back(index);
-      }
-    }
-    if(_i+1<local_costmap.info.width){
-      int index = (_i+1) + (_j) * local_costmap.info.width;
-      if(cells[index].cost < cost){
-        cells[index].cost = cost - MARGIN_WALL_STEP;
-        wall_list.push_back(index);
-      }
-    }
-    if(_j-1>0){
-      int index = (_i) + (_j-1) * local_costmap.info.width;
-      if(cells[index].cost < cost){
-        cells[index].cost = cost - MARGIN_WALL_STEP;
-        wall_list.push_back(index);
-      }
-    }
-    if(_j+1<local_costmap.info.width){
-      int index = (_i) + (_j+1) * local_costmap.info.width;
-      if(cells[index].cost < cost){
-        cells[index].cost = cost - MARGIN_WALL_STEP;
-        wall_list.push_back(index);
-      }
-    }
-    i++;
-  }
   //std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
   //std::cout << "map callback end" << std::endl;
+  map_received = true;
 }
 
 void waypoints_callback(const geometry_msgs::PoseArrayConstPtr& msg)
@@ -156,11 +112,11 @@ int main(int argc, char** argv)
 
   bool first_flag = true;
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(HZ);
 
   while(ros::ok()){
     std::cout << "=== avoidance path planner ===" << std::endl;
-    if(!local_costmap.data.empty() && waypoints_received){
+    if(map_received && waypoints_received){
       ros::Time start_time = ros::Time::now();
 
       std::cout << "=== transform waypoints ===" << std::endl;
@@ -190,44 +146,47 @@ int main(int argc, char** argv)
         double cost1 = calculate_astar(start, goal, path);
         /**************************/
         // path2の処理
-        cells[get_index(path.poses[1].pose.position.x, path.poses[1].pose.position.y)].is_wall = true;
-        for(int i=2;i<path.poses.size()-1;i++){
-          //cells[get_index(path.poses[i].pose.position.x, path.poses[i].pose.position.y)].cost += 5;
+        for(int i=1;i<path.poses.size()-1;i++){
           cells[get_index(path.poses[i].pose.position.x, path.poses[i].pose.position.y)].is_wall = true;
         }
-        double cost2 = calculate_astar(start, goal, path2);
+        //double cost2 = calculate_astar(start, goal, path2);
         /**************************/
         if(first_flag){
           previous_path = path;
           first_flag = false;
         }else{
-          /*
-          if(cost1 == cost2){
-            // costが同じ場合
-            double value1 = get_difference(previous_path, path);
-            double value2 = get_difference(previous_path, path2);
-            if(value1 <= value2){
-              previous_path = path;
-            }else{
-              previous_path = path2;
-            }
-          }else if(cost1 < cost2){
-            previous_path = path;
-          }else{
-            previous_path = path2;
-          }
-          */
           double value1 = get_difference(previous_path, path);
-          double value2 = get_difference(previous_path, path2);
-          if(value1 <= value2){
-            previous_path = path;
-          }else{
-            previous_path = path2;
-          }
+          double value2 = 0;//get_difference(previous_path, path2);
           std::cout << "=== difference ===" << std::endl;
           std::cout << value1 << ", " << value2 << std::endl;
+          /*
+          if(value1 <= value2){
+            if(value1<3.0){
+              previous_path = path;
+              std::cout << "path1 selected" << std::endl;
+            }else{
+              std::cout << "path not updated" << std::endl;
+            }
+          }else{
+            if(value2<3.0){
+              previous_path = path2;
+              std::cout << "path2 selected" << std::endl;
+            }else{
+              std::cout << "path not updated" << std::endl;
+            }
+          }
+          */
+          value1 = value2;
+          if(value1 <= value2){
+            previous_path = path;
+            std::cout << "path1 selected" << std::endl;
+          }else{
+            //previous_path = path2;
+            std::cout << "path2 selected" << std::endl;
+          }
         }
         path_pub.publish(previous_path);
+        map_received = false;
         std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
       }
     }
@@ -284,7 +243,14 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
   */
   open_list.push_back(start_index);
   cells[open_list[0]].sum = cells[open_list[0]].step + get_heuristic(start_i - goal_i, start_j - goal_j) + get_distance_to_global_path(start_i, start_j);
+
+  int count = 0;
+
   while(!open_list.empty() && ros::ok()){
+    count++;
+    if(count > 10000){
+      return -1;
+    }
     int n_index = open_list[0];
     int n = cells[n_index].sum;//cells[n_index].step + get_heuristic(goal_i - _i, goal_j - _j);
     for(int i=0;i<open_list.size();i++){//openlist中で最小の要素を選択
@@ -639,7 +605,7 @@ int get_distance_to_global_path(int i, int j)
   int b2 = b * b;
   int r2 = a2 + b2;
   int f1 = a * (y1 - j) - b * (x1 - i);
-  return 0.5 * (f1 * f1 ) / (double)r2;
+  return 0.2 * (f1 * f1 ) / (double)r2;
 }
 
 double get_difference(nav_msgs::Path& _path1, nav_msgs::Path& _path2)

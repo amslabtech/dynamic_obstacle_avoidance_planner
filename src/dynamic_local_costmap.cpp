@@ -12,6 +12,7 @@ const double DT = 0.1;// [s]
 const int PREDICTION_STEP = PREDICTION_TIME / DT;
 const double WIDTH = 10;// [m]
 const double RESOLUTION = 0.05;// [m]
+const double HZ = 10;
 double RADIUS;
 int obs_num;
 
@@ -64,7 +65,7 @@ int main(int argc, char** argv)
 
   tf::TransformListener listener;
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(HZ);
 
   while(ros::ok()){
     if(!robot_path.poses.empty() && !obstacle_paths.poses.empty()){
@@ -110,9 +111,9 @@ int main(int argc, char** argv)
               collision_pose.header.frame_id = "map";
               // 衝突位置の計算(左)
               predict_intersection_point(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)], collision_pose);
-              geometry_msgs::PoseStamped _collision_pose;
-              listener.transformPose("local_costmap", collision_pose, _collision_pose);
-              set_wall(_collision_pose, RADIUS, i);
+              //geometry_msgs::PoseStamped _collision_pose;
+              //listener.transformPose("local_costmap", collision_pose, _collision_pose);
+              set_wall(collision_pose, RADIUS, i);
             }
             // 衝突判定(右)
             if(predict_intersection(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)*2], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)])){
@@ -122,9 +123,9 @@ int main(int argc, char** argv)
               collision_pose.header.frame_id = "map";
               // 衝突位置の計算(右)
               predict_intersection_point(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)*2], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)], collision_pose);
-              geometry_msgs::PoseStamped _collision_pose;
-              listener.transformPose("local_costmap", collision_pose, _collision_pose);
-              set_wall(_collision_pose, RADIUS, i);
+              //geometry_msgs::PoseStamped _collision_pose;
+              //listener.transformPose("local_costmap", collision_pose, _collision_pose);
+              set_wall(collision_pose, RADIUS, i);
             }
           }
         }

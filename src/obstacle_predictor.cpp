@@ -10,6 +10,7 @@ const double PREDICTION_TIME = 3.5;// [s], 軌道予測時間
 const double DT = 0.1;// [s]
 const int PREDICTION_STEP = PREDICTION_TIME / DT;
 const int NUM_OF_PATH = 2;// obs1つあたりpath2本
+const double HZ = 10;
 
 int NUM = 0;
 
@@ -42,7 +43,7 @@ int main(int argc, char** argv)
 
   predicted_paths.header.frame_id = "map";
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(HZ);
 
   while(ros::ok()){
     if(NUM > 0){
@@ -71,9 +72,9 @@ int main(int argc, char** argv)
         std::cout << "===calculate velocity===" << std::endl;
         for(int i=0;i<NUM;i++){
           geometry_msgs::Twist velocity;
-          velocity.linear.x = (current_poses.poses[i].position.x - previous_poses.poses[i].position.x) / DT;
-          velocity.linear.y = (current_poses.poses[i].position.y - previous_poses.poses[i].position.y) / DT;
-          velocity.angular.z = (tf::getYaw(current_poses.poses[i].orientation) - tf::getYaw(previous_poses.poses[i].orientation)) / DT;
+          velocity.linear.x = (current_poses.poses[i].position.x - previous_poses.poses[i].position.x) * HZ;
+          velocity.linear.y = (current_poses.poses[i].position.y - previous_poses.poses[i].position.y) * HZ;
+          velocity.angular.z = (tf::getYaw(current_poses.poses[i].orientation) - tf::getYaw(previous_poses.poses[i].orientation)) * HZ;
           current_velocities.push_back(velocity);
           //std::cout << "obs" + i << std::endl;
           //std::cout << velocity << std::endl;

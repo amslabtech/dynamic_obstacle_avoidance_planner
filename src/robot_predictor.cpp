@@ -8,6 +8,7 @@
 const double PREDICTION_TIME = 3.5;// [s], 軌道予測時間
 const double DT = 0.1;// [s]
 const int PREDICTION_STEP = PREDICTION_TIME / DT;
+const double HZ = 10;
 
 double ANGULAR_ACCELERATION = 0.0;
 
@@ -36,7 +37,7 @@ int main(int argc, char** argv)
 
   predicted_path.header.frame_id = "map";
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(HZ);
 
   while(ros::ok()){
     bool transformed = false;
@@ -59,9 +60,9 @@ int main(int argc, char** argv)
     }else if(transformed && !first_transform){
       std::cout << "===calculate velocity===" << std::endl;
       geometry_msgs::Twist velocity;
-      velocity.linear.x = (current_pose.position.x - previous_pose.position.x) / DT;
-      velocity.linear.y = (current_pose.position.y - previous_pose.position.y) / DT;
-      velocity.angular.z = (tf::getYaw(current_pose.orientation) - tf::getYaw(previous_pose.orientation)) / DT;
+      velocity.linear.x = (current_pose.position.x - previous_pose.position.x) * HZ;
+      velocity.linear.y = (current_pose.position.y - previous_pose.position.y) * HZ;
+      velocity.angular.z = (tf::getYaw(current_pose.orientation) - tf::getYaw(previous_pose.orientation)) * HZ;
       current_velocity = velocity;
       std::cout << "===predict path===" << std::endl;
       predicted_path.poses.clear();
