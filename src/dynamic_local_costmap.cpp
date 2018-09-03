@@ -214,9 +214,14 @@ bool predict_approaching(geometry_msgs::Pose p1, geometry_msgs::Pose p2)
 
 void set_cost(geometry_msgs::PoseArray& obs_paths, double radius, int step, int n_obs, int n_path)
 {
+  double x = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+step+obs_num*(PREDICTION_STEP+1)*n_path].position.x;
+  double y = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+step+obs_num*(PREDICTION_STEP+1)*n_path].position.y;
+  if(local_costmap.data[get_index(x, y)] == 50){
+    return;
+  }
   for(int s=step;s<PREDICTION_STEP;s++){
-    double x = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+s+obs_num*(PREDICTION_STEP+1)*n_path].position.x;
-    double y = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+s+obs_num*(PREDICTION_STEP+1)*n_path].position.y;
+    x = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+s+obs_num*(PREDICTION_STEP+1)*n_path].position.x;
+    y = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+s+obs_num*(PREDICTION_STEP+1)*n_path].position.y;
     for(int i=0;i<local_costmap.info.height;i++){
       for(int j=0;j<local_costmap.info.width;j++){
         double _x = i * local_costmap.info.resolution + local_costmap.info.origin.position.x;

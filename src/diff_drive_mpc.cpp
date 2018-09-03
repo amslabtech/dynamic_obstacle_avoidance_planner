@@ -70,7 +70,7 @@ const int T = 15;
 const double DT = 0.1;// [s]
 const double HZ = 10;
 // 目標速度
-const double VREF = 1.0;// [m/s]
+const double VREF = 0.5;// [m/s]
 // ホイール角加速度
 const double WHEEL_ANGULAR_ACCELERATION_LIMIT = 5.0;// [rad/s^2]
 // ホイール角速度
