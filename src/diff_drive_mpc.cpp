@@ -215,10 +215,12 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     result.push_back(solution.x[y_start+i+1]);
     result.push_back(solution.x[yaw_start+i+1]);
   }
+  /*
   std::cout << "--- result ---" << std::endl;
   for(int i=0;i<result.size();i++){
     std::cout << result[i] << std::endl;
   }
+  */
   return result;
 }
 
@@ -237,9 +239,9 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   // state
   for(int i=0;i<T-1;i++){
     // pathとの距離
-    fg[0] += 100.0 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
+    fg[0] += 1000.0 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
     // 向き
-    fg[0] += 0.1 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
+    //fg[0] += 0.1 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
   }
   // input
   for(int i=0;i<T-2;i++){
@@ -299,27 +301,23 @@ void MPCPathTracker::path_callback(const nav_msgs::PathConstPtr& msg)
 
 void MPCPathTracker::process(void)
 {
+  std::cout << "=== diff drive mpc ===" << std::endl;
+  ros::Time start_time = ros::Time::now();
   bool transformed = false;
   try{
-    listener.lookupTransform("odom", "base_link", ros::Time(0), _transform);
-    /*
+    listener.lookupTransform("map", "base_link", ros::Time(0), _transform);
     tf::transformStampedTFToMsg(_transform, transform);
     pose.header = transform.header;
-    pose.pose.position.x = transform.transform.translation.x;
-    pose.pose.position.y = transform.transform.translation.y;
-    pose.pose.position.z = transform.transform.translation.z;
-    pose.pose.orientation = transform.transform.rotation;
-    */
     pose.pose.position.x = 0;
     pose.pose.position.y = 0;
-    pose.pose.orientation = tf::createQuaternionMsgFromYaw(0);
+    pose.pose.orientation = transform.transform.rotation;
     transformed = true;
   }catch(tf::TransformException &ex){
     std::cout << ex.what() << std::endl;
   }
 
   if(!path.poses.empty() && transformed){
-    std::cout << pose << std::endl;
+    //std::cout << pose << std::endl;
     Eigen::VectorXd state(3);
     state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation);
     std::cout << "path to vector" << std::endl;
@@ -343,6 +341,7 @@ void MPCPathTracker::process(void)
     }
     path_pub.publish(mpc_path);
   }
+  std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
 }
 
 void MPCPathTracker::path_to_vector(void)
