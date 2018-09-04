@@ -69,12 +69,13 @@ Visualization Manager:
       Show Names: true
       Tree:
         map:
+          local_costmap:
+            {}
           obs0:
             {}
           odom:
             base_link:
-              local_costmap:
-                {}
+              {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -148,7 +149,7 @@ Visualization Manager:
       Axes Radius: 0.00999999978
       Class: rviz/PoseArray
       Color: 255; 25; 0
-      Enabled: false
+      Enabled: true
       Head Length: 0.0700000003
       Head Radius: 0.0299999993
       Name: PoseArray
@@ -157,7 +158,7 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /waypoints
       Unreliable: false
-      Value: false
+      Value: true
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
@@ -179,6 +180,22 @@ Visualization Manager:
       Shaft Diameter: 0.100000001
       Shaft Length: 0.100000001
       Topic: /intermediate_path2
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Arrow Length: 0.300000012
+      Axes Length: 0.300000012
+      Axes Radius: 0.00999999978
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.0700000003
+      Head Radius: 0.0299999993
+      Name: PoseArray
+      Shaft Length: 0.230000004
+      Shaft Radius: 0.00999999978
+      Shape: Arrow (Flat)
+      Topic: /mpc_path
       Unreliable: false
       Value: true
   Enabled: true
@@ -206,16 +223,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 64.7210846
+      Distance: 63.6165428
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.197203532
-        Y: -1.72550547
-        Z: -22.6930161
+        X: -0.134401679
+        Y: -0.0287792087
+        Z: -22.6933556
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false

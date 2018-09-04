@@ -35,3 +35,6 @@ sleep 0.5s
 
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering diff_drive_mpc.launch" --geometry=45x12+895+476 &
 sleep 0.5s
+
+gnome-terminal -e "/opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering base_costmap" --geometry=45x12+1315+476 &
+sleep 0.5s

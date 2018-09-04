@@ -36,10 +36,12 @@ int main(int argc, char** argv)
     set_pose(i, 0, 0, 0);
   }
   set_pose(0, 0, 0.2, M_PI);
+  /*
   set_pose(1, 5, 1, M_PI);
   set_pose(2, 0, -1, M_PI);
   set_pose(3, 0, 1, M_PI);
   set_pose(4, 5, -1, M_PI);
+  */
 
   ros::Rate loop_rate(HZ);
 

@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
@@ -63,12 +64,16 @@ int main(int argc, char** argv)
   //debug
   ros::Publisher _obstacle_predicted_paths_pub = nh.advertise<geometry_msgs::PoseArray>("/_predicted_paths", 100);
 
+  tf::TransformBroadcaster broadcaster;
+  geometry_msgs::TransformStamped base_link_to_local_costmap;
+
   tf::TransformListener listener;
 
   ros::Rate loop_rate(HZ);
 
   while(ros::ok()){
     if(!robot_path.poses.empty() && !obstacle_paths.poses.empty()){
+      std::cout << "=== dynamic local costmap ===" << std::endl;
       ros::Time start_time = ros::Time::now();
       tf::StampedTransform transform;
       bool transformed = false;
@@ -76,8 +81,10 @@ int main(int argc, char** argv)
         listener.lookupTransform("map", "local_costmap", ros::Time(0), transform);
         transformed = true;
       }catch(tf::TransformException ex){
-        std::cout << ex.what();
+        std::cout << ex.what() << std::endl;;
       }
+      std::cout << "transformed" << std::endl;
+
       if(transformed){
         // pathの座標系変換
         for(int i=0;i<robot_path.poses.size();i++){

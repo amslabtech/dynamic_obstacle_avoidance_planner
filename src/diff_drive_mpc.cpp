@@ -6,6 +6,7 @@
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/PoseArray.h>
 
 //ipopt
 #include <Eigen/Core>
@@ -51,6 +52,7 @@ public:
 private:
   ros::NodeHandle nh;
   ros::Publisher velocity_pub;
+  ros::Publisher path_pub;
   ros::Subscriber path_sub;
   MPC mpc;
   nav_msgs::Path path;
@@ -65,12 +67,12 @@ private:
 };
 
 // ホライゾン長さ
-const int T = 15;
+const int T = 20;
 // 周期
 const double DT = 0.1;// [s]
 const double HZ = 10;
 // 目標速度
-const double VREF = 0.5;// [m/s]
+const double VREF = 1.0;// [m/s]
 // ホイール角加速度
 const double WHEEL_ANGULAR_ACCELERATION_LIMIT = 5.0;// [rad/s^2]
 // ホイール角速度
@@ -120,6 +122,7 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   double y = state[1];
   double yaw = state[2];
 
+  /*
   std::cout << "--- state ---" << std::endl;
   std::cout << state << std::endl;
   std::cout << "--- path_x ---" << std::endl;
@@ -128,6 +131,7 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   std::cout << ref_y << std::endl;
   std::cout << "--- path_yaw ---" << std::endl;
   std::cout << ref_yaw << std::endl;
+  */
 
   // 3(x, y, yaw), 2(vx, omega)
   size_t n_variables = 3 * T + 2 * (T - 1);
@@ -233,14 +237,14 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   // state
   for(int i=0;i<T-1;i++){
     // pathとの距離
-    fg[0] += 1000 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
+    fg[0] += 100.0 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
     // 向き
-    //fg[0] += 0.01 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
+    fg[0] += 0.1 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
   }
   // input
   for(int i=0;i<T-2;i++){
     // 速度
-    fg[0] += 0.1 * CppAD::pow(VREF - vars[vx_start + i], 2);
+    fg[0] += 0.01 * CppAD::pow(VREF - vars[vx_start + i], 2);
     // 角速度
     fg[0] += 0.1 * CppAD::pow(vars[omega_start + i], 2);
   }
@@ -270,7 +274,9 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     //制約
     fg[2 + x_start + i] = x1 - (x0 + vx0 * CppAD::cos(yaw0) * DT);
     fg[2 + y_start + i] = y1 - (y0 + vx0 * CppAD::sin(yaw0) * DT);
-    //fg[2 + yaw_start + i] = yaw1 - CppAD::atan2(CppAD::sin(yaw0 + omega0 * DT), CppAD::cos(yaw0 + omega0 * DT));
+    AD<double> sin0 = CppAD::sin(yaw0 + omega0 * DT);
+    AD<double> cos0 = CppAD::cos(yaw0 + omega0 * DT);
+    //fg[2 + yaw_start + i] = yaw1 - CppAD::atan2(sin0, cos0);
     fg[2 + yaw_start + i] = yaw1 - (yaw0 + omega0 * DT);
   }
   std::cout << "FG_eval() end" << std::endl;
@@ -279,6 +285,7 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
 MPCPathTracker::MPCPathTracker(void)
 {
   velocity_pub = nh.advertise<geometry_msgs::Twist>("/velocity", 100);
+  path_pub = nh.advertise<geometry_msgs::PoseArray>("/mpc_path", 100);
   path_sub = nh.subscribe("/path", 100, &MPCPathTracker::path_callback, this);
   path_x = Eigen::VectorXd::Zero(T);
   path_y = Eigen::VectorXd::Zero(T);
@@ -325,7 +332,16 @@ void MPCPathTracker::process(void)
     velocity.angular.z = result[1];
     std::cout << velocity << std::endl;
     velocity_pub.publish(velocity);
-
+    geometry_msgs::PoseArray mpc_path;
+    mpc_path.header.frame_id = "base_link";
+    for(int i=0;i<T-1;i++){
+      geometry_msgs::Pose temp;
+      temp.position.x = result[2+3*i];
+      temp.position.y = result[3+3*i];
+      temp.orientation = tf::createQuaternionMsgFromYaw(result[4+3*i]);
+      mpc_path.poses.push_back(temp);
+    }
+    path_pub.publish(mpc_path);
   }
 }
 
