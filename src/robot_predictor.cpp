@@ -11,6 +11,7 @@ const int PREDICTION_STEP = PREDICTION_TIME / DT;
 const double HZ = 10;
 
 double ANGULAR_ACCELERATION = 0.0;
+double MAX_ANGULAR_VELOCITY = 0.0;
 
 geometry_msgs::PoseArray predicted_path;
 geometry_msgs::Pose current_pose;
@@ -28,6 +29,7 @@ int main(int argc, char** argv)
   ros::NodeHandle local_nh("~");
 
   local_nh.getParam("ANGULAR_ACCELERATION", ANGULAR_ACCELERATION);
+  local_nh.getParam("MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
 
   ros::Publisher predicted_path_pub = nh.advertise<geometry_msgs::PoseArray>("/robot_predicted_path", 100);
 
@@ -63,7 +65,13 @@ int main(int argc, char** argv)
       velocity.linear.x = (current_pose.position.x - previous_pose.position.x) * HZ;
       velocity.linear.y = (current_pose.position.y - previous_pose.position.y) * HZ;
       velocity.angular.z = (tf::getYaw(current_pose.orientation) - tf::getYaw(previous_pose.orientation)) * HZ;
+      /////////////////////////////////////////
+      if(velocity.linear.x > 1.0){
+        velocity.linear.x = 1.0;
+      }
+      /////////////////////////////////////////
       current_velocity = velocity;
+      std::cout << current_velocity << std::endl;
       std::cout << "===predict path===" << std::endl;
       predicted_path.poses.clear();
       // v=const, omega=0
@@ -95,7 +103,7 @@ int main(int argc, char** argv)
         double vx = current_velocity.linear.x;
         double vy = current_velocity.linear.y;
         double v = sqrt(vx*vx + vy*vy);
-        double omega = current_velocity.angular.z + ANGULAR_ACCELERATION * DT;
+        double omega = current_velocity.angular.z;
         double yaw = tf::getYaw(current_pose.orientation);
         for(int j=0;j<PREDICTION_STEP;j++){
           geometry_msgs::Pose pose;
@@ -107,7 +115,9 @@ int main(int argc, char** argv)
           vx = v * cos(yaw);
           vy = v * sin(yaw);
           v = sqrt(vx*vx + vy*vy);
-          omega = omega;
+          if(omega + ANGULAR_ACCELERATION * DT <= MAX_ANGULAR_VELOCITY){
+            omega += ANGULAR_ACCELERATION * DT;
+          }
           predicted_path.poses.push_back(pose);
         }
       }
@@ -117,7 +127,7 @@ int main(int argc, char** argv)
         double vx = current_velocity.linear.x;
         double vy = current_velocity.linear.y;
         double v = sqrt(vx*vx + vy*vy);
-        double omega = current_velocity.angular.z - ANGULAR_ACCELERATION * DT;
+        double omega = current_velocity.angular.z;
         double yaw = tf::getYaw(current_pose.orientation);
         for(int j=0;j<PREDICTION_STEP;j++){
           geometry_msgs::Pose pose;
@@ -129,7 +139,9 @@ int main(int argc, char** argv)
           vx = v * cos(yaw);
           vy = v * sin(yaw);
           v = sqrt(vx*vx + vy*vy);
-          omega = omega;
+          if(omega - ANGULAR_ACCELERATION * DT >= -MAX_ANGULAR_VELOCITY){
+            omega -= ANGULAR_ACCELERATION * DT;
+          }
           predicted_path.poses.push_back(pose);
         }
       }
