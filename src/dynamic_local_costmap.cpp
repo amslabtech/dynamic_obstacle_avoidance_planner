@@ -107,6 +107,10 @@ int main(int argc, char** argv)
         // costmap初期化
         setup_map();
         std::cout << "===calculate cost===" << std::endl;
+        //存在コスト
+        for(int j=0;j<obs_num;j++){
+          set_cost(obstacle_paths, RADIUS, 0, j, 0);
+        }
         // 交差
         for(int i=0;i<PREDICTION_STEP;i++){
           for(int j=0;j<obs_num;j++){
@@ -151,7 +155,6 @@ int main(int argc, char** argv)
                   //geometry_msgs::PoseStamped _collision_pose;
                   //listener.transformPose("local_costmap", collision_pose, _collision_pose);
                   set_wall(collision_pose, RADIUS, i);
-                  set_cost(obstacle_paths, RADIUS, i, j, l);
                 }
               }
             }
@@ -235,7 +238,7 @@ void set_cost(geometry_msgs::PoseArray& obs_paths, double radius, int step, int 
         double _y = j * local_costmap.info.resolution + local_costmap.info.origin.position.y;
         if((x-_x)*(x-_x)+(y-_y)*(y-_y) < radius*radius){
           // 適当
-          double cost = 50;
+          double cost = 36-s;
           if(local_costmap.data[local_costmap.info.width * j + i] < cost){
             //std::cout << i << ", " << j << std::endl;
             local_costmap.data[local_costmap.info.width * j + i] = cost;

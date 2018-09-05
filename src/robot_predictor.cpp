@@ -65,11 +65,6 @@ int main(int argc, char** argv)
       velocity.linear.x = (current_pose.position.x - previous_pose.position.x) * HZ;
       velocity.linear.y = (current_pose.position.y - previous_pose.position.y) * HZ;
       velocity.angular.z = (tf::getYaw(current_pose.orientation) - tf::getYaw(previous_pose.orientation)) * HZ;
-      /////////////////////////////////////////
-      if(velocity.linear.x > 1.0){
-        velocity.linear.x = 1.0;
-      }
-      /////////////////////////////////////////
       current_velocity = velocity;
       std::cout << current_velocity << std::endl;
       std::cout << "===predict path===" << std::endl;
