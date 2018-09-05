@@ -239,7 +239,7 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   // state
   for(int i=0;i<T-1;i++){
     // pathとの距離
-    fg[0] += 1000.0 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
+    fg[0] += 3000.0 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
     // 向き
     //fg[0] += 0.1 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
   }
@@ -248,7 +248,7 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     // 速度
     fg[0] += 0.01 * CppAD::pow(VREF - vars[vx_start + i], 2);
     // 角速度
-    fg[0] += 0.1 * CppAD::pow(vars[omega_start + i], 2);
+    fg[0] += 1.0 * CppAD::pow(vars[omega_start + i], 2);
   }
 
   std::cout << "constrains start" << std::endl;
@@ -346,10 +346,11 @@ void MPCPathTracker::process(void)
 
 void MPCPathTracker::path_to_vector(void)
 {
+  int m = VREF * DT / 0.05;
   int index = 0;
   for(int i=0;i<T;i++){
-    if(i*4<path.poses.size()){
-      index = i*4;
+    if(i*m<path.poses.size()){
+      index = i*m;
       path_x[i] = path.poses[index].pose.position.x;
       path_y[i] = path.poses[index].pose.position.y;
       path_yaw[i] = tf::getYaw(path.poses[index].pose.orientation);

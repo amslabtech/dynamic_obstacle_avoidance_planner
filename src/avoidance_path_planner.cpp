@@ -71,7 +71,7 @@ void map_callback(const nav_msgs::OccupancyGridConstPtr& msg)
   cells.clear();
   cells.resize(local_costmap.info.height*local_costmap.info.width);
   for(int i=0;i<local_costmap.info.height*local_costmap.info.width;i++){
-    cells[i].is_wall = (local_costmap.data[i]==100);
+    //cells[i].is_wall = (local_costmap.data[i]==100);
     cells[i].sum = -1;
     cells[i].parent_index = -1;
     cells[i].cost = local_costmap.data[i];

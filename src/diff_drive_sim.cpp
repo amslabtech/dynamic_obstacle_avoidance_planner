@@ -7,7 +7,7 @@
 std::vector<geometry_msgs::TransformStamped> obs_list;
 
 const double DT = 0.1;//[s]
-const double HZ = 10;
+const double HZ = 100;
 
 int NUM;
 
