@@ -16,7 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
 )
 
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED COMPONENTS system)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(IPOPT ipopt REQUIRED)
 
@@ -128,7 +128,7 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN_INCLUDE_DIRS}
+  ${Eigen3_INCLUDE_DIRS}
   ${IPOPT_INCLUDE_DIRS}
 )
 
@@ -161,6 +161,7 @@ add_executable(avoidance_path_planner src/avoidance_path_planner.cpp)
 add_executable(waypoints_test src/waypoints_test.cpp)
 add_executable(diff_drive_mpc src/diff_drive_mpc.cpp)
 add_executable(base_costmap src/base_costmap.cpp)
+add_executable(obstacle_predictor_kf src/obstacle_predictor_kf.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -222,6 +223,9 @@ target_link_libraries(diff_drive_mpc
   ${IPOPT_LIBRARIES}
 )
 target_link_libraries(base_costmap
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(obstacle_predictor_kf
   ${catkin_LIBRARIES}
 )
 
