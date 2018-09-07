@@ -112,6 +112,7 @@ int main(int argc, char** argv)
           set_cost(obstacle_paths, RADIUS, 0, j, 0);
         }
         // 交差
+        /*
         for(int i=0;i<PREDICTION_STEP;i++){
           for(int j=0;j<obs_num;j++){
             // 衝突判定(左)
@@ -140,13 +141,14 @@ int main(int argc, char** argv)
             }
           }
         }
+        */
         // 接近
         for(int i=0;i<PREDICTION_STEP;i++){
           for(int j=0;j<obs_num;j++){
             // ロボット予測進路
-            for(int k=0;k<3;k++){
+            for(int k=0;k<1;k++){
               // 障害物予測進路
-              for(int l=0;l<2;l++){
+              for(int l=0;l<1;l++){
                 if(predict_approaching(robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)*l])){
                   std::cout << "approaching collision step:" << i << std::endl;
                   geometry_msgs::PoseStamped collision_pose;

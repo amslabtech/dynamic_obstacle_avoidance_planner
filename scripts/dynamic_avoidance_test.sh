@@ -14,7 +14,7 @@ sleep 0.5s
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering diff_drive_sim.launch" --geometry=45x12+1315+0 &
 sleep 0.5s
 
-gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering obstacle_predictor.launch" --geometry=45x12+0+250 &
+gnome-terminal -e "/opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering obstacle_predictor_kf" --geometry=45x12+0+250 &
 sleep 0.5s
 
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering robot_predictor.launch" --geometry=45x12+475+250 &
