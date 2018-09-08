@@ -220,6 +220,7 @@ void KalmanFilter::update(double x, double y, double yaw)
   //std::cout << "Z" << std::endl;
   //std::cout << Z << std::endl;
   Eigen::Vector3d e = Z - H * X;
+  e[2] = atan2(sin(e[2]), cos(e[2]));
   //std::cout << "e" << std::endl;
   //std::cout << e << std::endl;
   Eigen::Matrix3d S = H * P * H.transpose() + R;
@@ -229,6 +230,7 @@ void KalmanFilter::update(double x, double y, double yaw)
   //std::cout << "K" << std::endl;
   //std::cout << K << std::endl;
 
+  X[2] = atan2(sin(X[2]), cos(X[2]));
   X = X + K * e;
   X[2] = atan2(sin(X[2]), cos(X[2]));
   //std::cout << "X" << std::endl;
@@ -260,7 +262,7 @@ void KalmanFilter::predict(void)
         0.0, 0.0,                    0.0,            0.0,            1.0;
 
   X = F * X;
-  X[2] = atan2(sin(X[2]), cos(X[2]));
+  //X[2] = atan2(sin(X[2]), cos(X[2]));
   //std::cout << "X" << std::endl;
   //std::cout << X << std::endl;
   P = jF * P * jF.transpose() + Q;
