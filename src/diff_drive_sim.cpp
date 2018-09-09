@@ -41,8 +41,8 @@ int main(int argc, char** argv)
     obs_list[i].child_frame_id = "obs" + std::to_string(i);
     set_pose(i, 0, 0, 0);
   }
-  set_pose(0, -13, 7, 3*M_PI/2.0);
-  set_pose(1, 0, 0.2, M_PI);
+  set_pose(0, 0, 0.2, M_PI);
+  set_pose(1, -13, 7, 3*M_PI/2.0);
   /*
   set_pose(2, -1, -1, M_PI);
   set_pose(3, -1, 1, M_PI);
