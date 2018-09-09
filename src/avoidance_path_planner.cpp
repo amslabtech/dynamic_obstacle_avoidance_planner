@@ -105,8 +105,8 @@ int main(int argc, char** argv)
   // path2用
   ros::Publisher path2_pub = nh.advertise<nav_msgs::Path>("/intermediate_path2", 100);
 
-  ros::Subscriber map_sub = nh.subscribe("/local_costmap", 5, map_callback);
-  ros::Subscriber waypoints_sub = nh.subscribe("/waypoints", 5, waypoints_callback);
+  ros::Subscriber map_sub = nh.subscribe("/local_costmap", 1, map_callback);
+  ros::Subscriber waypoints_sub = nh.subscribe("/waypoints", 1, waypoints_callback);
 
   tf::TransformListener listener;
 
@@ -144,48 +144,9 @@ int main(int argc, char** argv)
         start.pose.position.y = 0;
         start.pose.orientation = tf::createQuaternionMsgFromYaw(0);
         double cost1 = calculate_astar(start, goal, path);
-        /**************************/
-        // path2の処理
-        for(int i=1;i<path.poses.size()-1;i++){
-          cells[get_index(path.poses[i].pose.position.x, path.poses[i].pose.position.y)].is_wall = true;
+        if(cost1 >= 0){
+          path_pub.publish(path);
         }
-        //double cost2 = calculate_astar(start, goal, path2);
-        /**************************/
-        if(first_flag){
-          previous_path = path;
-          first_flag = false;
-        }else{
-          double value1 = get_difference(previous_path, path);
-          double value2 = 0;//get_difference(previous_path, path2);
-          std::cout << "=== difference ===" << std::endl;
-          std::cout << value1 << ", " << value2 << std::endl;
-          /*
-          if(value1 <= value2){
-            if(value1<3.0){
-              previous_path = path;
-              std::cout << "path1 selected" << std::endl;
-            }else{
-              std::cout << "path not updated" << std::endl;
-            }
-          }else{
-            if(value2<3.0){
-              previous_path = path2;
-              std::cout << "path2 selected" << std::endl;
-            }else{
-              std::cout << "path not updated" << std::endl;
-            }
-          }
-          */
-          value1 = value2;
-          if(value1 <= value2){
-            previous_path = path;
-            std::cout << "path1 selected" << std::endl;
-          }else{
-            //previous_path = path2;
-            std::cout << "path2 selected" << std::endl;
-          }
-        }
-        path_pub.publish(previous_path);
         map_received = false;
         std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
       }
@@ -198,12 +159,16 @@ int main(int argc, char** argv)
 
 int get_i_from_x(double x)
 {
-  return floor((x - local_costmap.info.origin.position.x) / local_costmap.info.resolution + 0.5);
+  int val = (x - local_costmap.info.origin.position.x) * (1.0 / local_costmap.info.resolution) + 0.5;
+  int i = (int)val;
+  return i - (i > val);
 }
 
 int get_j_from_y(double y)
 {
-  return floor((y - local_costmap.info.origin.position.y) / local_costmap.info.resolution + 0.5);
+  int val = (y - local_costmap.info.origin.position.y) * (1.0 / local_costmap.info.resolution) + 0.5;
+  int i = (int)val;
+  return i - (i > val);
 }
 
 int get_index(double x, double y)

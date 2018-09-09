@@ -268,7 +268,7 @@ void set_wall(geometry_msgs::PoseStamped collision_pose, double radius, int step
           }
         }else{
           // 回避圏
-          double cost = PREDICTION_STEP + 1;
+          double cost = 1.5*PREDICTION_STEP;
           if(local_costmap.data[local_costmap.info.width * j + i] < cost){
             local_costmap.data[local_costmap.info.width * j + i] = cost;
           }

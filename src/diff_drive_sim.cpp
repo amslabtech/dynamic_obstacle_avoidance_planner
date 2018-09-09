@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     set_pose(i, 0, 0, 0);
   }
   //set_pose(0, 0, 0.1, M_PI);
-  set_pose(0, -13, 0.1, 0);
+  set_pose(0, 0, 0.1, M_PI);
   //set_pose(1, -13, 7, 3*M_PI/2.0);
   /*
   set_pose(2, -1, -1, M_PI);
