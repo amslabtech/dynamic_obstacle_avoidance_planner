@@ -76,6 +76,8 @@ const double DT = 0.1;// [s]
 const double HZ = 10;
 // 目標速度
 const double VREF = 1.0;// [m/s]
+// 最大角速度
+const double MAX_ANGULAR_VELOCITY = 5.0;// [rad/s]
 // ホイール角加速度
 const double WHEEL_ANGULAR_ACCELERATION_LIMIT = 5.0;// [rad/s^2]
 // ホイール角速度
@@ -268,8 +270,8 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   for(int i=0;i<T-2;i++){
     // 速度
     fg[0] += 0.01 * CppAD::pow(VREF - vars[vx_start + i], 2);
-    // 角速度
-    fg[0] += 1.0 * CppAD::pow(vars[omega_start + i], 2);
+    // 角加速度
+    fg[0] += 0.1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i+ 1], 2);
   }
 
   std::cout << "constrains start" << std::endl;

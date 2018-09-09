@@ -36,10 +36,9 @@ int main(int argc, char** argv)
 
   ros::Rate loop_rate(10);
 
+  std::cout << "=== collision predictor ===" << std::endl;
   while(ros::ok()){
     if(NUM > 0){
-      std::cout << "=== collision predictor ===" << std::endl;
-
       bool transformed = false;
       try{
         {
@@ -91,6 +90,7 @@ bool collision_detection(geometry_msgs::Pose p0, geometry_msgs::Pose p1)
   double dy = p0.position.y - p1.position.y;
   double distance = sqrt(dx*dx + dy*dy);
   if(distance <= RADIUS){
+    std::cout << distance << "[m]" << std::endl;
     return true;
   }
   return false;

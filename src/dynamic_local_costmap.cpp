@@ -146,7 +146,7 @@ int main(int argc, char** argv)
         for(int i=0;i<PREDICTION_STEP;i++){
           for(int j=0;j<obs_num;j++){
             // ロボット予測進路
-            for(int k=0;k<1;k++){
+            for(int k=0;k<3;k++){
               // 障害物予測進路
               for(int l=0;l<1;l++){
                 if(predict_approaching(robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)*l])){
@@ -228,10 +228,7 @@ void set_cost(geometry_msgs::PoseArray& obs_paths, double radius, int step, int 
 {
   double x = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+step+obs_num*(PREDICTION_STEP+1)*n_path].position.x;
   double y = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+step+obs_num*(PREDICTION_STEP+1)*n_path].position.y;
-  if(local_costmap.data[get_index(x, y)] == 50){
-    return;
-  }
-  for(int s=step;s<PREDICTION_STEP;s++){
+  for(int s=step;s<PREDICTION_STEP - 1;s++){
     x = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+s+obs_num*(PREDICTION_STEP+1)*n_path].position.x;
     y = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+s+obs_num*(PREDICTION_STEP+1)*n_path].position.y;
     for(int i=0;i<local_costmap.info.height;i++){
@@ -240,7 +237,7 @@ void set_cost(geometry_msgs::PoseArray& obs_paths, double radius, int step, int 
         double _y = j * local_costmap.info.resolution + local_costmap.info.origin.position.y;
         if((x-_x)*(x-_x)+(y-_y)*(y-_y) < radius*radius){
           // 適当
-          double cost = 36-s;
+          double cost = PREDICTION_STEP - s * 0.5;
           if(local_costmap.data[local_costmap.info.width * j + i] < cost){
             //std::cout << i << ", " << j << std::endl;
             local_costmap.data[local_costmap.info.width * j + i] = cost;
@@ -259,12 +256,22 @@ void set_wall(geometry_msgs::PoseStamped collision_pose, double radius, int step
     for(int j=0;j<local_costmap.info.width;j++){
       double _x = i * local_costmap.info.resolution + local_costmap.info.origin.position.x;
       double _y = j * local_costmap.info.resolution + local_costmap.info.origin.position.y;
-      if((x-_x)*(x-_x)+(y-_y)*(y-_y) < radius*radius){
-        // 適当
-        double cost = 100;
-        if(local_costmap.data[local_costmap.info.width * j + i] < cost){
-          //std::cout << i << ", " << j << std::endl;
-          local_costmap.data[local_costmap.info.width * j + i] = cost;
+      double dist2 = (x-_x)*(x-_x)+(y-_y)*(y-_y);
+      if(dist2 < (radius * 1.5) * (radius * 1.5)){
+        if(dist2 < radius*radius){
+          // 衝突判定圏
+          // 適当
+          double cost = 100;
+          if(local_costmap.data[local_costmap.info.width * j + i] < cost){
+            //std::cout << i << ", " << j << std::endl;
+            local_costmap.data[local_costmap.info.width * j + i] = cost;
+          }
+        }else{
+          // 回避圏
+          double cost = PREDICTION_STEP + 1;
+          if(local_costmap.data[local_costmap.info.width * j + i] < cost){
+            local_costmap.data[local_costmap.info.width * j + i] = cost;
+          }
         }
       }
     }

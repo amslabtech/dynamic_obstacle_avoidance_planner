@@ -91,7 +91,6 @@ int main(int argc, char** argv)
           predicted_path.poses.push_back(pose);
         }
       }
-      /*
       const int SIZE_OF_LINEAR_PATH = predicted_path.poses.size();
       // v=const, omega+=domega * dt
       {
@@ -141,7 +140,6 @@ int main(int argc, char** argv)
           predicted_path.poses.push_back(pose);
         }
       }
-      */
       std::cout << predicted_path.poses.size() << std::endl;
       predicted_path_pub.publish(predicted_path);
       previous_velocity = current_velocity;

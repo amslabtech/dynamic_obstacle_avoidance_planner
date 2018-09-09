@@ -18,9 +18,9 @@ public:
     parent_index = -1;
   }
 
-  double cost;
+  int cost;
   int step;
-  double sum;
+  int sum;
   int parent_index;
   bool is_wall;
 
