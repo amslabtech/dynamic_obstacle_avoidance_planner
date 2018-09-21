@@ -14,8 +14,9 @@ const int PREDICTION_STEP = PREDICTION_TIME / DT;
 const double WIDTH = 10;// [m]
 const double RESOLUTION = 0.05;// [m]
 const double HZ = 10;
-double RADIUS;
+double RADIUS;// 衝突判定半径[m]
 int obs_num;
+const int SEARCH_RANGE = 20;
 
 geometry_msgs::PoseArray robot_path;
 geometry_msgs::PoseArray obstacle_paths;
@@ -25,13 +26,15 @@ void setup_map(void);
 bool predict_intersection(geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose);
 void predict_intersection_point(geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::PoseStamped&);
 bool predict_approaching(geometry_msgs::Pose, geometry_msgs::Pose);
+bool predict_approaching(geometry_msgs::Pose&, geometry_msgs::Pose&, geometry_msgs::Pose&);
 void set_wall(geometry_msgs::PoseStamped, double, int);
 void set_cost(geometry_msgs::PoseArray&, double, int, int, int);
+void set_cost_with_velocity(geometry_msgs::PoseStamped&, geometry_msgs::Twist&, geometry_msgs::Twist&);
 
 // map function
-int get_i_from_x(double);
-int get_j_from_y(double);
-int get_index(double, double);
+inline int get_i_from_x(double);
+inline int get_j_from_y(double);
+inline int get_index(double, double);
 
 void robot_path_callback(const geometry_msgs::PoseArrayConstPtr& msg)
 {
@@ -107,61 +110,39 @@ int main(int argc, char** argv)
         // costmap初期化
         setup_map();
         std::cout << "===calculate cost===" << std::endl;
-        //存在コスト
+        // 存在コスト(消したい)
+        double set_cost_start = ros::Time::now().toSec();
         for(int j=0;j<obs_num;j++){
-          set_cost(obstacle_paths, RADIUS, 0, j, 0);
+          //set_cost(obstacle_paths, RADIUS, 0, j, 0);
         }
-        // 交差
-        /*
-        for(int i=0;i<PREDICTION_STEP;i++){
-          for(int j=0;j<obs_num;j++){
-            // 衝突判定(左)
-            if(predict_intersection(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)])){
-              std::cout << "cross collision at robot left:" << i << std::endl;;
-              geometry_msgs::PoseStamped collision_pose;
-              collision_pose.pose.orientation = robot_path.poses[i].orientation;
-              collision_pose.header.frame_id = "map";
-              // 衝突位置の計算(左)
-              predict_intersection_point(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)], collision_pose);
-              //geometry_msgs::PoseStamped _collision_pose;
-              //listener.transformPose("local_costmap", collision_pose, _collision_pose);
-              set_wall(collision_pose, RADIUS, i);
-            }
-            // 衝突判定(右)
-            if(predict_intersection(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)*2], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)])){
-              std::cout << "cross collision at robot right:" << i << std::endl;;
-              geometry_msgs::PoseStamped collision_pose;
-              collision_pose.pose.orientation = robot_path.poses[i].orientation;
-              collision_pose.header.frame_id = "map";
-              // 衝突位置の計算(右)
-              predict_intersection_point(robot_path.poses[i], robot_path.poses[i+(PREDICTION_STEP+1)*2], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)], collision_pose);
-              //geometry_msgs::PoseStamped _collision_pose;
-              //listener.transformPose("local_costmap", collision_pose, _collision_pose);
-              set_wall(collision_pose, RADIUS, i);
-            }
-          }
-        }
-        */
+        std::cout << "set_cost : " << ros::Time::now().toSec() - set_cost_start << "[s]" << std::endl;
         // 接近
-        for(int i=0;i<PREDICTION_STEP;i++){
-          for(int j=0;j<obs_num;j++){
-            // ロボット予測進路
-            for(int k=0;k<3;k++){
-              // 障害物予測進路
-              for(int l=0;l<1;l++){
-                if(predict_approaching(robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)*l])){
-                  std::cout << "approaching collision step:" << i << std::endl;
-                  geometry_msgs::PoseStamped collision_pose;
-                  collision_pose.pose = obstacle_paths.poses[j*(PREDICTION_STEP+1)+i+obs_num*(PREDICTION_STEP+1)*l];
-                  collision_pose.header.frame_id = "map";
-                  //geometry_msgs::PoseStamped _collision_pose;
-                  //listener.transformPose("local_costmap", collision_pose, _collision_pose);
-                  set_wall(collision_pose, RADIUS, i);
+        double set_cost_v_start = ros::Time::now().toSec();
+        for(int j=0;j<obs_num;j++){
+          for(int k=1;k<3;k++){
+            for(int i=0;i<PREDICTION_STEP;i++){
+              if(predict_approaching(robot_path.poses[i], robot_path.poses[i+k*(PREDICTION_STEP*1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i])){
+                //std::cout << "approaching collision step:" << i << std::endl;
+                geometry_msgs::PoseStamped collision_pose;
+                collision_pose.pose = obstacle_paths.poses[j*(PREDICTION_STEP+1)+i];
+                collision_pose.header.frame_id = "map";
+                //set_wall(collision_pose, RADIUS, i);
+                if(i > 0){
+                  geometry_msgs::Twist vr;
+                  vr.linear.x = (robot_path.poses[i].position.x - robot_path.poses[i - 1].position.x) * HZ;
+                  vr.linear.y = (robot_path.poses[i].position.y - robot_path.poses[i - 1].position.y) * HZ;
+                  geometry_msgs::Twist vo;
+                  vo.linear.x = (obstacle_paths.poses[j*(PREDICTION_STEP+1)+i].position.x - obstacle_paths.poses[j*(PREDICTION_STEP+1)+i - 1].position.x) * HZ;
+                  vo.linear.y = (obstacle_paths.poses[j*(PREDICTION_STEP+1)+i].position.y - obstacle_paths.poses[j*(PREDICTION_STEP+1)+i - 1].position.y) * HZ;
+                  set_cost_with_velocity(collision_pose, vr, vo);
+                  // 衝突予測以後の未来は考えない
+                  break;
                 }
               }
             }
           }
         }
+        std::cout << "set_cost_v : " << ros::Time::now().toSec() - set_cost_v_start << "[s]" << std::endl;
         std::cout << "===publish costmap===" << std::endl;
         costmap_pub.publish(local_costmap);
         std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
@@ -228,19 +209,45 @@ void set_cost(geometry_msgs::PoseArray& obs_paths, double radius, int step, int 
 {
   double x = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+step+obs_num*(PREDICTION_STEP+1)*n_path].position.x;
   double y = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+step+obs_num*(PREDICTION_STEP+1)*n_path].position.y;
-  for(int s=step;s<PREDICTION_STEP - 1;s++){
+  double _radius = radius * 1.5;
+  for(int s=step;s<PREDICTION_STEP-1;s++){
     x = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+s+obs_num*(PREDICTION_STEP+1)*n_path].position.x;
     y = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+s+obs_num*(PREDICTION_STEP+1)*n_path].position.y;
-    for(int i=0;i<local_costmap.info.height;i++){
-      for(int j=0;j<local_costmap.info.width;j++){
+    int lower_i = get_i_from_x(x) - SEARCH_RANGE;
+    if(lower_i < 0){
+      lower_i = 0;
+    }
+    int upper_i = get_i_from_x(x) + SEARCH_RANGE;
+    if(upper_i > local_costmap.info.width-1){
+      upper_i = local_costmap.info.width-1;
+    }
+    int lower_j = get_j_from_y(y) - SEARCH_RANGE;
+    if(lower_j < 0){
+      lower_j = 0;
+    }
+    int upper_j = get_j_from_y(y) + SEARCH_RANGE;
+    if(upper_j > local_costmap.info.width-1){
+      upper_j = local_costmap.info.width-1;
+    }
+    for(int i=lower_i;i<upper_i;i++){
+      for(int j=lower_j;j<upper_j;j++){
         double _x = i * local_costmap.info.resolution + local_costmap.info.origin.position.x;
         double _y = j * local_costmap.info.resolution + local_costmap.info.origin.position.y;
-        if((x-_x)*(x-_x)+(y-_y)*(y-_y) < radius*radius){
-          // 適当
-          double cost = PREDICTION_STEP - s * 0.5;
-          if(local_costmap.data[local_costmap.info.width * j + i] < cost){
-            //std::cout << i << ", " << j << std::endl;
-            local_costmap.data[local_costmap.info.width * j + i] = cost;
+        if((x-_x)*(x-_x)+(y-_y)*(y-_y) < _radius*_radius){
+          if((x-_x)*(x-_x)+(y-_y)*(y-_y) < radius*radius){
+            // 適当
+            double cost = PREDICTION_STEP - s;
+            if(local_costmap.data[local_costmap.info.width * j + i] < cost){
+              //std::cout << i << ", " << j << std::endl;
+              local_costmap.data[local_costmap.info.width * j + i] = cost;
+            }
+          }else{
+            /*
+            double cost = PREDICTION_STEP - s * 0.5;
+            if(local_costmap.data[local_costmap.info.width * j + i] < cost){
+              local_costmap.data[local_costmap.info.width * j + i] = cost;
+            }
+            */
           }
         }
       }
@@ -278,18 +285,97 @@ void set_wall(geometry_msgs::PoseStamped collision_pose, double radius, int step
   }
 }
 
-int get_i_from_x(double x)
+inline int get_i_from_x(double x)
 {
   return floor((x - local_costmap.info.origin.position.x) / local_costmap.info.resolution + 0.5);
 }
 
-int get_j_from_y(double y)
+inline int get_j_from_y(double y)
 {
   return floor((y - local_costmap.info.origin.position.y) / local_costmap.info.resolution + 0.5);
 }
 
-int get_index(double x, double y)
+inline int get_index(double x, double y)
 {
   return local_costmap.info.width * get_j_from_y(y) + get_i_from_x(x);
 
+}
+
+void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry_msgs::Twist& vr, geometry_msgs::Twist& vo)
+{
+  /*
+   * 衝突位置
+   * cpでのロボット速度ベクトル
+   * cpでの障害物速度ベクトル
+   */
+  geometry_msgs::Twist synthetic_vector;
+  synthetic_vector.linear.x = (vo.linear.x - vr.linear.x) * 0.5;
+  synthetic_vector.linear.y = (vo.linear.y - vr.linear.y) * 0.5;
+  double x = collision_pose.pose.position.x;
+  double y = collision_pose.pose.position.y;
+  double radius_min = 0.5 * RADIUS;// 最小コスト半径
+  double radius_a = 1.5 * RADIUS;// 最大コスト半径
+  double v = sqrt(synthetic_vector.linear.x * synthetic_vector.linear.x + synthetic_vector.linear.y * synthetic_vector.linear.y);
+  const double LENGTH = v * PREDICTION_TIME;
+  double l = 0;
+  for(int i=0;i<PREDICTION_STEP;i+=1){// PREDICTION_STEPである理由はない
+    int lower_i = get_i_from_x(x) - SEARCH_RANGE;
+    if(lower_i < 0){
+      lower_i = 0;
+    }
+    int upper_i = get_i_from_x(x) + SEARCH_RANGE;
+    if(upper_i > local_costmap.info.width-1){
+      upper_i = local_costmap.info.width-1;
+    }
+    int lower_j = get_j_from_y(y) - SEARCH_RANGE;
+    if(lower_j < 0){
+      lower_j = 0;
+    }
+    int upper_j = get_j_from_y(y) + SEARCH_RANGE;
+    if(upper_j > local_costmap.info.width-1){
+      upper_j = local_costmap.info.width-1;
+    }
+    for(int i=lower_i;i<upper_i;i++){
+      for(int j=lower_j;j<upper_j;j++){
+        double _x = i * local_costmap.info.resolution + local_costmap.info.origin.position.x;
+        double _y = j * local_costmap.info.resolution + local_costmap.info.origin.position.y;
+        double dist2 = sqrt((x-_x)*(x-_x)+(y-_y)*(y-_y));
+        // l[m]での半径
+        double radius_l = radius_min + (radius_a - radius_min) * (LENGTH - l) / LENGTH;
+        if(dist2 < radius_l){
+          double cost = 90 * (radius_l - dist2) + 10;
+          if(local_costmap.data[local_costmap.info.width * j + i] < cost){
+            local_costmap.data[local_costmap.info.width * j + i] = cost;
+          }
+        }
+      }
+    }
+    x += synthetic_vector.linear.x * DT;
+    y += synthetic_vector.linear.y * DT;
+    l += v * DT;
+  }
+}
+//参考: https://qiita.com/yellow_73/items/bcd4e150e7caa0210ee6
+bool predict_approaching(geometry_msgs::Pose& pr1, geometry_msgs::Pose& pr2, geometry_msgs::Pose& po)
+{
+  double a = pr2.position.x - pr1.position.x;
+  double b = pr2.position.y - pr1.position.y;
+  double a2 = a * a;
+  double b2 = b * b;
+  double r2 = a2 + b2;
+  double tt = -(a * (pr1.position.x - po.position.x) + b * (pr1.position.y - po.position.y));
+  double distance = 0;
+  if(tt < 0){
+    distance = (pr1.position.x - po.position.x) * (pr1.position.x - po.position.x) + (pr1.position.y - po.position.y) * (pr1.position.y - po.position.y);
+  }else if(tt > r2){
+    distance = (pr2.position.x - po.position.x) * (pr2.position.x - po.position.x) + (pr2.position.y - po.position.y) * (pr2.position.y - po.position.y);
+  }else{
+    double f1 = a * (pr1.position.y - po.position.y) - b * (pr1.position.x - po.position.x);
+    distance = (f1 * f1) / r2;
+  }
+  if(distance < RADIUS){
+    return true;
+  }else{
+    return false;
+  }
 }

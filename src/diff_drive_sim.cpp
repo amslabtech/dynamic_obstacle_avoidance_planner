@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 
   while(ros::ok()){
     // 速度
-    update(0, 0.5, 0);
+    update(0, 1.0, 0);
     //update(1, 1.0, 0);
     obs_broadcaster.sendTransform(obs_list);
 
