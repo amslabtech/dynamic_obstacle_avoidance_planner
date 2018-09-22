@@ -259,11 +259,19 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
           d_jy = -d_jy;
         }
         int dist = d_ix + d_jy;
+        /*
+        int dist = 0;
+        if(d_ix >= d_jy){
+          dist = d_ix;
+        }else{
+          dist = d_jy;
+        }
+        */
         // l[m]での半径
         double radius_l = radius_min + (radius_a - radius_min) * (LENGTH - l) / LENGTH;
-        int radius_l_grid = radius_l / RESOLUTION;
+        double radius_l_grid = radius_l / RESOLUTION;
         if(dist <= radius_l_grid){
-          double cost = 90 * (radius_l_grid - dist)/(double)radius_l_grid + 10;
+          double cost = 90 * (radius_l_grid - dist) / radius_l_grid + 10;
           if(local_costmap.data[local_costmap.info.width * j + i] < cost){
             local_costmap.data[local_costmap.info.width * j + i] = cost;
           }
