@@ -16,7 +16,8 @@ const double RESOLUTION = 0.05;// [m]
 const double HZ = 10;
 double RADIUS;// 衝突判定半径[m]
 int obs_num;
-const int SEARCH_RANGE = 50;
+const int SEARCH_RANGE = 30;
+const double COST_COL = 90;
 
 geometry_msgs::PoseArray robot_path;
 geometry_msgs::PoseArray obstacle_paths;
@@ -224,8 +225,10 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
   synthetic_vector.linear.y = (vo.linear.y - vr.linear.y) * 0.5;
   double x = collision_pose.pose.position.x;
   double y = collision_pose.pose.position.y;
-  double radius_min = 0.5 * RADIUS;// 最小コスト半径
-  double radius_a = 1.5 * RADIUS;// 最大コスト半径
+  double radius_min = 0.3;// 最小コスト半径=ロボット半径
+  double radius_max = 1.5 * RADIUS;// 最大回避領域コスト半径
+  double radius_col_max = RADIUS;// 最大衝突領域半径
+  double radius_col_min = radius_min;// 最小衝突領域半径
   double v = sqrt(synthetic_vector.linear.x * synthetic_vector.linear.x + synthetic_vector.linear.y * synthetic_vector.linear.y);
   const double LENGTH = v * PREDICTION_TIME;
   double l = 0;
@@ -248,8 +251,12 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
     if(upper_j > local_costmap.info.width-1){
       upper_j = local_costmap.info.width-1;
     }
-    // l[m]での半径
-    double radius_l = radius_min + (radius_a - radius_min) * (LENGTH - l) / LENGTH;
+    // l[m]での衝突領域半径
+    double radius_col_l = radius_col_min + (radius_col_max - radius_col_min) * (LENGTH - l) / LENGTH;
+    double radius_col_l_grid = radius_col_l / RESOLUTION;
+    double cost_l_col = COST_COL * (LENGTH - l) / LENGTH;
+    // l[m]での回避領域半径
+    double radius_l = radius_min + (radius_max - radius_min) * (LENGTH - l) / LENGTH;
     double radius_l_grid = radius_l / RESOLUTION;
     for(int i=lower_i;i<upper_i;i++){
       for(int j=lower_j;j<upper_j;j++){
@@ -262,11 +269,14 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
           d_jy = -d_jy;
         }
         double dist = sqrt(d_ix * d_ix + d_jy * d_jy);
-
-        if(dist <= radius_l_grid){
-          double cost = 90 * (radius_l_grid - dist) / radius_l_grid + 10;
-          if(local_costmap.data[local_costmap.info.width * j + i] < cost){
-            local_costmap.data[local_costmap.info.width * j + i] = cost;
+        if(dist <= radius_col_l_grid){
+          if(local_costmap.data[local_costmap.info.width * j + i] < cost_l_col+10){
+            local_costmap.data[local_costmap.info.width * j + i] = cost_l_col+10;
+          }
+        }else if(dist <= radius_l_grid){
+          double cost_l = cost_l_col - cost_l_col * (dist*RESOLUTION - radius_col_l) / (radius_max - radius_col_l);
+          if(local_costmap.data[local_costmap.info.width * j + i] < cost_l+10){
+            local_costmap.data[local_costmap.info.width * j + i] = cost_l+10;
           }
         }
       }
