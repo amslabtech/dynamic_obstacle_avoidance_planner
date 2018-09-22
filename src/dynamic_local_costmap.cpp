@@ -16,7 +16,7 @@ const double RESOLUTION = 0.05;// [m]
 const double HZ = 10;
 double RADIUS;// 衝突判定半径[m]
 int obs_num;
-const int SEARCH_RANGE = 20;
+const int SEARCH_RANGE = 50;
 
 geometry_msgs::PoseArray robot_path;
 geometry_msgs::PoseArray obstacle_paths;
@@ -33,6 +33,7 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped&, geometry_msgs::Twist&, 
 inline int get_i_from_x(double);
 inline int get_j_from_y(double);
 inline int get_index(double, double);
+inline int get_distance_grid(int, int, int, int);
 
 void robot_path_callback(const geometry_msgs::PoseArrayConstPtr& msg)
 {
@@ -228,32 +229,41 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
   double v = sqrt(synthetic_vector.linear.x * synthetic_vector.linear.x + synthetic_vector.linear.y * synthetic_vector.linear.y);
   const double LENGTH = v * PREDICTION_TIME;
   double l = 0;
-  for(int i=0;i<PREDICTION_STEP;i+=1){// PREDICTION_STEPである理由はない
-    int lower_i = get_i_from_x(x) - SEARCH_RANGE;
+  for(int s=0;s<PREDICTION_STEP;s+=1){// PREDICTION_STEPである理由はない
+    int grid_x = get_i_from_x(x);
+    int grid_y = get_j_from_y(y);
+    int lower_i = grid_x - SEARCH_RANGE;
     if(lower_i < 0){
       lower_i = 0;
     }
-    int upper_i = get_i_from_x(x) + SEARCH_RANGE;
+    int upper_i = grid_x + SEARCH_RANGE;
     if(upper_i > local_costmap.info.width-1){
       upper_i = local_costmap.info.width-1;
     }
-    int lower_j = get_j_from_y(y) - SEARCH_RANGE;
+    int lower_j = grid_y - SEARCH_RANGE;
     if(lower_j < 0){
       lower_j = 0;
     }
-    int upper_j = get_j_from_y(y) + SEARCH_RANGE;
+    int upper_j = grid_y + SEARCH_RANGE;
     if(upper_j > local_costmap.info.width-1){
       upper_j = local_costmap.info.width-1;
     }
     for(int i=lower_i;i<upper_i;i++){
       for(int j=lower_j;j<upper_j;j++){
-        double _x = i * local_costmap.info.resolution + local_costmap.info.origin.position.x;
-        double _y = j * local_costmap.info.resolution + local_costmap.info.origin.position.y;
-        double dist2 = sqrt((x-_x)*(x-_x)+(y-_y)*(y-_y));
+        int d_ix = grid_x - i;
+        if(d_ix < 0){
+          d_ix = -d_ix;
+        }
+        int d_jy = grid_y - j;
+        if(d_jy < 0){
+          d_jy = -d_jy;
+        }
+        int dist = d_ix + d_jy;
         // l[m]での半径
         double radius_l = radius_min + (radius_a - radius_min) * (LENGTH - l) / LENGTH;
-        if(dist2 < radius_l){
-          double cost = 90 * (radius_l - dist2) + 10;
+        int radius_l_grid = radius_l / RESOLUTION;
+        if(dist <= radius_l_grid){
+          double cost = 90 * (radius_l_grid - dist)/(double)radius_l_grid + 10;
           if(local_costmap.data[local_costmap.info.width * j + i] < cost){
             local_costmap.data[local_costmap.info.width * j + i] = cost;
           }
@@ -287,5 +297,22 @@ bool predict_approaching(geometry_msgs::Pose& pr1, geometry_msgs::Pose& pr2, geo
     return true;
   }else{
     return false;
+  }
+}
+
+int get_distance_grid(int i0, int j0, int i1, int j1)
+{
+  int di = i0 - i1;
+  if(di < 0){
+    di = -di;
+  }
+  int dj = j0 - j1;
+  if(dj < 0){
+    dj = -dj;
+  }
+  if(di >= dj){
+    return di;
+  }else{
+    return dj;
   }
 }
