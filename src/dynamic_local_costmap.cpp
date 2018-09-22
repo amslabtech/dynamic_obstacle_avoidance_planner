@@ -248,6 +248,9 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
     if(upper_j > local_costmap.info.width-1){
       upper_j = local_costmap.info.width-1;
     }
+    // l[m]での半径
+    double radius_l = radius_min + (radius_a - radius_min) * (LENGTH - l) / LENGTH;
+    double radius_l_grid = radius_l / RESOLUTION;
     for(int i=lower_i;i<upper_i;i++){
       for(int j=lower_j;j<upper_j;j++){
         int d_ix = grid_x - i;
@@ -258,18 +261,8 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
         if(d_jy < 0){
           d_jy = -d_jy;
         }
-        int dist = d_ix + d_jy;
-        /*
-        int dist = 0;
-        if(d_ix >= d_jy){
-          dist = d_ix;
-        }else{
-          dist = d_jy;
-        }
-        */
-        // l[m]での半径
-        double radius_l = radius_min + (radius_a - radius_min) * (LENGTH - l) / LENGTH;
-        double radius_l_grid = radius_l / RESOLUTION;
+        double dist = sqrt(d_ix * d_ix + d_jy * d_jy);
+
         if(dist <= radius_l_grid){
           double cost = 90 * (radius_l_grid - dist) / radius_l_grid + 10;
           if(local_costmap.data[local_costmap.info.width * j + i] < cost){
