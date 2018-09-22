@@ -27,8 +27,6 @@ bool predict_intersection(geometry_msgs::Pose, geometry_msgs::Pose, geometry_msg
 void predict_intersection_point(geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::PoseStamped&);
 bool predict_approaching(geometry_msgs::Pose, geometry_msgs::Pose);
 bool predict_approaching(geometry_msgs::Pose&, geometry_msgs::Pose&, geometry_msgs::Pose&);
-void set_wall(geometry_msgs::PoseStamped, double, int);
-void set_cost(geometry_msgs::PoseArray&, double, int, int, int);
 void set_cost_with_velocity(geometry_msgs::PoseStamped&, geometry_msgs::Twist&, geometry_msgs::Twist&);
 
 // map function
@@ -110,23 +108,15 @@ int main(int argc, char** argv)
         // costmap初期化
         setup_map();
         std::cout << "===calculate cost===" << std::endl;
-        // 存在コスト(消したい)
-        double set_cost_start = ros::Time::now().toSec();
-        for(int j=0;j<obs_num;j++){
-          //set_cost(obstacle_paths, RADIUS, 0, j, 0);
-        }
-        std::cout << "set_cost : " << ros::Time::now().toSec() - set_cost_start << "[s]" << std::endl;
         // 接近
         double set_cost_v_start = ros::Time::now().toSec();
         for(int j=0;j<obs_num;j++){
           for(int k=1;k<3;k++){
             for(int i=0;i<PREDICTION_STEP;i++){
               if(predict_approaching(robot_path.poses[i], robot_path.poses[i+k*(PREDICTION_STEP*1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i])){
-                //std::cout << "approaching collision step:" << i << std::endl;
                 geometry_msgs::PoseStamped collision_pose;
                 collision_pose.pose = obstacle_paths.poses[j*(PREDICTION_STEP+1)+i];
                 collision_pose.header.frame_id = "map";
-                //set_wall(collision_pose, RADIUS, i);
                 if(i > 0){
                   geometry_msgs::Twist vr;
                   vr.linear.x = (robot_path.poses[i].position.x - robot_path.poses[i - 1].position.x) * HZ;
@@ -203,86 +193,6 @@ void predict_intersection_point(geometry_msgs::Pose a, geometry_msgs::Pose b, ge
 bool predict_approaching(geometry_msgs::Pose p1, geometry_msgs::Pose p2)
 {
   return RADIUS * RADIUS > (p1.position.x - p2.position.x) * (p1.position.x - p2.position.x) + (p1.position.y - p2.position.y) * (p1.position.y - p2.position.y);
-}
-
-void set_cost(geometry_msgs::PoseArray& obs_paths, double radius, int step, int n_obs, int n_path)
-{
-  double x = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+step+obs_num*(PREDICTION_STEP+1)*n_path].position.x;
-  double y = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+step+obs_num*(PREDICTION_STEP+1)*n_path].position.y;
-  double _radius = radius * 1.5;
-  for(int s=step;s<PREDICTION_STEP-1;s++){
-    x = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+s+obs_num*(PREDICTION_STEP+1)*n_path].position.x;
-    y = obs_paths.poses[n_obs*(PREDICTION_STEP+1)+s+obs_num*(PREDICTION_STEP+1)*n_path].position.y;
-    int lower_i = get_i_from_x(x) - SEARCH_RANGE;
-    if(lower_i < 0){
-      lower_i = 0;
-    }
-    int upper_i = get_i_from_x(x) + SEARCH_RANGE;
-    if(upper_i > local_costmap.info.width-1){
-      upper_i = local_costmap.info.width-1;
-    }
-    int lower_j = get_j_from_y(y) - SEARCH_RANGE;
-    if(lower_j < 0){
-      lower_j = 0;
-    }
-    int upper_j = get_j_from_y(y) + SEARCH_RANGE;
-    if(upper_j > local_costmap.info.width-1){
-      upper_j = local_costmap.info.width-1;
-    }
-    for(int i=lower_i;i<upper_i;i++){
-      for(int j=lower_j;j<upper_j;j++){
-        double _x = i * local_costmap.info.resolution + local_costmap.info.origin.position.x;
-        double _y = j * local_costmap.info.resolution + local_costmap.info.origin.position.y;
-        if((x-_x)*(x-_x)+(y-_y)*(y-_y) < _radius*_radius){
-          if((x-_x)*(x-_x)+(y-_y)*(y-_y) < radius*radius){
-            // 適当
-            double cost = PREDICTION_STEP - s;
-            if(local_costmap.data[local_costmap.info.width * j + i] < cost){
-              //std::cout << i << ", " << j << std::endl;
-              local_costmap.data[local_costmap.info.width * j + i] = cost;
-            }
-          }else{
-            /*
-            double cost = PREDICTION_STEP - s * 0.5;
-            if(local_costmap.data[local_costmap.info.width * j + i] < cost){
-              local_costmap.data[local_costmap.info.width * j + i] = cost;
-            }
-            */
-          }
-        }
-      }
-    }
-  }
-}
-
-void set_wall(geometry_msgs::PoseStamped collision_pose, double radius, int step)
-{
-  double x = collision_pose.pose.position.x;
-  double y = collision_pose.pose.position.y;
-  for(int i=0;i<local_costmap.info.height;i++){
-    for(int j=0;j<local_costmap.info.width;j++){
-      double _x = i * local_costmap.info.resolution + local_costmap.info.origin.position.x;
-      double _y = j * local_costmap.info.resolution + local_costmap.info.origin.position.y;
-      double dist2 = (x-_x)*(x-_x)+(y-_y)*(y-_y);
-      if(dist2 < (radius * 1.5) * (radius * 1.5)){
-        if(dist2 < radius*radius){
-          // 衝突判定圏
-          // 適当
-          double cost = 100;
-          if(local_costmap.data[local_costmap.info.width * j + i] < cost){
-            //std::cout << i << ", " << j << std::endl;
-            local_costmap.data[local_costmap.info.width * j + i] = cost;
-          }
-        }else{
-          // 回避圏
-          double cost = 1.5*PREDICTION_STEP;
-          if(local_costmap.data[local_costmap.info.width * j + i] < cost){
-            local_costmap.data[local_costmap.info.width * j + i] = cost;
-          }
-        }
-      }
-    }
-  }
 }
 
 inline int get_i_from_x(double x)
