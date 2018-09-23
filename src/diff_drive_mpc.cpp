@@ -386,6 +386,7 @@ void MPCPathTracker::process(void)
         mpc_path.poses.push_back(temp);
       }
       path_pub.publish(mpc_path);
+      path.poses.erase(path.poses.begin());
     }
   }
   previous_pose = current_pose;
