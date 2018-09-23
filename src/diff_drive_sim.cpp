@@ -42,8 +42,8 @@ int main(int argc, char** argv)
     set_pose(i, 0, 0, 0);
   }
   //set_pose(0, 0, 0.1, M_PI);
-  set_pose(0, 0, 0.1, M_PI);
-  //set_pose(1, -13, 7, 3*M_PI/2.0);
+  //set_pose(0, 0, 0.1, M_PI);
+  set_pose(0, -10,10, 3*M_PI/2.0);
   /*
   set_pose(2, -1, -1, M_PI);
   set_pose(3, -1, 1, M_PI);
@@ -90,8 +90,8 @@ void set_pose(int index, double x, double y, double yaw)
 // 各obs frame
 void update(int index, double v, double omega)
 {
-  v += dist(engine);
-  omega += dist(engine);
+  //v += dist(engine);
+  //omega += dist(engine);
   obs_list[index].header.stamp = ros::Time::now();
   double yaw = tf::getYaw(obs_list[index].transform.rotation);
   obs_list[index].transform.translation.x += v * cos(yaw) / HZ;

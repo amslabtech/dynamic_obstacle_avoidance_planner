@@ -18,6 +18,7 @@ double RADIUS;// 衝突判定半径[m]
 int obs_num;
 const int SEARCH_RANGE = 30;
 const double COST_COL = 90;
+const double MIN_COST = 10;
 
 geometry_msgs::PoseArray robot_path;
 geometry_msgs::PoseArray obstacle_paths;
@@ -270,13 +271,13 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
         }
         double dist = sqrt(d_ix * d_ix + d_jy * d_jy);
         if(dist <= radius_col_l_grid){
-          if(local_costmap.data[local_costmap.info.width * j + i] < cost_l_col+10){
-            local_costmap.data[local_costmap.info.width * j + i] = cost_l_col+10;
+          if(local_costmap.data[local_costmap.info.width * j + i] < cost_l_col + MIN_COST){
+            local_costmap.data[local_costmap.info.width * j + i] = cost_l_col + MIN_COST;
           }
         }else if(dist <= radius_l_grid){
           double cost_l = cost_l_col - cost_l_col * (dist*RESOLUTION - radius_col_l) / (radius_max - radius_col_l);
-          if(local_costmap.data[local_costmap.info.width * j + i] < cost_l+10){
-            local_costmap.data[local_costmap.info.width * j + i] = cost_l+10;
+          if(local_costmap.data[local_costmap.info.width * j + i] < cost_l + MIN_COST){
+            local_costmap.data[local_costmap.info.width * j + i] = cost_l + MIN_COST;
           }
         }
       }
