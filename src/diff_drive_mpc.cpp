@@ -335,13 +335,18 @@ void MPCPathTracker::process(void)
   std::cout << "=== diff drive mpc ===" << std::endl;
   ros::Time start_time = ros::Time::now();
   bool transformed = false;
+  geometry_msgs::PoseStamped pose;
   try{
     listener.lookupTransform("map", "base_link", ros::Time(0), _transform);
     tf::transformStampedTFToMsg(_transform, transform);
     current_pose.header = transform.header;
-    current_pose.pose.position.x = 0;
-    current_pose.pose.position.y = 0;
+    current_pose.pose.position.x = transform.transform.translation.x;
+    current_pose.pose.position.y = transform.transform.translation.y;
     current_pose.pose.orientation = transform.transform.rotation;
+    pose.header = current_pose.header;
+    pose.pose.position.x = 0;
+    pose.pose.position.y = 0;
+    pose.pose.orientation = transform.transform.rotation;
     transformed = true;
   }catch(tf::TransformException &ex){
     std::cout << ex.what() << std::endl;
@@ -365,7 +370,7 @@ void MPCPathTracker::process(void)
       double omega_l = (v - omega * TREAD / (2.0 * WHEEL_RADIUS)) / WHEEL_RADIUS;
 
       Eigen::VectorXd state(5);
-      state << current_pose.pose.position.x, current_pose.pose.position.y, tf::getYaw(current_pose.pose.orientation), omega_r, omega_l;
+      state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation), omega_r, omega_l;
       std::cout << "path to vector" << std::endl;
       path_to_vector();
       std::cout << "solving" << std::endl;
@@ -376,16 +381,19 @@ void MPCPathTracker::process(void)
       velocity.angular.z = result[1];
       std::cout << velocity << std::endl;
       velocity_pub.publish(velocity);
+      // mpc表示
       geometry_msgs::PoseArray mpc_path;
       mpc_path.header.frame_id = "base_link";
+      double yaw0 = tf::getYaw(pose.pose.orientation);
       for(int i=0;i<T-1;i++){
         geometry_msgs::Pose temp;
-        temp.position.x = result[2+3*i];
-        temp.position.y = result[3+3*i];
+        temp.position.x = result[2+3*i] * cos(-yaw0) - result[3+3*i] * sin(-yaw0);
+        temp.position.y = result[2+3*i] * sin(-yaw0) + result[3+3*i] * cos(-yaw0);
         temp.orientation = tf::createQuaternionMsgFromYaw(result[4+3*i]);
         mpc_path.poses.push_back(temp);
       }
       path_pub.publish(mpc_path);
+      // ~mpc表示
       path.poses.erase(path.poses.begin());
     }
   }
