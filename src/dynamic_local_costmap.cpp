@@ -222,8 +222,8 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
    * cpでの障害物速度ベクトル
    */
   geometry_msgs::Twist synthetic_vector;
-  synthetic_vector.linear.x = (vo.linear.x - vr.linear.x) * 0.5;
-  synthetic_vector.linear.y = (vo.linear.y - vr.linear.y) * 0.5;
+  synthetic_vector.linear.x = (vo.linear.x - vr.linear.x);// * 0.5;
+  synthetic_vector.linear.y = (vo.linear.y - vr.linear.y);// * 0.5;
   double x = collision_pose.pose.position.x;
   double y = collision_pose.pose.position.y;
   double radius_min = 0.3;// 最小コスト半径=ロボット半径
@@ -275,7 +275,7 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
             local_costmap.data[local_costmap.info.width * j + i] = cost_l_col + MIN_COST;
           }
         }else if(dist <= radius_l_grid){
-          double cost_l = cost_l_col - cost_l_col * (dist*RESOLUTION - radius_col_l) / (radius_max - radius_col_l);
+          double cost_l = cost_l_col - cost_l_col * (dist*RESOLUTION - radius_col_l) / (radius_l - radius_col_l);
           if(local_costmap.data[local_costmap.info.width * j + i] < cost_l + MIN_COST){
             local_costmap.data[local_costmap.info.width * j + i] = cost_l + MIN_COST;
           }
