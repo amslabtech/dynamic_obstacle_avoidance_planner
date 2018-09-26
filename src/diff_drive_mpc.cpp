@@ -389,7 +389,7 @@ void MPCPathTracker::process(void)
         geometry_msgs::Pose temp;
         temp.position.x = result[2+3*i] * cos(-yaw0) - result[3+3*i] * sin(-yaw0);
         temp.position.y = result[2+3*i] * sin(-yaw0) + result[3+3*i] * cos(-yaw0);
-        temp.orientation = tf::createQuaternionMsgFromYaw(result[4+3*i]);
+        temp.orientation = tf::createQuaternionMsgFromYaw(result[4+3*i] - yaw0);
         mpc_path.poses.push_back(temp);
       }
       path_pub.publish(mpc_path);

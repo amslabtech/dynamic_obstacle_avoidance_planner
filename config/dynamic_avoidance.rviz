@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 745
   - Class: rviz/Selection
@@ -33,7 +34,7 @@ Visualization Manager:
       Cell Size: 1
       Class: rviz/Grid
       Color: 160; 160; 164
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.0299999993
         Value: Lines
@@ -46,7 +47,7 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 30
       Reference Frame: <Fixed Frame>
-      Value: true
+      Value: false
     - Class: rviz/TF
       Enabled: true
       Frame Timeout: 15
@@ -57,14 +58,14 @@ Visualization Manager:
         local_costmap:
           Value: false
         map:
-          Value: true
+          Value: false
         obs0:
           Value: true
         odom:
-          Value: true
+          Value: false
       Marker Scale: 1
       Name: TF
-      Show Arrows: true
+      Show Arrows: false
       Show Axes: true
       Show Names: true
       Tree:
@@ -149,7 +150,7 @@ Visualization Manager:
       Axes Radius: 0.00999999978
       Class: rviz/PoseArray
       Color: 255; 25; 0
-      Enabled: true
+      Enabled: false
       Head Length: 0.0700000003
       Head Radius: 0.0299999993
       Name: PoseArray
@@ -158,7 +159,7 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /waypoints
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path

@@ -608,8 +608,8 @@ int get_distance_to_global_path(int i, int j)
   int a2 = a * a;
   int b2 = b * b;
   int f1 = a * (y1 - j) - b * (x1 - i);
-  //return 0.05 * (f1 * f1) / (double)(a2 + b2);
-  return 0;
+  return 0.05 * (f1 * f1) / (double)(a2 + b2);
+  //return 0;
 }
 
 double get_difference(nav_msgs::Path& _path1, nav_msgs::Path& _path2)

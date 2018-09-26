@@ -226,7 +226,7 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
   synthetic_vector.linear.y = (vo.linear.y - vr.linear.y);// * 0.5;
   double x = collision_pose.pose.position.x;
   double y = collision_pose.pose.position.y;
-  double radius_min = 0.3;// 最小コスト半径=ロボット半径
+  double radius_min = 0.1;// 最小コスト半径=ロボット半径
   double radius_max = 1.5 * RADIUS;// 最大回避領域コスト半径
   double radius_col_max = RADIUS;// 最大衝突領域半径
   double radius_col_min = radius_min;// 最小衝突領域半径
