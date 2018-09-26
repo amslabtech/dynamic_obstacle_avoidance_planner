@@ -181,6 +181,7 @@ inline int get_index(double x, double y)
 
 inline int get_heuristic(int diff_x, int diff_y)
 {
+  /*
   if(diff_x < 0){
     diff_x *= -1;
   }
@@ -192,6 +193,8 @@ inline int get_heuristic(int diff_x, int diff_y)
   }else{
     return diff_y;
   }
+  */
+  return sqrt(diff_x*diff_x+diff_y*diff_y);
 }
 
 double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseStamped& _goal, nav_msgs::Path& _path)
@@ -605,8 +608,8 @@ int get_distance_to_global_path(int i, int j)
   int a2 = a * a;
   int b2 = b * b;
   int f1 = a * (y1 - j) - b * (x1 - i);
-  return 0.05 * (f1 * f1) / (double)(a2 + b2);
-  //return 0;
+  //return 0.05 * (f1 * f1) / (double)(a2 + b2);
+  return 0;
 }
 
 double get_difference(nav_msgs::Path& _path1, nav_msgs::Path& _path2)
