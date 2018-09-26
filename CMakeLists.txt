@@ -163,6 +163,7 @@ add_executable(diff_drive_mpc src/diff_drive_mpc.cpp)
 add_executable(base_costmap src/base_costmap.cpp)
 add_executable(obstacle_predictor_kf src/obstacle_predictor_kf.cpp)
 add_executable(collision_detector src/collision_detector.cpp)
+add_executable(trajectory_logger src/trajectory_logger.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -230,6 +231,9 @@ target_link_libraries(obstacle_predictor_kf
   ${catkin_LIBRARIES}
 )
 target_link_libraries(collision_detector
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(trajectory_logger
   ${catkin_LIBRARIES}
 )
 
