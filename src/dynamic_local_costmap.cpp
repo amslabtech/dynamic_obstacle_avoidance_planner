@@ -65,9 +65,6 @@ int main(int argc, char** argv)
   ros::Subscriber obstacle_predicted_paths_sub = nh.subscribe("/predicted_paths", 100, obstacle_paths_callback);
   ros::Subscriber obs_num_sub = nh.subscribe("/obs_num", 100, obs_num_callback);
 
-  //debug
-  ros::Publisher _obstacle_predicted_paths_pub = nh.advertise<geometry_msgs::PoseArray>("/_predicted_paths", 100);
-
   tf::TransformBroadcaster broadcaster;
   geometry_msgs::TransformStamped base_link_to_local_costmap;
 
@@ -83,13 +80,6 @@ int main(int argc, char** argv)
       bool transformed = false;
       try{
         listener.lookupTransform("map", "local_costmap", ros::Time(0), transform);
-        transformed = true;
-      }catch(tf::TransformException ex){
-        std::cout << ex.what() << std::endl;;
-      }
-      std::cout << "transformed" << std::endl;
-
-      if(transformed){
         // pathの座標系変換
         for(int i=0;i<robot_path.poses.size();i++){
           geometry_msgs::PoseStamped temp;
@@ -107,7 +97,13 @@ int main(int argc, char** argv)
           obstacle_paths.poses[i] = temp.pose;
           obstacle_paths.header = temp.header;
         }
-        _obstacle_predicted_paths_pub.publish(obstacle_paths);
+        transformed = true;
+      }catch(tf::TransformException ex){
+        std::cout << ex.what() << std::endl;;
+      }
+      std::cout << "transformed" << std::endl;
+
+      if(transformed){
         // costmap初期化
         setup_map();
         std::cout << "===calculate cost===" << std::endl;
