@@ -43,6 +43,7 @@ inline int get_j_from_y(double);
 inline int get_index(double, double);
 inline int get_heuristic(int, int);
 double get_difference(nav_msgs::Path&, nav_msgs::Path&);
+bool is_contained(std::vector<int>&, int);
 
 double MARGIN_WALL;
 
@@ -147,8 +148,26 @@ int main(int argc, char** argv)
         start.pose.position.y = 0;
         start.pose.orientation = tf::createQuaternionMsgFromYaw(0);
         double cost1 = calculate_astar(start, goal, path);
-        if(cost1 >= 0){
-          path_pub.publish(path);
+        for(int i=1;i<path.poses.size()-5;i++){
+          cells[get_index(path.poses[i].pose.position.x, path.poses[i].pose.position.y)].cost = 100;
+        }
+        double cost2 = calculate_astar(start, goal, path2);
+        if(get_difference(previous_path, path) <= get_difference(previous_path, path2)){
+          if(cost1 <= cost2){
+            path_pub.publish(path);
+            previous_path = path;
+          }else{
+            path_pub.publish(path2);
+            previous_path = path2;
+          }
+        }else{
+          if(cost2 <= cost1){
+            path_pub.publish(path2);
+            previous_path = path2;
+          }else{
+            path_pub.publish(path);
+            previous_path = path;
+          }
         }
         map_received = false;
         std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
@@ -227,17 +246,16 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
 
   int count = 0;
 
-  int max_open_count = 0;
+  int max_openlist_size = 0;
   double max_loop_time = 0;
 
   while(!open_list.empty() && ros::ok()){
     double loop_start_time = ros::Time::now().toSec();
-    int open_count = 0;
 
     count++;
     if(count > 10000){
       std::cout << "count > 10000" << std::endl;
-      return -1;
+      return 1000000;
     }
     int n_index = open_list[0];
     int n = cells[n_index].sum;//cells[n_index].step + get_heuristic(goal_i - _i, goal_j - _j);
@@ -255,6 +273,7 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
     }else{
       break;
     }
+
     int _index;
     int _i = n_index % local_costmap.info.width;
     int _j = (n_index - _i) / local_costmap.info.width;
@@ -262,19 +281,18 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
     //std::cout << "sum:" << cells[n_index].sum << std::endl;
     if(_j-1>=0){
       _index = (_j-1)*local_costmap.info.width+_i;//i, j-1
-      if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
+      if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
         if(!cells[_index].is_wall){
           cells[_index].step = cells[n_index].step + 1;
           cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-_i, goal_j-(_j-1)) + get_distance_to_global_path(_i, _j-1);
           cells[_index].parent_index = n_index;
           open_list.push_back(_index);
-          open_count++;
         }
-      }else if(std::find(open_list.begin(), open_list.end(), _index) != open_list.end()){
+      }else if(is_contained(open_list, _index)){
         if(cells[n_index].step + 1 < cells[_index].step){
           cells[_index].parent_index = n_index;
         }
-      }else if(std::find(close_list.begin(), close_list.end(), _index) != close_list.end()){
+      }else if(is_contained(close_list, _index)){
         if(cells[n_index].step + 1 < cells[_index].step){
           cells[_index].parent_index = n_index;
         }
@@ -282,19 +300,18 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
     }
     if(_j+1<local_costmap.info.width){
       _index = (_j+1)*local_costmap.info.width+_i;//i, j+1
-      if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
+      if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
         if(!cells[_index].is_wall){
           cells[_index].step = cells[n_index].step + 1;
           cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-_i, goal_j-(_j+1)) + get_distance_to_global_path(_i, _j+1);;
           cells[_index].parent_index = n_index;
           open_list.push_back(_index);
-          open_count++;
         }
-      }else if(std::find(open_list.begin(), open_list.end(), _index) != open_list.end()){
+      }else if(is_contained(open_list, _index)){
         if(cells[n_index].step + 1 < cells[_index].step){
           cells[_index].parent_index = n_index;
         }
-      }else if(std::find(close_list.begin(), close_list.end(), _index) != close_list.end()){
+      }else if(is_contained(close_list, _index)){
         if(cells[n_index].step + 1 < cells[_index].step){
           cells[_index].parent_index = n_index;
         }
@@ -303,19 +320,18 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
     }
     if(_i+1<local_costmap.info.height){
       _index = _j*local_costmap.info.width+(_i+1);//i+1, j
-      if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
+      if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
         if(!cells[_index].is_wall){
           cells[_index].step = cells[n_index].step + 1;
           cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-_j) + get_distance_to_global_path(_i+1, _j);
           cells[_index].parent_index = n_index;
           open_list.push_back(_index);
-          open_count++;
         }
-      }else if(std::find(open_list.begin(), open_list.end(), _index) != open_list.end()){
+      }else if(is_contained(open_list, _index)){
         if(cells[n_index].step + 1 < cells[_index].step){
           cells[_index].parent_index = n_index;
         }
-      }else if(std::find(close_list.begin(), close_list.end(), _index) != close_list.end()){
+      }else if(is_contained(close_list, _index)){
         if(cells[n_index].step + 1 < cells[_index].step){
           cells[_index].parent_index = n_index;
         }
@@ -323,19 +339,18 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
 
       if(_j-1>=0){
         _index = (_j-1)*local_costmap.info.width+(_i+1);//i+1, j-1
-        if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
+        if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
           if(!cells[_index].is_wall){
             cells[_index].step = cells[n_index].step + 1;
             cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-(_j-1)) + get_distance_to_global_path(_i+1, _j-1);
             cells[_index].parent_index = n_index;
             open_list.push_back(_index);
-            open_count++;
           }
-        }else if(std::find(open_list.begin(), open_list.end(), _index) != open_list.end()){
+        }else if(is_contained(open_list, _index)){
           if(cells[n_index].step + 1 < cells[_index].step){
             cells[_index].parent_index = n_index;
           }
-        }else if(std::find(close_list.begin(), close_list.end(), _index) != close_list.end()){
+        }else if(is_contained(close_list, _index)){
           if(cells[n_index].step + 1 < cells[_index].step){
             cells[_index].parent_index = n_index;
           }
@@ -344,19 +359,18 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
       }
       if(_j+1<local_costmap.info.width){
         _index = (_j+1)*local_costmap.info.width+(_i+1);//i+1, j+1
-        if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
+        if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
           if(!cells[_index].is_wall){
             cells[_index].step = cells[n_index].step + 1;
             cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-(_j+1)) + get_distance_to_global_path(_i+1, _j+1);
             cells[_index].parent_index = n_index;
             open_list.push_back(_index);
-            open_count++;
           }
-        }else if(std::find(open_list.begin(), open_list.end(), _index) != open_list.end()){
+        }else if(is_contained(open_list, _index)){
           if(cells[n_index].step + 1 < cells[_index].step){
             cells[_index].parent_index = n_index;
           }
-        }else if(std::find(close_list.begin(), close_list.end(), _index) != close_list.end()){
+        }else if(is_contained(close_list, _index)){
           if(cells[n_index].step + 1 < cells[_index].step){
             cells[_index].parent_index = n_index;
           }
@@ -367,19 +381,18 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
     }
     if(_i-1>=0){
       _index = _j*local_costmap.info.width+(_i-1);//i-1, j
-      if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
+      if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
         if(!cells[_index].is_wall){
           cells[_index].step = cells[n_index].step + 1;
           cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-_j) + get_distance_to_global_path(_i-1, _j);
           cells[_index].parent_index = n_index;
           open_list.push_back(_index);
-          open_count++;
         }
-      }else if(std::find(open_list.begin(), open_list.end(), _index) != open_list.end()){
+      }else if(is_contained(open_list, _index)){
         if(cells[n_index].step + 1 < cells[_index].step){
           cells[_index].parent_index = n_index;
         }
-      }else if(std::find(close_list.begin(), close_list.end(), _index) != close_list.end()){
+      }else if(is_contained(close_list, _index)){
         if(cells[n_index].step + 1 < cells[_index].step){
           cells[_index].parent_index = n_index;
         }
@@ -387,19 +400,18 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
 
       if(_j-1>=0){
         _index = (_j-1)*local_costmap.info.width+(_i-1);//i-1, j-1
-        if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
+        if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
           if(!cells[_index].is_wall){
             cells[_index].step = cells[n_index].step + 1;
             cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-(_j-1)) + get_distance_to_global_path(_i-1, _j-1);
             cells[_index].parent_index = n_index;
             open_list.push_back(_index);
-            open_count++;
           }
-        }else if(std::find(open_list.begin(), open_list.end(), _index) != open_list.end()){
+        }else if(is_contained(open_list, _index)){
           if(cells[n_index].step + 1 < cells[_index].step){
             cells[_index].parent_index = n_index;
           }
-        }else if(std::find(close_list.begin(), close_list.end(), _index) != close_list.end()){
+        }else if(is_contained(close_list, _index)){
           if(cells[n_index].step + 1 < cells[_index].step){
             cells[_index].parent_index = n_index;
           }
@@ -408,19 +420,18 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
       }
       if(_j+1<local_costmap.info.width){
         _index = (_j+1)*local_costmap.info.width+(_i-1);//i-1, j+1
-        if((std::find(open_list.begin(), open_list.end(), _index) == open_list.end()) && (std::find(close_list.begin(), close_list.end(), _index) == close_list.end())){
+        if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
           if(!cells[_index].is_wall){
             cells[_index].step = cells[n_index].step + 1;
             cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-(_j+1)) + get_distance_to_global_path(_i-1, _j+1);
             cells[_index].parent_index = n_index;
             open_list.push_back(_index);
-            open_count++;
           }
-        }else if(std::find(open_list.begin(), open_list.end(), _index) != open_list.end()){
+        }else if(is_contained(open_list, _index)){
           if(cells[n_index].step + 1 < cells[_index].step){
             cells[_index].parent_index = n_index;
           }
-        }else if(std::find(close_list.begin(), close_list.end(), _index) != close_list.end()){
+        }else if(is_contained(close_list, _index)){
           if(cells[n_index].step + 1 < cells[_index].step){
             cells[_index].parent_index = n_index;
           }
@@ -429,12 +440,12 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
       double loop_time = ros::Time::now().toSec() - loop_start_time;
       if(loop_time > max_loop_time){
         max_loop_time = loop_time;
-        max_open_count = open_count;
+        max_openlist_size = open_list.size();
       }
     }
   }
   std::cout << "max_loop_time = " << max_loop_time << std::endl;
-  std::cout << "opened = " << max_open_count << std::endl;
+  std::cout << "openlist = " << max_openlist_size << std::endl;
   std::cout << "count = " << count << std::endl;
   nav_msgs::Path temp_path;
   temp_path.header.frame_id = "local_costmap";
@@ -599,6 +610,7 @@ void predict_intersection_point(geometry_msgs::Pose a, geometry_msgs::Pose b, ge
  */
 int get_distance_to_global_path(int i, int j)
 {
+  //return 0;
   int x1 = get_i_from_x(waypoint0.pose.position.x);
   int x2 = get_i_from_x(waypoint1.pose.position.x);
   int y1 = get_j_from_y(waypoint0.pose.position.y);
@@ -609,7 +621,6 @@ int get_distance_to_global_path(int i, int j)
   int b2 = b * b;
   int f1 = a * (y1 - j) - b * (x1 - i);
   return 0.05 * (f1 * f1) / (double)(a2 + b2);
-  //return 0;
 }
 
 double get_difference(nav_msgs::Path& _path1, nav_msgs::Path& _path2)
@@ -621,4 +632,14 @@ double get_difference(nav_msgs::Path& _path1, nav_msgs::Path& _path2)
     sum += dx * dx + dy * dy;
   }
   return sum;
+}
+
+bool is_contained(std::vector<int>& v, int val)
+{
+  for(int i=0;i<v.size();i++){
+    if(v[i] == val){
+      return true;
+    }
+  }
+  return false;
 }
