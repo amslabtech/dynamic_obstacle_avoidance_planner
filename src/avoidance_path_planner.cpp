@@ -148,7 +148,7 @@ int main(int argc, char** argv)
         start.pose.position.y = 0;
         start.pose.orientation = tf::createQuaternionMsgFromYaw(0);
         double cost1 = calculate_astar(start, goal, path);
-        for(int i=1;i<path.poses.size()-5;i++){
+        for(int i=1;i<path.poses.size()-20;i++){
           cells[get_index(path.poses[i].pose.position.x, path.poses[i].pose.position.y)].cost = 100;
         }
         double cost2 = calculate_astar(start, goal, path2);
@@ -223,6 +223,7 @@ double calculate_astar(geometry_msgs::PoseStamped& _start, geometry_msgs::PoseSt
   for(int i=0;i<local_costmap.info.height*local_costmap.info.width;i++){
     cells[i].sum = -1;
     cells[i].parent_index = -1;
+    cells[i].step = 0;
     if(cells[i].is_wall){
       cells[i].cost = 100;
     }
