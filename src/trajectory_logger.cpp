@@ -21,8 +21,10 @@ int main(int argc, char** argv)
 
   ros::Publisher robot_path_pub = nh.advertise<nav_msgs::Path>("/trajectory/robot", 1);
   ros::Publisher obs0_path_pub = nh.advertise<nav_msgs::Path>("/trajectory/obs0", 1);
-  ros::Publisher robot_viz_pub = nh.advertise<visualization_msgs::MarkerArray>("/markers/robot", 1);
-  ros::Publisher obs0_viz_pub = nh.advertise<visualization_msgs::MarkerArray>("/markers/obs0", 1);
+  ros::Publisher robot_viz_pub = nh.advertise<visualization_msgs::Marker>("/marker/robot", 1);
+  ros::Publisher obs0_viz_pub = nh.advertise<visualization_msgs::Marker>("/marker/obs0", 1);
+  ros::Publisher robot_viz_array_pub = nh.advertise<visualization_msgs::MarkerArray>("/markers/robot", 1);
+  ros::Publisher obs0_viz_array_pub = nh.advertise<visualization_msgs::MarkerArray>("/markers/obs0", 1);
 
   nav_msgs::Path robot_path;
   nav_msgs::Path obs0_path;
@@ -66,16 +68,17 @@ int main(int argc, char** argv)
       pose.pose.orientation.z = robot_transform.getRotation().getZ();
       pose.pose.orientation.w = robot_transform.getRotation().getW();
       robot_path.poses.push_back(pose);
+      viz.header.stamp = ros::Time::now();
+      viz.pose = pose.pose;
+      viz.scale.z = 0.6;
+      viz.color.r = 0;
+      viz.color.g = 1;
+      viz.color.b = 0;
+      viz.color.a = 1;
+      viz.lifetime = ros::Duration(0);
+      robot_viz_pub.publish(viz);
       if(count%10==0){
-        viz.header.stamp = ros::Time::now();
         viz.id = count;
-        viz.pose = pose.pose;
-        viz.scale.z = 0.6;
-        viz.color.r = 0;
-        viz.color.g = 1;
-        viz.color.b = 0;
-        viz.color.a = 1;
-        viz.lifetime = ros::Duration(0);
         robot_viz.markers.push_back(viz);
       }
 
@@ -89,16 +92,17 @@ int main(int argc, char** argv)
       pose.pose.orientation.z = obs0_transform.getRotation().getZ();
       pose.pose.orientation.w = obs0_transform.getRotation().getW();
       obs0_path.poses.push_back(pose);
+      viz.header.stamp = ros::Time::now();
+      viz.pose = pose.pose;
+      viz.scale.z = 0.5;
+      viz.color.r = 1;
+      viz.color.g = 0;
+      viz.color.b = 0;
+      viz.color.a = 1;
+      viz.lifetime = ros::Duration(0);
+      obs0_viz_pub.publish(viz);
       if(count%10==0){
-        viz.header.stamp = ros::Time::now();
         viz.id = count;
-        viz.pose = pose.pose;
-        viz.scale.z = 0.5;
-        viz.color.r = 1;
-        viz.color.g = 0;
-        viz.color.b = 0;
-        viz.color.a = 1;
-        viz.lifetime = ros::Duration(0);
         obs0_viz.markers.push_back(viz);
       }
       count++;
@@ -106,8 +110,8 @@ int main(int argc, char** argv)
     }
     robot_path_pub.publish(robot_path);
     obs0_path_pub.publish(obs0_path);
-    robot_viz_pub.publish(robot_viz);
-    obs0_viz_pub.publish(obs0_viz);
+    robot_viz_array_pub.publish(robot_viz);
+    obs0_viz_array_pub.publish(obs0_viz);
 
     ros::spinOnce();
     loop_rate.sleep();
