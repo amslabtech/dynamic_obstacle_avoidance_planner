@@ -70,13 +70,14 @@ int main(int argc, char** argv)
       robot_path.poses.push_back(pose);
       viz.header.stamp = ros::Time::now();
       viz.pose = pose.pose;
-      viz.scale.z = 0.6;
+      viz.scale.z = 0.2;
       viz.color.r = 0;
       viz.color.g = 1;
       viz.color.b = 0;
       viz.color.a = 1;
-      viz.lifetime = ros::Duration(0);
+      viz.lifetime = ros::Duration(0.1);
       robot_viz_pub.publish(viz);
+      viz.lifetime = ros::Duration(0);
       if(count%10==0){
         viz.id = count;
         robot_viz.markers.push_back(viz);
@@ -94,13 +95,14 @@ int main(int argc, char** argv)
       obs0_path.poses.push_back(pose);
       viz.header.stamp = ros::Time::now();
       viz.pose = pose.pose;
-      viz.scale.z = 0.5;
+      viz.scale.z = 0.1;
       viz.color.r = 1;
       viz.color.g = 0;
       viz.color.b = 0;
       viz.color.a = 1;
-      viz.lifetime = ros::Duration(0);
+      viz.lifetime = ros::Duration(0.1);
       obs0_viz_pub.publish(viz);
+      viz.lifetime = ros::Duration(0);
       if(count%10==0){
         viz.id = count;
         obs0_viz.markers.push_back(viz);
