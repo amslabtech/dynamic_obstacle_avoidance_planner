@@ -77,7 +77,7 @@ const double HZ = 10;
 // 目標速度
 const double VREF = 1.0;// [m/s]
 // 最大角速度
-const double MAX_ANGULAR_VELOCITY = 5.0;// [rad/s]
+const double MAX_ANGULAR_VELOCITY = 2.0;// [rad/s]
 // ホイール角加速度
 const double WHEEL_ANGULAR_ACCELERATION_LIMIT = 5.0;// [rad/s^2]
 // ホイール角速度
@@ -262,14 +262,14 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   // state
   for(int i=0;i<T-1;i++){
     // pathとの距離
-    fg[0] += 3000.0 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
+    fg[0] += 0.2 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
     // 向き
     //fg[0] += 0.1 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
   }
   // input
   for(int i=0;i<T-2;i++){
     // 速度
-    fg[0] += 0.01 * CppAD::pow(VREF - vars[vx_start + i], 2);
+    fg[0] += 0.1 * CppAD::pow(VREF - vars[vx_start + i], 2);
     // 角加速度
     fg[0] += 0.1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i+ 1], 2);
   }

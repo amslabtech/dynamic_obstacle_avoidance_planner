@@ -99,6 +99,7 @@ int main(int argc, char** argv)
         double vy = current_velocity.linear.y;
         double v = sqrt(vx*vx + vy*vy);
         double omega = current_velocity.angular.z;
+            omega += ANGULAR_ACCELERATION * DT;
         double yaw = tf::getYaw(current_pose.orientation);
         for(int j=0;j<PREDICTION_STEP;j++){
           geometry_msgs::Pose pose;
@@ -111,7 +112,7 @@ int main(int argc, char** argv)
           vy = v * sin(yaw);
           v = sqrt(vx*vx + vy*vy);
           if(omega + ANGULAR_ACCELERATION * DT <= MAX_ANGULAR_VELOCITY){
-            omega += ANGULAR_ACCELERATION * DT;
+            //omega += ANGULAR_ACCELERATION * DT;
           }
           predicted_path.poses.push_back(pose);
         }
@@ -123,6 +124,7 @@ int main(int argc, char** argv)
         double vy = current_velocity.linear.y;
         double v = sqrt(vx*vx + vy*vy);
         double omega = current_velocity.angular.z;
+            omega -= ANGULAR_ACCELERATION * DT;
         double yaw = tf::getYaw(current_pose.orientation);
         for(int j=0;j<PREDICTION_STEP;j++){
           geometry_msgs::Pose pose;
@@ -135,7 +137,7 @@ int main(int argc, char** argv)
           vy = v * sin(yaw);
           v = sqrt(vx*vx + vy*vy);
           if(omega - ANGULAR_ACCELERATION * DT >= -MAX_ANGULAR_VELOCITY){
-            omega -= ANGULAR_ACCELERATION * DT;
+            //omega -= ANGULAR_ACCELERATION * DT;
           }
           predicted_path.poses.push_back(pose);
         }

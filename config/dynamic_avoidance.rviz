@@ -49,36 +49,19 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: false
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_link:
-          Value: true
-        local_costmap:
-          Value: false
-        map:
-          Value: false
-        obs0:
-          Value: true
-        odom:
-          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: false
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          local_costmap:
-            {}
-          obs0:
-            {}
-          odom:
-            base_link:
-              {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Alpha: 1
       Arrow Length: 0.0500000007
       Axes Length: 0.300000012
@@ -86,12 +69,12 @@ Visualization Manager:
       Class: rviz/PoseArray
       Color: 255; 25; 0
       Enabled: true
-      Head Length: 0.0700000003
+      Head Length: 0
       Head Radius: 0.0299999993
       Name: PoseArray
-      Shaft Length: 0.230000004
-      Shaft Radius: 0.00999999978
-      Shape: Arrow (Flat)
+      Shaft Length: 0.100000001
+      Shaft Radius: 0.0500000007
+      Shape: Arrow (3D)
       Topic: /predicted_paths
       Unreliable: false
       Value: true
@@ -102,12 +85,12 @@ Visualization Manager:
       Class: rviz/PoseArray
       Color: 0; 170; 0
       Enabled: true
-      Head Length: 0.0700000003
-      Head Radius: 0.0299999993
+      Head Length: 0
+      Head Radius: 0.0500000007
       Name: PoseArray
-      Shaft Length: 0.230000004
-      Shaft Radius: 0.00999999978
-      Shape: Arrow (Flat)
+      Shaft Length: 0.100000001
+      Shaft Radius: 0.0500000007
+      Shape: Arrow (3D)
       Topic: /robot_predicted_path
       Unreliable: false
       Value: true
@@ -189,7 +172,7 @@ Visualization Manager:
       Axes Radius: 0.00999999978
       Class: rviz/PoseArray
       Color: 255; 25; 0
-      Enabled: true
+      Enabled: false
       Head Length: 0.0700000003
       Head Radius: 0.0299999993
       Name: PoseArray
@@ -198,7 +181,7 @@ Visualization Manager:
       Shape: Arrow (Flat)
       Topic: /mpc_path
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
@@ -246,35 +229,43 @@ Visualization Manager:
       Unreliable: false
       Value: false
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /markers/obs0
       Name: MarkerArray
       Namespaces:
-        robot_viz: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /markers/robot
       Name: MarkerArray
       Namespaces:
-        robot_viz: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /marker/obs0
       Name: Marker
       Namespaces:
-        robot_viz: true
-      Queue Size: 100
+        {}
+      Queue Size: 1
       Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /marker/robot
       Name: Marker
       Namespaces:
-        robot_viz: true
+        {}
+      Queue Size: 1
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /lines
+      Name: Marker
+      Namespaces:
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -302,16 +293,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 59.9257774
+      Distance: 50.5862885
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -10.9731531
-        Y: 0.39279139
-        Z: -22.7041988
+        X: -10.9376163
+        Y: -0.538702309
+        Z: -23.4817638
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false

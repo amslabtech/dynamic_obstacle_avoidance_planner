@@ -42,13 +42,8 @@ int main(int argc, char** argv)
     set_pose(i, 0, 0, 0);
   }
   //set_pose(0, 0, 0.1, M_PI);
-  //set_pose(0, 0, 0.1, M_PI);
-  set_pose(0, -10,10, 3*M_PI/2.0);
-  /*
-  set_pose(2, -1, -1, M_PI);
-  set_pose(3, -1, 1, M_PI);
-  set_pose(4, 1, -1, M_PI);
-  */
+  set_pose(0, -10, 7, 3*M_PI/2.0);
+  //set_pose(0, -8, 0, 0);
 
   ros::Rate loop_rate(HZ);
 
@@ -57,7 +52,7 @@ int main(int argc, char** argv)
   while(ros::ok()){
     // 速度
     update(0, 1.0, 0);
-    //update(1, 1.0, 0);
+    //update(0, 0.5, 0);
     obs_broadcaster.sendTransform(obs_list);
 
     std_msgs::Int32 num;

@@ -112,7 +112,7 @@ int main(int argc, char** argv)
         for(int j=0;j<obs_num;j++){
           for(int k=1;k<3;k++){
             for(int i=0;i<PREDICTION_STEP;i++){
-              if(predict_approaching(robot_path.poses[i], robot_path.poses[i+k*(PREDICTION_STEP*1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i])){
+              if(predict_approaching(robot_path.poses[i], robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i])){
                 geometry_msgs::PoseStamped collision_pose;
                 collision_pose.pose = obstacle_paths.poses[j*(PREDICTION_STEP+1)+i];
                 collision_pose.header.frame_id = "map";

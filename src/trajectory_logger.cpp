@@ -4,9 +4,30 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <geometry_msgs/PoseArray.h>
 
 
-double HZ = 10.0;
+double HZ = 100.0;
+
+visualization_msgs::Marker lines;
+
+void path_callback(const geometry_msgs::PoseArrayConstPtr& msg)
+{
+  lines.points.clear();
+  geometry_msgs::PoseArray pose_array;
+  pose_array = *msg;
+  lines.header = pose_array.header;
+  lines.color.r = 0;
+  lines.color.g = 0;
+  lines.color.b = 1;
+  lines.color.a = 1;
+  for(int i=0;i<36;i++){
+    lines.points.push_back(pose_array.poses[i].position);
+    lines.points.push_back(pose_array.poses[i+36].position);
+    lines.points.push_back(pose_array.poses[i].position);
+    lines.points.push_back(pose_array.poses[i+72].position);
+  }
+}
 
 int main(int argc, char** argv)
 {
@@ -26,6 +47,9 @@ int main(int argc, char** argv)
   ros::Publisher robot_viz_array_pub = nh.advertise<visualization_msgs::MarkerArray>("/markers/robot", 1);
   ros::Publisher obs0_viz_array_pub = nh.advertise<visualization_msgs::MarkerArray>("/markers/obs0", 1);
 
+  ros::Subscriber robot_path_sub = nh.subscribe("/robot_predicted_path", 1, path_callback);
+  ros::Publisher robot_line_pub = nh.advertise<visualization_msgs::Marker>("/lines", 1);
+
   nav_msgs::Path robot_path;
   nav_msgs::Path obs0_path;
   visualization_msgs::MarkerArray robot_viz;
@@ -43,6 +67,13 @@ int main(int argc, char** argv)
   viz.action = visualization_msgs::Marker::ADD;
   viz.header.frame_id = "map";
   viz.ns = "robot_viz";
+
+  lines.type = visualization_msgs::Marker::LINE_LIST;
+  lines.lifetime = ros::Duration(0.01);
+  lines.action = visualization_msgs::Marker::ADD;
+  lines.header.frame_id = "map";
+  lines.ns = "lines";
+  lines.scale.x = 0.01;
 
   int count = 0;
 
@@ -75,7 +106,7 @@ int main(int argc, char** argv)
       viz.color.g = 1;
       viz.color.b = 0;
       viz.color.a = 1;
-      viz.lifetime = ros::Duration(0.1);
+      viz.lifetime = ros::Duration(0.01);
       robot_viz_pub.publish(viz);
       viz.lifetime = ros::Duration(0);
       if(count%10==0){
@@ -100,7 +131,7 @@ int main(int argc, char** argv)
       viz.color.g = 0;
       viz.color.b = 0;
       viz.color.a = 1;
-      viz.lifetime = ros::Duration(0.1);
+      viz.lifetime = ros::Duration(0.01);
       obs0_viz_pub.publish(viz);
       viz.lifetime = ros::Duration(0);
       if(count%10==0){
@@ -114,6 +145,7 @@ int main(int argc, char** argv)
     obs0_path_pub.publish(obs0_path);
     robot_viz_array_pub.publish(robot_viz);
     obs0_viz_array_pub.publish(obs0_viz);
+    robot_line_pub.publish(lines);
 
     ros::spinOnce();
     loop_rate.sleep();
