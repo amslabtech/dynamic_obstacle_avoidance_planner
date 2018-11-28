@@ -1,0 +1,7 @@
+<launch>
+
+  <node pkg="four_wheel_drive_independent_steering" name="robot_predictor" type="robot_predictor" output="screen">
+    <param name="ANGULAR_ACCELERATION" value="2.0" type="double"/>
+    <param name="MAX_ANGULAR_VELOCITY" value="2.0" type="double"/>
+  </node>
+</launch>

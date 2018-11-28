@@ -1,0 +1,8 @@
+<launch>
+
+  <node pkg="four_wheel_drive_independent_steering" name="dynamic_local_costmap" type="dynamic_local_costmap" output="screen">
+    <param name="RADIUS" value="0.6"/>
+
+  </node>
+
+</launch>
