@@ -1,5 +1,0 @@
-<launch>
-
-  <include file="$(find four_wheel_drive_independent_steering)/launch/sin_curve.launch"/>
-
-</launch>

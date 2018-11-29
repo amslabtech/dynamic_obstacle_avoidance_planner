@@ -1,5 +1,0 @@
-<launch>
-  <node pkg="four_wheel_drive_independent_steering" name="diff_drive_mpc" type="diff_drive_mpc" output="screen">
-    <remap from="path" to="intermediate_path"/>
-  </node>
-</launch>

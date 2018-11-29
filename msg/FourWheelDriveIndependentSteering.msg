@@ -1,9 +1,0 @@
-float64 front_right_wheel_velocity
-float64 front_right_steering_angle
-float64 front_left_wheel_velocity
-float64 front_left_steering_angle
-float64 rear_right_wheel_velocity
-float64 rear_right_steering_angle
-float64 rear_left_wheel_velocity
-float64 rear_left_steering_angle
-
