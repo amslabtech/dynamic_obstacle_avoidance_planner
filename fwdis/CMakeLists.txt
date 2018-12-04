@@ -236,7 +236,8 @@ target_link_libraries(trajectory_logger
   ${catkin_LIBRARIES}
 )
 
-add_dependencies(fwdis_controller fwdis_msgs)
+add_dependencies(fwdis_controller fwdis_msgs_generate_messages_cpp)
+add_dependencies(fwdis_gazebo fwdis_msgs_generate_messages_cpp)
 
 #############
 ## Install ##
