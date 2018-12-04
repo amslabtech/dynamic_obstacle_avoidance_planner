@@ -16,4 +16,4 @@ before_install:
     - docker-compose up -d
 
 script:
-    - docker-compose run master /bin/bash -c "catkin_ws/src && git clone https://github.com/amslabtech/project_high_agility && cd ../ && catkin_make"
+    - docker-compose run master /bin/bash -c "cd catkin_ws/src && git clone https://github.com/amslabtech/project_high_agility && cd ../ && catkin_make"
