@@ -236,6 +236,8 @@ target_link_libraries(trajectory_logger
   ${catkin_LIBRARIES}
 )
 
+add_dependencies(fwdis_controller fwdis_msgs)
+
 #############
 ## Install ##
 #############
