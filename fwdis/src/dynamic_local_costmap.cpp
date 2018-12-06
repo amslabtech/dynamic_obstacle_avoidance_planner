@@ -12,7 +12,7 @@ const double PREDICTION_TIME = 3.5;// [s], 軌道予測時間
 const double DT = 0.1;// [s]
 const int PREDICTION_STEP = PREDICTION_TIME / DT;
 const double WIDTH = 10;// [m]
-const double RESOLUTION = 0.05;// [m]
+const double RESOLUTION = 0.10;// [m]
 const double HZ = 10;
 double RADIUS;// 衝突判定半径[m]
 int obs_num;
