@@ -1,7 +1,7 @@
 #!/bin/bash
 
 gnome-terminal -e "/opt/ros/${ROS_DISTRO}/bin/roscore" --geometry=45x12+0+0 &
-sleep 0.5s
+sleep 3s
 
 gnome-terminal -e "/opt/ros/${ROS_DISTRO}/bin/rosrun rviz rviz -d ../config/dynamic_avoidance.rviz" --geometry=45x12+475+0 &
 sleep 0.5s
