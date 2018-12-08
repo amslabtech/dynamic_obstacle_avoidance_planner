@@ -42,5 +42,5 @@ sleep 0.1s
 gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering collision_detector.launch'" --geometry=45x12+0+702 &
 sleep 0.1s
 
-#gnome-terminal -e "docker run -it --net='host' --rm fwdis:latest /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && rosrun four_wheel_drive_independent_steering trajectory_logger'" --geometry=45x12+475+702 &
+#gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rorun four_wheel_drive_independent_steering trajectory_logger'" --geometry=45x12+475+702 &
 sleep 0.1s
