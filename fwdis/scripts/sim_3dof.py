@@ -18,7 +18,7 @@ def velocity_callback(data):
   velocity = data
 
 def process():
-  rospy.Subscriber('/velocity', Twist, velocity_callback)
+  rospy.Subscriber('/t_frog/cmd_vel', Twist, velocity_callback)
 
   print "=== sim 3dof ==="
 
