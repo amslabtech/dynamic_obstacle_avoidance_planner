@@ -37,14 +37,14 @@ int main(int argc, char** argv)
 
   bool first_transform = true;
 
-  predicted_path.header.frame_id = "map";
+  predicted_path.header.frame_id = "world";
 
   ros::Rate loop_rate(HZ);
 
   while(ros::ok()){
     bool transformed = false;
     try{
-      listener.lookupTransform("map", "base_link", ros::Time(0), _transform);
+      listener.lookupTransform("world", "vicon/base_link/base_link", ros::Time(0), _transform);
       geometry_msgs::TransformStamped transform;
       tf::transformStampedTFToMsg(_transform, transform);
       geometry_msgs::Pose pose;

@@ -6,7 +6,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/Int32.h>
 
-int NUM = 0;
+int NUM = 1;
 double RADIUS = 0;
 
 void obs_num_callback(const std_msgs::Int32ConstPtr& msg)
@@ -29,10 +29,10 @@ int main(int argc, char** argv)
   tf::TransformListener listener;
 
   geometry_msgs::PoseArray current_poses;
-  current_poses.header.frame_id = "map";
+  current_poses.header.frame_id = "world";
 
   geometry_msgs::PoseStamped current_robot;
-  current_robot.header.frame_id = "map";
+  current_robot.header.frame_id = "world";
 
   ros::Rate loop_rate(10);
 
@@ -43,7 +43,7 @@ int main(int argc, char** argv)
       try{
         {
           tf::StampedTransform _transform;
-          listener.lookupTransform("map", "base_link", ros::Time(0), _transform);
+          listener.lookupTransform("world", "vicon/base_link/base_link", ros::Time(0), _transform);
           geometry_msgs::TransformStamped transform;
           tf::transformStampedTFToMsg(_transform, transform);
           current_robot.pose.position.x = transform.transform.translation.x;
@@ -53,7 +53,7 @@ int main(int argc, char** argv)
         for(int i=0;i<NUM;i++){
           std::string frame = "obs" + std::to_string(i);
           tf::StampedTransform _transform;
-          listener.lookupTransform("map", frame, ros::Time(0), _transform);
+          listener.lookupTransform("world", frame, ros::Time(0), _transform);
           geometry_msgs::TransformStamped transform;
           tf::transformStampedTFToMsg(_transform, transform);
           geometry_msgs::Pose pose;

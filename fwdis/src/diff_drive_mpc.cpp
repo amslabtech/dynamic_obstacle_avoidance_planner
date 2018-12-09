@@ -75,17 +75,17 @@ const int T = 15;
 const double DT = 0.1;// [s]
 const double HZ = 10;
 // 目標速度
-const double VREF = 1.0;// [m/s]
+const double VREF = 0.5;// [m/s]
 // 最大角速度
-const double MAX_ANGULAR_VELOCITY = 2.0;// [rad/s]
+const double MAX_ANGULAR_VELOCITY = 0.8;// [rad/s]
 // ホイール角加速度
-const double WHEEL_ANGULAR_ACCELERATION_LIMIT = 5.0;// [rad/s^2]
+const double WHEEL_ANGULAR_ACCELERATION_LIMIT = 2.0;// [rad/s^2]
 // ホイール角速度
-const double WHEEL_ANGULAR_VELOCITY_LIMIT = 16;// [rad/s]
+const double WHEEL_ANGULAR_VELOCITY_LIMIT = 24;// [rad/s]
 // ホイール半径
-const double WHEEL_RADIUS = 0.125;// [m]
+const double WHEEL_RADIUS = 0.075;// [m]
 // トレッド
-const double TREAD = 0.6;// [m]
+const double TREAD = 0.5;// [m]
 
 // state
 size_t x_start = 0;
@@ -337,7 +337,7 @@ void MPCPathTracker::process(void)
   bool transformed = false;
   geometry_msgs::PoseStamped pose;
   try{
-    listener.lookupTransform("map", "base_link", ros::Time(0), _transform);
+    listener.lookupTransform("world", "vicon/base_link/base_link", ros::Time(0), _transform);
     tf::transformStampedTFToMsg(_transform, transform);
     current_pose.header = transform.header;
     current_pose.pose.position.x = transform.transform.translation.x;
@@ -383,7 +383,7 @@ void MPCPathTracker::process(void)
       velocity_pub.publish(velocity);
       // mpc表示
       geometry_msgs::PoseArray mpc_path;
-      mpc_path.header.frame_id = "base_link";
+      mpc_path.header.frame_id = "vicon/base_link/base_link";
       double yaw0 = tf::getYaw(pose.pose.orientation);
       for(int i=0;i<T-1;i++){
         geometry_msgs::Pose temp;

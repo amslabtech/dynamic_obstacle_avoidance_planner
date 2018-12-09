@@ -14,7 +14,7 @@ int main(int argc, char** argv)
 
   tf::TransformListener listener;
 
-  base_costmap.header.frame_id = "map";
+  base_costmap.header.frame_id = "world";
   base_costmap.header.stamp = ros::Time::now();
   base_costmap.child_frame_id = "local_costmap";
   //base_costmap.transform.translation.x = 0;
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     bool transformed = false;
     tf::StampedTransform transform;
     try{
-      listener.lookupTransform("map", "base_link", ros::Time(0), transform);
+      listener.lookupTransform("world", "vicon/base_link/base_link", ros::Time(0), transform);
       transformed = true;
     }catch(tf::TransformException ex){
       std::cout << ex.what() << std::endl;

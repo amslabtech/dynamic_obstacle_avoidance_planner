@@ -15,7 +15,7 @@ int NUM;
 
 std::random_device seed;
 std::mt19937 engine(seed());
-std::normal_distribution<> dist(0.0, 0.05);
+std::normal_distribution<> dist(0.0, 0.005);
 
 double get_yaw(geometry_msgs::Quaternion);
 void set_pose(int, double, double, double);
@@ -37,12 +37,12 @@ int main(int argc, char** argv)
 
   // 初期位置設定
   for(int i=0;i<NUM;i++){
-    obs_list[i].header.frame_id = "map";
-    obs_list[i].child_frame_id = "obs" + std::to_string(i);
+    obs_list[i].header.frame_id = "world";
+    obs_list[i].child_frame_id = "vicon/obs/obs";//"obs" + std::to_string(i);
     set_pose(i, 0, 0, 0);
   }
-  //set_pose(0, 0, 0.1, M_PI);
-  set_pose(0, -10, 7, 3*M_PI/2.0);
+  set_pose(0, 0, 0.1, M_PI);
+  //set_pose(0, -10, 7, 3*M_PI/2.0);
   //set_pose(0, -8, 0, 0);
 
   ros::Rate loop_rate(HZ);
@@ -51,8 +51,8 @@ int main(int argc, char** argv)
 
   while(ros::ok()){
     // 速度
-    update(0, 1.0, 0);
-    //update(0, 0.5, 0);
+    //update(0, 1.0, 0);
+    update(0, 0.5, 0);
     obs_broadcaster.sendTransform(obs_list);
 
     std_msgs::Int32 num;
@@ -85,8 +85,8 @@ void set_pose(int index, double x, double y, double yaw)
 // 各obs frame
 void update(int index, double v, double omega)
 {
-  //v += dist(engine);
-  //omega += dist(engine);
+  v += dist(engine);
+  omega += dist(engine);
   obs_list[index].header.stamp = ros::Time::now();
   double yaw = tf::getYaw(obs_list[index].transform.rotation);
   obs_list[index].transform.translation.x += v * cos(yaw) / HZ;

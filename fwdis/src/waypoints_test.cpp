@@ -11,7 +11,7 @@ int main(int argc, char** argv)
 
   std::cout << "=== waypoints_test ===" << std::endl;
   geometry_msgs::PoseArray wp;
-  wp.header.frame_id = "map";
+  wp.header.frame_id = "world";
   wp.poses.resize(2);
   wp.poses[0].orientation = wp.poses[1].orientation = tf::createQuaternionMsgFromYaw(0);
   wp.poses[0].position.x = -15;
