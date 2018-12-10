@@ -51,7 +51,7 @@ int main(int argc, char** argv)
           current_robot.pose.orientation = transform.transform.rotation;
         }
         for(int i=0;i<NUM;i++){
-          std::string frame = "obs" + std::to_string(i);
+          std::string frame = "/vicon/obs/obs";//"obs" + std::to_string(i);
           tf::StampedTransform _transform;
           listener.lookupTransform("world", frame, ros::Time(0), _transform);
           geometry_msgs::TransformStamped transform;

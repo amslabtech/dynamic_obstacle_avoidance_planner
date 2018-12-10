@@ -15,7 +15,9 @@ int main(int argc, char** argv)
   wp.poses.resize(2);
   wp.poses[0].orientation = wp.poses[1].orientation = tf::createQuaternionMsgFromYaw(0);
   wp.poses[0].position.x = -15;
+  wp.poses[0].position.y = 1;
   wp.poses[1].position.x = 15;
+  wp.poses[1].position.y = 1;
 
   ros::Rate loop_rate(10);
 

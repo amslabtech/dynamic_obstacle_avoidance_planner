@@ -77,7 +77,7 @@ const double HZ = 10;
 // 目標速度
 const double VREF = 0.5;// [m/s]
 // 最大角速度
-const double MAX_ANGULAR_VELOCITY = 0.8;// [rad/s]
+const double MAX_ANGULAR_VELOCITY = 1.5;// [rad/s]
 // ホイール角加速度
 const double WHEEL_ANGULAR_ACCELERATION_LIMIT = 2.0;// [rad/s^2]
 // ホイール角速度
