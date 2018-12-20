@@ -4,10 +4,11 @@
   <arg name="_DT" default="0.1"/>
   <arg name="_VREF" default="0.5"/>
   <arg name="_MAX_ANGULAR_VELOCITY" default="0.8"/>
-  <arg name="_WHEEL_ANGULAR_ACCELERATION_LIMIT" default="4.0"/>
+  <arg name="_WHEEL_ANGULAR_ACCELERATION_LIMIT" default="10.0"/>
   <arg name="_WHEEL_ANGULAR_VELOCITY_LIMIT" default="15.0"/>
   <arg name="_WHEEL_RADIUS" default="0.0775"/>
   <arg name="_TREAD" default="0.5"/>
+  <arg name="_RESOLUTION" default="0.1"/>
 
   <node pkg="four_wheel_drive_independent_steering" name="diff_drive_mpc" type="diff_drive_mpc" output="screen">
     <param name="HORIZON_T" value="$(arg _HORIZON_T)"/>
@@ -18,6 +19,7 @@
     <param name="WHEEL_ANGULAR_VELOCITY_LIMIT" value="$(arg _WHEEL_ANGULAR_VELOCITY_LIMIT)"/>
     <param name="WHEEL_RADIUS" value="$(arg _WHEEL_RADIUS)"/>
     <param name="TREAD" value="$(arg _TREAD)"/>
+    <param name="RESOLUTION" value="$(arg _RESOLUTION)"/>
     <remap from="path" to="intermediate_path"/>
     <remap from="velocity" to="t_frog/cmd_vel"/>
   </node>

@@ -86,6 +86,8 @@ double WHEEL_ANGULAR_VELOCITY_LIMIT = 24;// [rad/s]
 double WHEEL_RADIUS = 0.075;// [m]
 // トレッド
 double TREAD = 0.5;// [m]
+// グリッドマップ分解能
+double RESOLUTION = 0.1;// [m]
 
 // state
 size_t x_start = 0;
@@ -112,6 +114,7 @@ int main(int argc, char** argv)
   local_nh.getParam("WHEEL_ANGULAR_VELOCITY_LIMIT", WHEEL_ANGULAR_VELOCITY_LIMIT);
   local_nh.getParam("WHEEL_RADIUS", WHEEL_RADIUS);
   local_nh.getParam("TREAD", TREAD);
+  local_nh.getParam("RESOLUTION", RESOLUTION);
 
   MPCPathTracker mpc_path_tracker;
 
@@ -317,8 +320,8 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     AD<double> cos0 = CppAD::cos(yaw0 + omega0 * DT);
     //fg[2 + yaw_start + i] = yaw1 - CppAD::atan2(sin0, cos0);
     fg[2 + yaw_start + i] = yaw1 - (yaw0 + omega0 * DT);
-    fg[2 + omega_r_start + i] = omega_r0 - (vx0 + omega0 * TREAD / (2.0 * WHEEL_RADIUS)) / WHEEL_RADIUS;
-    fg[2 + omega_l_start + i] = omega_l0 - (vx0 - omega0 * TREAD / (2.0 * WHEEL_RADIUS)) / WHEEL_RADIUS;
+    fg[2 + omega_r_start + i] = omega_r0 - (vx0 + omega0 * TREAD / 2.0) / WHEEL_RADIUS;
+    fg[2 + omega_l_start + i] = omega_l0 - (vx0 - omega0 * TREAD / 2.0) / WHEEL_RADIUS;
   }
   std::cout << "FG_eval() end" << std::endl;
 }
@@ -374,8 +377,8 @@ void MPCPathTracker::process(void)
       double dyaw = tf::getYaw(current_pose.pose.orientation) - tf::getYaw(previous_pose.pose.orientation);
       double v = sqrt(dx * dx + dy * dy) / dt;
       double omega = dyaw / dt;
-      double omega_r = (v + omega * TREAD / (2.0 * WHEEL_RADIUS)) / WHEEL_RADIUS;
-      double omega_l = (v - omega * TREAD / (2.0 * WHEEL_RADIUS)) / WHEEL_RADIUS;
+      double omega_r = (v + omega * TREAD / 2.0) / WHEEL_RADIUS;
+      double omega_l = (v - omega * TREAD / 2.0) / WHEEL_RADIUS;
 
       Eigen::VectorXd state(5);
       state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation), omega_r, omega_l;
@@ -411,7 +414,7 @@ void MPCPathTracker::process(void)
 
 void MPCPathTracker::path_to_vector(void)
 {
-  int m = VREF * DT / 0.05;
+  int m = VREF * DT / RESOLUTION + 1;// TODO:delete 1
   int index = 0;
   for(int i=0;i<T;i++){
     if(i*m<path.poses.size()){
