@@ -55,8 +55,8 @@ int main(int argc, char** argv)
   visualization_msgs::MarkerArray robot_viz;
   visualization_msgs::MarkerArray obs0_viz;
 
-  robot_path.header.frame_id = "map";
-  obs0_path.header.frame_id = "map";
+  robot_path.header.frame_id = "world";
+  obs0_path.header.frame_id = "world";
 
   geometry_msgs::PoseStamped pose;
   visualization_msgs::Marker viz;
@@ -65,13 +65,13 @@ int main(int argc, char** argv)
   viz.scale.z = 0.6;
   viz.type = visualization_msgs::Marker::CYLINDER;
   viz.action = visualization_msgs::Marker::ADD;
-  viz.header.frame_id = "map";
+  viz.header.frame_id = "world";
   viz.ns = "robot_viz";
 
   lines.type = visualization_msgs::Marker::LINE_LIST;
   lines.lifetime = ros::Duration(0.01);
   lines.action = visualization_msgs::Marker::ADD;
-  lines.header.frame_id = "map";
+  lines.header.frame_id = "world";
   lines.ns = "lines";
   lines.scale.x = 0.01;
 
@@ -82,15 +82,15 @@ int main(int argc, char** argv)
     tf::StampedTransform robot_transform;
     tf::StampedTransform obs0_transform;
     try{
-      listener.lookupTransform("map", "base_link", ros::Time(0), robot_transform);
-      listener.lookupTransform("map", "obs0", ros::Time(0), obs0_transform);
+      listener.lookupTransform("world", "/vicon/base_link/base_link", ros::Time(0), robot_transform);
+      listener.lookupTransform("world", "/vicon/obs/obs", ros::Time(0), obs0_transform);
       transformed = true;
     }catch(tf::TransformException ex){
       std::cout << ex.what() << std::endl;
     }
     if(transformed){
       robot_path.header.stamp = robot_transform.stamp_;
-      pose.header.frame_id = "map";
+      pose.header.frame_id = "world";
       pose.header.stamp = robot_transform.stamp_;
       pose.pose.position.x = robot_transform.getOrigin().getX();
       pose.pose.position.y = robot_transform.getOrigin().getY();
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
       }
 
       obs0_path.header.stamp = obs0_transform.stamp_;
-      pose.header.frame_id = "map";
+      pose.header.frame_id = "world";
       pose.header.stamp = obs0_transform.stamp_;
       pose.pose.position.x = obs0_transform.getOrigin().getX();
       pose.pose.position.y = obs0_transform.getOrigin().getY();
