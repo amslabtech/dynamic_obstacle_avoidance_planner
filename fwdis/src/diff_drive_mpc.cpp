@@ -70,22 +70,22 @@ private:
 };
 
 // ホライゾン長さ
-const int T = 15;
+int T = 15;
 // 周期
-const double DT = 0.1;// [s]
+double DT = 0.1;// [s]
 const double HZ = 10;
 // 目標速度
-const double VREF = 0.5;// [m/s]
+double VREF = 0.5;// [m/s]
 // 最大角速度
-const double MAX_ANGULAR_VELOCITY = 1.5;// [rad/s]
+double MAX_ANGULAR_VELOCITY = 1.5;// [rad/s]
 // ホイール角加速度
-const double WHEEL_ANGULAR_ACCELERATION_LIMIT = 2.0;// [rad/s^2]
+double WHEEL_ANGULAR_ACCELERATION_LIMIT = 2.0;// [rad/s^2]
 // ホイール角速度
-const double WHEEL_ANGULAR_VELOCITY_LIMIT = 24;// [rad/s]
+double WHEEL_ANGULAR_VELOCITY_LIMIT = 24;// [rad/s]
 // ホイール半径
-const double WHEEL_RADIUS = 0.075;// [m]
+double WHEEL_RADIUS = 0.075;// [m]
 // トレッド
-const double TREAD = 0.5;// [m]
+double TREAD = 0.5;// [m]
 
 // state
 size_t x_start = 0;
@@ -104,6 +104,14 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "diff_drive_mpc");
   ros::NodeHandle local_nh("~");
+
+  local_nh.getParam("HORIZON_T", T);
+  local_nh.getParam("VREF", VREF);
+  local_nh.getParam("MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
+  local_nh.getParam("WHEEL_ANGULAR_ACCELERATION_LIMIT", WHEEL_ANGULAR_ACCELERATION_LIMIT);
+  local_nh.getParam("WHEEL_ANGULAR_VELOCITY_LIMIT", WHEEL_ANGULAR_VELOCITY_LIMIT);
+  local_nh.getParam("WHEEL_RADIUS", WHEEL_RADIUS);
+  local_nh.getParam("TREAD", TREAD);
 
   MPCPathTracker mpc_path_tracker;
 

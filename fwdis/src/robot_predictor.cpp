@@ -112,7 +112,7 @@ int main(int argc, char** argv)
           vy = v * sin(yaw);
           v = sqrt(vx*vx + vy*vy);
           if(omega + ANGULAR_ACCELERATION * DT <= MAX_ANGULAR_VELOCITY){
-            //omega += ANGULAR_ACCELERATION * DT;
+            omega += ANGULAR_ACCELERATION * DT;
           }
           predicted_path.poses.push_back(pose);
         }
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
           vy = v * sin(yaw);
           v = sqrt(vx*vx + vy*vy);
           if(omega - ANGULAR_ACCELERATION * DT >= -MAX_ANGULAR_VELOCITY){
-            //omega -= ANGULAR_ACCELERATION * DT;
+            omega -= ANGULAR_ACCELERATION * DT;
           }
           predicted_path.poses.push_back(pose);
         }
