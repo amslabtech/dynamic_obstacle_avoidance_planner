@@ -42,7 +42,7 @@ def process():
     pose.pose.orientation.w = q[3]
     pose.pose.position.x += velocity.linear.x * m.cos(yaw) / HZ - velocity.linear.y * m.sin(yaw) / HZ
     pose.pose.position.y += velocity.linear.x * m.sin(yaw) / HZ + velocity.linear.y * m.cos(yaw) / HZ
-    br.sendTransform((pose.pose.position.x, pose.pose.position.y, 0), (pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w), rospy.Time.now(), "base_link", "odom")
+    br.sendTransform((pose.pose.position.x, pose.pose.position.y, 0), (pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w), rospy.Time.now(), "vicon/base_link/base_link", "odom")
     print pose
     r.sleep()
 

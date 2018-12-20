@@ -148,6 +148,7 @@ int main(int argc, char** argv)
         start.pose.position.y = 0;
         start.pose.orientation = tf::createQuaternionMsgFromYaw(0);
         double cost1 = calculate_astar(start, goal, path);
+        /*
         for(int i=1;i<path.poses.size()-20;i++){
           cells[get_index(path.poses[i].pose.position.x, path.poses[i].pose.position.y)].cost = 100;
         }
@@ -169,6 +170,9 @@ int main(int argc, char** argv)
             previous_path = path;
           }
         }
+        */
+        path_pub.publish(path);
+        previous_path = path;
         map_received = false;
         std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
       }
