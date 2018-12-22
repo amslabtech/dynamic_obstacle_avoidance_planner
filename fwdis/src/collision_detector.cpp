@@ -22,7 +22,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::NodeHandle local_nh("~");
 
-  local_nh.getParam("RADIUS", RADIUS);
+  local_nh.getParam("/dynamic_avoidance/RADIUS", RADIUS);
 
   ros::Subscriber obs_num_sub = nh.subscribe("/obs_num", 100, obs_num_callback);
 
