@@ -1,0 +1,4 @@
+fwdis:
+  WHEEL_RADIUS: 0.100 #[m]
+  WHEEL_BASE: 0.400 #[m]
+  TREAD: 0.400 #[m]
