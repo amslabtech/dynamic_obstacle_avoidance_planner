@@ -1,11 +1,6 @@
 <launch>
 
-  <arg name="_ANGULAR_ACCELERATION" default="1.0"/>
-  <arg name="_MAX_ANGULAR_VELOCITY" default="0.8"/>
-
   <node pkg="four_wheel_drive_independent_steering" name="robot_predictor" type="robot_predictor" output="screen">
-    <param name="ANGULAR_ACCELERATION" value="$(arg _ANGULAR_ACCELERATION)"/>
-    <param name="MAX_ANGULAR_VELOCITY" value="$(arg _MAX_ANGULAR_VELOCITY)"/>
   </node>
 
 </launch>

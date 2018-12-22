@@ -8,11 +8,11 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Int32.h>
 
-const double PREDICTION_TIME = 3.5;// [s], 軌道予測時間
+double PREDICTION_TIME = 3.5;// [s], 軌道予測時間
 const double DT = 0.1;// [s]
-const int PREDICTION_STEP = PREDICTION_TIME / DT;
+int PREDICTION_STEP = PREDICTION_TIME / DT;
 const double WIDTH = 10;// [m]
-const double RESOLUTION = 0.10;// [m]
+double RESOLUTION = 0.10;// [m]
 const double HZ = 10;
 double RADIUS;// 衝突判定半径[m]
 int obs_num = 1;//si
@@ -58,7 +58,10 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::NodeHandle local_nh("~");
 
-  local_nh.getParam("RADIUS", RADIUS);
+  local_nh.getParam("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME);
+  local_nh.getParam("/dynamic_avoidance/RADIUS", RADIUS);
+  local_nh.getParam("/dynamic_avoidance/RESOLUTION", RESOLUTION);
+  PREDICTION_STEP = PREDICTION_TIME / DT;
 
   ros::Publisher costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("/local_costmap", 100);
   ros::Subscriber robot_predicted_path_sub = nh.subscribe("/robot_predicted_path", 100, robot_path_callback);

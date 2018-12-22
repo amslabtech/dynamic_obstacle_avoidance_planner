@@ -3,6 +3,9 @@
 gnome-terminal -e "/opt/ros/kinetic/bin/roscore" --geometry=45x12+0+0 &
 sleep 0.5s
 
+gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering load_param_diff_drive.launch" --geometry=45x12+0+0 &
+sleep 0.1s
+
 gnome-terminal -e "/opt/ros/kinetic/bin/rosrun rviz rviz -d ../config/dynamic_avoidance.rviz" --geometry=45x12+475+0 &
 sleep 0.5s
 
@@ -20,7 +23,7 @@ sleep 0.1s
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering robot_predictor.launch" --geometry=45x12+475+250 &
 sleep 0.1s
 
-gnome-terminal -e "/opt/ros/kinetic/bin/rosrun tf static_transform_publisher -15 0 0 0 0 0 map odom 100" --geometry=45x12+895+250 &
+gnome-terminal -e "/opt/ros/kinetic/bin/rosrun tf static_transform_publisher -15 0 0 0 0 0 world odom 100" --geometry=45x12+895+250 &
 sleep 0.1s
 
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering dynamic_local_costmap.launch" --geometry=45x12+1315+250 &

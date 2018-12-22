@@ -5,9 +5,9 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
 
-const double PREDICTION_TIME = 3.5;// [s], 軌道予測時間
+double PREDICTION_TIME;// [s], 軌道予測時間
 const double DT = 0.1;// [s]
-const int PREDICTION_STEP = PREDICTION_TIME / DT;
+int PREDICTION_STEP;
 const double HZ = 10;
 
 double ANGULAR_ACCELERATION = 0.0;
@@ -28,8 +28,10 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::NodeHandle local_nh("~");
 
-  local_nh.getParam("ANGULAR_ACCELERATION", ANGULAR_ACCELERATION);
-  local_nh.getParam("MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
+  local_nh.getParam("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME);
+  local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_ACCELERATION", ANGULAR_ACCELERATION);
+  local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
+  PREDICTION_STEP = PREDICTION_TIME / DT;
 
   ros::Publisher predicted_path_pub = nh.advertise<geometry_msgs::PoseArray>("/robot_predicted_path", 100);
 

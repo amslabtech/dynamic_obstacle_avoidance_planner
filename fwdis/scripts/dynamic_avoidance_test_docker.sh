@@ -3,6 +3,9 @@
 gnome-terminal -e "/opt/ros/${ROS_DISTRO}/bin/roscore" --geometry=45x12+0+0 &
 sleep 3s
 
+gnome-terminal -e "/opt/ros/${ROS_DISTRO}/bin/roslaunch four_wheel_drive_independent_steering load_param_diff_drive.launch" --geometry=45x12+0+0 &
+sleep 0.1s
+
 gnome-terminal -e "/opt/ros/${ROS_DISTRO}/bin/rosrun rviz rviz -d ../config/dynamic_avoidance.rviz" --geometry=45x12+475+0 &
 sleep 0.5s
 

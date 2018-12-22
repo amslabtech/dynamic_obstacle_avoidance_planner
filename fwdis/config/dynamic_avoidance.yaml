@@ -1,0 +1,6 @@
+dynamic_avoidance:
+  PREDICTION_TIME: 3.5 #[s]
+  RESOLUTION: 0.10 #[s]
+  RADIUS: 0.6 #[m]
+  MAX_ANGULAR_ACCELERATION: 0.8 #[rad/ss]
+  MAX_ANGULAR_VELOCITY: 1.0 #[rad/s]

@@ -109,12 +109,12 @@ int main(int argc, char** argv)
 
   local_nh.getParam("HORIZON_T", T);
   local_nh.getParam("VREF", VREF);
-  local_nh.getParam("MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
+  local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
   local_nh.getParam("WHEEL_ANGULAR_ACCELERATION_LIMIT", WHEEL_ANGULAR_ACCELERATION_LIMIT);
   local_nh.getParam("WHEEL_ANGULAR_VELOCITY_LIMIT", WHEEL_ANGULAR_VELOCITY_LIMIT);
   local_nh.getParam("WHEEL_RADIUS", WHEEL_RADIUS);
   local_nh.getParam("TREAD", TREAD);
-  local_nh.getParam("RESOLUTION", RESOLUTION);
+  local_nh.getParam("/dynamic_avoidance/RESOLUTION", RESOLUTION);
 
   MPCPathTracker mpc_path_tracker;
 
