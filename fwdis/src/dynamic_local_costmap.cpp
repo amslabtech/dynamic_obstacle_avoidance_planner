@@ -19,6 +19,9 @@ int obs_num = 1;//si
 const int SEARCH_RANGE = 30;
 const double COST_COL = 90;
 const double MIN_COST = 10;
+std::string WORLD_FRAME;
+std::string OBS_FRAME;
+std::string ROBOT_FRAME;
 
 geometry_msgs::PoseArray robot_path;
 geometry_msgs::PoseArray obstacle_paths;
@@ -61,6 +64,9 @@ int main(int argc, char** argv)
   local_nh.getParam("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME);
   local_nh.getParam("/dynamic_avoidance/RADIUS", RADIUS);
   local_nh.getParam("/dynamic_avoidance/RESOLUTION", RESOLUTION);
+  local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
+  local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
+  local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
   PREDICTION_STEP = PREDICTION_TIME / DT;
 
   ros::Publisher costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("/local_costmap", 100);
@@ -82,11 +88,11 @@ int main(int argc, char** argv)
       tf::StampedTransform transform;
       bool transformed = false;
       try{
-        listener.lookupTransform("world", "local_costmap", ros::Time(0), transform);
+        listener.lookupTransform(WORLD_FRAME, "local_costmap", ros::Time(0), transform);
         // pathの座標系変換
         for(int i=0;i<robot_path.poses.size();i++){
           geometry_msgs::PoseStamped temp;
-          temp.header.frame_id = "world";
+          temp.header.frame_id = WORLD_FRAME;
           temp.pose = robot_path.poses[i];
           listener.transformPose("local_costmap", temp, temp);
           robot_path.poses[i] = temp.pose;
@@ -94,7 +100,7 @@ int main(int argc, char** argv)
         }
         for(int i=0;i<obstacle_paths.poses.size();i++){
           geometry_msgs::PoseStamped temp;
-          temp.header.frame_id = "world";
+          temp.header.frame_id = WORLD_FRAME;
           temp.pose = obstacle_paths.poses[i];
           listener.transformPose("local_costmap", temp, temp);
           obstacle_paths.poses[i] = temp.pose;
@@ -118,7 +124,7 @@ int main(int argc, char** argv)
               if(predict_approaching(robot_path.poses[i], robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i])){
                 geometry_msgs::PoseStamped collision_pose;
                 collision_pose.pose = obstacle_paths.poses[j*(PREDICTION_STEP+1)+i];
-                collision_pose.header.frame_id = "world";
+                collision_pose.header.frame_id = WORLD_FRAME;
                 if(i > 0){
                   geometry_msgs::Twist vr;
                   vr.linear.x = (robot_path.poses[i].position.x - robot_path.poses[i - 1].position.x) * HZ;

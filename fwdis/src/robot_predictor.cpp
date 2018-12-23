@@ -9,6 +9,8 @@ double PREDICTION_TIME;// [s], 軌道予測時間
 const double DT = 0.1;// [s]
 int PREDICTION_STEP;
 const double HZ = 10;
+std::string ROBOT_FRAME;
+std::string WORLD_FRAME;
 
 double ANGULAR_ACCELERATION = 0.0;
 double MAX_ANGULAR_VELOCITY = 0.0;
@@ -31,6 +33,8 @@ int main(int argc, char** argv)
   local_nh.getParam("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME);
   local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_ACCELERATION", ANGULAR_ACCELERATION);
   local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
+  local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
+  local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
   PREDICTION_STEP = PREDICTION_TIME / DT;
 
   ros::Publisher predicted_path_pub = nh.advertise<geometry_msgs::PoseArray>("/robot_predicted_path", 100);
@@ -39,14 +43,14 @@ int main(int argc, char** argv)
 
   bool first_transform = true;
 
-  predicted_path.header.frame_id = "world";
+  predicted_path.header.frame_id = WORLD_FRAME;
 
   ros::Rate loop_rate(HZ);
 
   while(ros::ok()){
     bool transformed = false;
     try{
-      listener.lookupTransform("world", "vicon/base_link/base_link", ros::Time(0), _transform);
+      listener.lookupTransform(WORLD_FRAME, ROBOT_FRAME, ros::Time(0), _transform);
       geometry_msgs::TransformStamped transform;
       tf::transformStampedTFToMsg(_transform, transform);
       geometry_msgs::Pose pose;

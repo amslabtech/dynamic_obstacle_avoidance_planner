@@ -18,6 +18,8 @@ def velocity_callback(data):
   velocity = data
 
 def process():
+  ROBOT_FRAME = rospy.get_param("/dynamic_avoidance/ROBOT_FRAME")
+
   rospy.Subscriber('/t_frog/cmd_vel', Twist, velocity_callback)
 
   print "=== sim 3dof ==="
@@ -42,7 +44,7 @@ def process():
     pose.pose.orientation.w = q[3]
     pose.pose.position.x += velocity.linear.x * m.cos(yaw) / HZ - velocity.linear.y * m.sin(yaw) / HZ
     pose.pose.position.y += velocity.linear.x * m.sin(yaw) / HZ + velocity.linear.y * m.cos(yaw) / HZ
-    br.sendTransform((pose.pose.position.x, pose.pose.position.y, 0), (pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w), rospy.Time.now(), "vicon/base_link/base_link", "odom")
+    br.sendTransform((pose.pose.position.x, pose.pose.position.y, 0), (pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w), rospy.Time.now(), ROBOT_FRAME, "odom")
     print pose
     r.sleep()
 

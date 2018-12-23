@@ -32,11 +32,13 @@ private:
   double last_time;
 };
 
-const double PREDICTION_TIME = 3.5;// [s], 軌道予測時間
+double PREDICTION_TIME;// [s], 軌道予測時間
 const double DT = 0.1;// [s]
-const int PREDICTION_STEP = PREDICTION_TIME / DT;
+int PREDICTION_STEP;
 const int NUM_OF_PATH = 2;// obs1つあたりpath2本
 const double HZ = 10;
+std::string WORLD_FRAME;
+std::string OBS_FRAME;
 
 int NUM = 1;
 
@@ -53,6 +55,11 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "obstacle_predictor_kf");
   ros::NodeHandle nh;
   ros::NodeHandle local_nh("~");
+
+  local_nh.getParam("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME);
+  local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
+  local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
+  PREDICTION_STEP = PREDICTION_TIME / DT;
 
   ros::Publisher predicted_paths_pub = nh.advertise<geometry_msgs::PoseArray>("/predicted_paths", 100);
 
@@ -75,9 +82,9 @@ int main(int argc, char** argv)
       bool transformed = false;
       try{
         for(int i=0;i<NUM;i++){
-          std::string frame = "vicon/obs/obs";
-          listener.lookupTransform("world", frame, ros::Time(0), _transform);
-          std::cout << "obs" + std::to_string(i) + " received" << std::endl;
+          std::string frame = OBS_FRAME;
+          listener.lookupTransform(WORLD_FRAME, frame, ros::Time(0), _transform);
+          std::cout << OBS_FRAME + std::to_string(i) + " received" << std::endl;
           geometry_msgs::TransformStamped transform;
           tf::transformStampedTFToMsg(_transform, transform);
           geometry_msgs::Pose pose;
@@ -140,10 +147,10 @@ int main(int argc, char** argv)
           yaw = atan2(sin(yaw), cos(yaw));
           double vx = v * cos(yaw);
           double vy = v * sin(yaw);
-		  vx = velocity[0];
-		  vy = velocity[1];
-		  v = sqrt(vx*vx+vy+vy);
-		  omega = velocity[2];
+          vx = velocity[0];
+          vy = velocity[1];
+          v = sqrt(vx*vx+vy+vy);
+          omega = velocity[2];
 
           for(int j=0;j<PREDICTION_STEP;j++){
             geometry_msgs::Pose pose;

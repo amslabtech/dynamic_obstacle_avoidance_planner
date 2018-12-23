@@ -17,6 +17,9 @@ std::random_device seed;
 std::mt19937 engine(seed());
 std::normal_distribution<> dist(0.0, 0.005);
 
+std::string WORLD_FRAME;
+std::string OBS_FRAME;
+
 double get_yaw(geometry_msgs::Quaternion);
 void set_pose(int, double, double, double);
 void update(int, double, double);
@@ -28,6 +31,8 @@ int main(int argc, char** argv)
   ros::NodeHandle local_nh("~");
 
   local_nh.getParam("NUM", NUM);
+  local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
+  local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
 
   ros::Publisher obs_num_pub = nh.advertise<std_msgs::Int32>("/obs_num", 100);
 
@@ -37,8 +42,8 @@ int main(int argc, char** argv)
 
   // 初期位置設定
   for(int i=0;i<NUM;i++){
-    obs_list[i].header.frame_id = "world";
-    obs_list[i].child_frame_id = "vicon/obs/obs";//"obs" + std::to_string(i);
+    obs_list[i].header.frame_id = WORLD_FRAME;
+    obs_list[i].child_frame_id = OBS_FRAME;//"obs" + std::to_string(i);
     set_pose(i, 0, 0, 0);
   }
   set_pose(0, 0, 0.1, M_PI);

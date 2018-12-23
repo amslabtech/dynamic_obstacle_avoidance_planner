@@ -89,6 +89,9 @@ double TREAD = 0.5;// [m]
 // グリッドマップ分解能
 double RESOLUTION = 0.1;// [m]
 
+std::string WORLD_FRAME;
+std::string ROBOT_FRAME;
+
 // state
 size_t x_start = 0;
 size_t y_start = x_start + T;
@@ -115,6 +118,8 @@ int main(int argc, char** argv)
   local_nh.getParam("WHEEL_RADIUS", WHEEL_RADIUS);
   local_nh.getParam("TREAD", TREAD);
   local_nh.getParam("/dynamic_avoidance/RESOLUTION", RESOLUTION);
+  local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
+  local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
 
   MPCPathTracker mpc_path_tracker;
 
@@ -348,7 +353,7 @@ void MPCPathTracker::process(void)
   bool transformed = false;
   geometry_msgs::PoseStamped pose;
   try{
-    listener.lookupTransform("world", "vicon/base_link/base_link", ros::Time(0), _transform);
+    listener.lookupTransform(WORLD_FRAME, ROBOT_FRAME, ros::Time(0), _transform);
     tf::transformStampedTFToMsg(_transform, transform);
     current_pose.header = transform.header;
     current_pose.pose.position.x = transform.transform.translation.x;
@@ -394,7 +399,7 @@ void MPCPathTracker::process(void)
       velocity_pub.publish(velocity);
       // mpc表示
       geometry_msgs::PoseArray mpc_path;
-      mpc_path.header.frame_id = "vicon/base_link/base_link";
+      mpc_path.header.frame_id = ROBOT_FRAME;
       double yaw0 = tf::getYaw(pose.pose.orientation);
       for(int i=0;i<T-1;i++){
         geometry_msgs::Pose temp;

@@ -4,3 +4,6 @@ dynamic_avoidance:
   RADIUS: 0.6 #[m]
   MAX_ANGULAR_ACCELERATION: 0.8 #[rad/ss]
   MAX_ANGULAR_VELOCITY: 1.0 #[rad/s]
+  ROBOT_FRAME: "base_link"
+  OBSTACLES_FRAME: "obs"
+  WORLD_FRAME: "world"

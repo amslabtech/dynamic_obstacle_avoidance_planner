@@ -23,7 +23,8 @@ sleep 0.1s
 gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering robot_predictor.launch'" --geometry=45x12+475+250 &
 sleep 0.1s
 
-gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun tf static_transform_publisher -15 0 0 0 0 0 map odom 100'" --geometry=45x12+895+250 &
+WORLD_FRAME=$(/opt/ros/${ROS_DISTRO}/bin/rosparam get /dynamic_avoidance/WORLD_FRAME)
+gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun tf static_transform_publisher -15 0 0 0 0 0 $WORLD_FRAME odom 100'" --geometry=45x12+895+250 &
 sleep 0.1s
 
 gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering dynamic_local_costmap.launch'" --geometry=45x12+1315+250 &
