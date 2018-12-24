@@ -8,3 +8,4 @@ dynamic_avoidance:
   OBSTACLES_FRAME: "obs"
   WORLD_FRAME: "world"
   VELOCITY_TOPIC_NAME: "/velocity"
+  INTERMEDIATE_PATH_TOPIC_NAME: "/intermediate_path"

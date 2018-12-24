@@ -16,7 +16,6 @@
     <param name="WHEEL_ANGULAR_VELOCITY_LIMIT" value="$(arg _WHEEL_ANGULAR_VELOCITY_LIMIT)"/>
     <param name="WHEEL_RADIUS" value="$(arg _WHEEL_RADIUS)"/>
     <param name="TREAD" value="$(arg _TREAD)"/>
-    <remap from="path" to="intermediate_path"/>
   </node>
 
 </launch>
