@@ -102,6 +102,10 @@ size_t omega_l_start = omega_r_start + T;
 size_t vx_start = omega_l_start + T;
 size_t omega_start = vx_start + T - 1;
 
+// 最適化失敗時は最後の成功データを使う
+int failure_count = 0;
+std::vector<double> result;
+
 double min_distance(nav_msgs::Path&, geometry_msgs::PoseStamped&);
 double get_distance(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&);
 
@@ -247,15 +251,30 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   auto cost = solution.obj_value;
   std::cout << "Cost " << cost << std::endl;
 
-  std::vector<double> result;
-  // 何故か0だとうまく行かない
-  result.push_back(solution.x[vx_start+1]);
-  result.push_back(solution.x[omega_start+1]);
-  //予測軌道
-  for(int i = 0; i < T-1; i++){
-    result.push_back(solution.x[x_start+i+1]);
-    result.push_back(solution.x[y_start+i+1]);
-    result.push_back(solution.x[yaw_start+i+1]);
+  if(ok){
+    failure_count = 0;
+    result.clear();
+    // 何故か0だとうまく行かない
+    result.push_back(solution.x[vx_start+1]);
+    result.push_back(solution.x[omega_start+1]);
+    //予測軌道
+    for(int i = 0; i < T-1; i++){
+      result.push_back(solution.x[x_start+i+1]);
+      result.push_back(solution.x[y_start+i+1]);
+      result.push_back(solution.x[yaw_start+i+1]);
+    }
+  }else{
+    if(failure_count < T - 1){
+      failure_count++;
+    }
+    result.push_back(solution.x[vx_start+1+failure_count]);
+    result.push_back(solution.x[omega_start+1+failure_count]);
+    //予測軌道
+    for(int i = failure_count; i < T-1; i++){
+      result.push_back(solution.x[x_start+i+1]);
+      result.push_back(solution.x[y_start+i+1]);
+      result.push_back(solution.x[yaw_start+i+1]);
+    }
   }
   /*
   std::cout << "--- result ---" << std::endl;
