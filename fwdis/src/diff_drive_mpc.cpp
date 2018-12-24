@@ -196,8 +196,8 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     vars_upper_bound[i] = VREF;
   }
   for(int i=omega_start;i<n_variables;i++){
-    vars_lower_bound[i] = -2.0;
-    vars_upper_bound[i] = 2.0;
+    vars_lower_bound[i] = -MAX_ANGULAR_VELOCITY;
+    vars_upper_bound[i] = MAX_ANGULAR_VELOCITY;
   }
 
   // 等式制約
@@ -242,6 +242,7 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   std::cout << "optimization end" << std::endl;
   ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
   std::cout << solution.status << std::endl;
+  std::cout << ok << std::endl;
 
   auto cost = solution.obj_value;
   std::cout << "Cost " << cost << std::endl;
@@ -256,10 +257,12 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     result.push_back(solution.x[y_start+i+1]);
     result.push_back(solution.x[yaw_start+i+1]);
   }
+  /*
   std::cout << "--- result ---" << std::endl;
   for(int i=0;i<result.size();i++){
     std::cout << result[i] << std::endl;
   }
+  */
   return result;
 }
 
