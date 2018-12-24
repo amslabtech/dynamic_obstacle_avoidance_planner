@@ -46,6 +46,7 @@ double get_difference(nav_msgs::Path&, nav_msgs::Path&);
 bool is_contained(std::vector<int>&, int);
 
 double MARGIN_WALL;
+std::string INTERMEDIATE_PATH_TOPIC_NAME;
 
 const double HZ = 10;
 
@@ -100,11 +101,12 @@ int main(int argc, char** argv)
   ros::NodeHandle local_nh("~");
 
   local_nh.getParam("MARGIN_WALL", MARGIN_WALL);
+  local_nh.getParam("/dynamic_avoidance/INTERMEDIATE_PATH_TOPIC_NAME", INTERMEDIATE_PATH_TOPIC_NAME);
 
-  ros::Publisher path_pub = nh.advertise<nav_msgs::Path>("/intermediate_path", 100);
+  ros::Publisher path_pub = nh.advertise<nav_msgs::Path>(INTERMEDIATE_PATH_TOPIC_NAME, 100);
 
   // path2用
-  ros::Publisher path2_pub = nh.advertise<nav_msgs::Path>("/intermediate_path2", 100);
+  ros::Publisher path2_pub = nh.advertise<nav_msgs::Path>(INTERMEDIATE_PATH_TOPIC_NAME + std::to_string(2), 100);
 
   ros::Subscriber map_sub = nh.subscribe("/local_costmap", 1, map_callback);
   ros::Subscriber waypoints_sub = nh.subscribe("/waypoints", 1, waypoints_callback);
