@@ -5,10 +5,12 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
 
-const double PREDICTION_TIME = 3.5;// [s], 軌道予測時間
+double PREDICTION_TIME;// [s], 軌道予測時間
 const double DT = 0.1;// [s]
-const int PREDICTION_STEP = PREDICTION_TIME / DT;
+int PREDICTION_STEP;
 const double HZ = 10;
+std::string ROBOT_FRAME;
+std::string WORLD_FRAME;
 
 double ANGULAR_ACCELERATION = 0.0;
 double MAX_ANGULAR_VELOCITY = 0.0;
@@ -28,8 +30,12 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::NodeHandle local_nh("~");
 
-  local_nh.getParam("ANGULAR_ACCELERATION", ANGULAR_ACCELERATION);
-  local_nh.getParam("MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
+  local_nh.getParam("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME);
+  local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_ACCELERATION", ANGULAR_ACCELERATION);
+  local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
+  local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
+  local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
+  PREDICTION_STEP = PREDICTION_TIME / DT;
 
   ros::Publisher predicted_path_pub = nh.advertise<geometry_msgs::PoseArray>("/robot_predicted_path", 100);
 
@@ -37,14 +43,14 @@ int main(int argc, char** argv)
 
   bool first_transform = true;
 
-  predicted_path.header.frame_id = "map";
+  predicted_path.header.frame_id = WORLD_FRAME;
 
   ros::Rate loop_rate(HZ);
 
   while(ros::ok()){
     bool transformed = false;
     try{
-      listener.lookupTransform("map", "base_link", ros::Time(0), _transform);
+      listener.lookupTransform(WORLD_FRAME, ROBOT_FRAME, ros::Time(0), _transform);
       geometry_msgs::TransformStamped transform;
       tf::transformStampedTFToMsg(_transform, transform);
       geometry_msgs::Pose pose;
@@ -112,7 +118,7 @@ int main(int argc, char** argv)
           vy = v * sin(yaw);
           v = sqrt(vx*vx + vy*vy);
           if(omega + ANGULAR_ACCELERATION * DT <= MAX_ANGULAR_VELOCITY){
-            //omega += ANGULAR_ACCELERATION * DT;
+            omega += ANGULAR_ACCELERATION * DT;
           }
           predicted_path.poses.push_back(pose);
         }
@@ -137,7 +143,7 @@ int main(int argc, char** argv)
           vy = v * sin(yaw);
           v = sqrt(vx*vx + vy*vy);
           if(omega - ANGULAR_ACCELERATION * DT >= -MAX_ANGULAR_VELOCITY){
-            //omega -= ANGULAR_ACCELERATION * DT;
+            omega -= ANGULAR_ACCELERATION * DT;
           }
           predicted_path.poses.push_back(pose);
         }

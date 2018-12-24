@@ -8,17 +8,20 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Int32.h>
 
-const double PREDICTION_TIME = 3.5;// [s], 軌道予測時間
+double PREDICTION_TIME = 3.5;// [s], 軌道予測時間
 const double DT = 0.1;// [s]
-const int PREDICTION_STEP = PREDICTION_TIME / DT;
+int PREDICTION_STEP = PREDICTION_TIME / DT;
 const double WIDTH = 10;// [m]
-const double RESOLUTION = 0.10;// [m]
+double RESOLUTION = 0.10;// [m]
 const double HZ = 10;
 double RADIUS;// 衝突判定半径[m]
-int obs_num;
+int obs_num = 1;//si
 const int SEARCH_RANGE = 30;
 const double COST_COL = 90;
 const double MIN_COST = 10;
+std::string WORLD_FRAME;
+std::string OBS_FRAME;
+std::string ROBOT_FRAME;
 
 geometry_msgs::PoseArray robot_path;
 geometry_msgs::PoseArray obstacle_paths;
@@ -58,7 +61,13 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::NodeHandle local_nh("~");
 
-  local_nh.getParam("RADIUS", RADIUS);
+  local_nh.getParam("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME);
+  local_nh.getParam("/dynamic_avoidance/RADIUS", RADIUS);
+  local_nh.getParam("/dynamic_avoidance/RESOLUTION", RESOLUTION);
+  local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
+  local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
+  local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
+  PREDICTION_STEP = PREDICTION_TIME / DT;
 
   ros::Publisher costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("/local_costmap", 100);
   ros::Subscriber robot_predicted_path_sub = nh.subscribe("/robot_predicted_path", 100, robot_path_callback);
@@ -79,11 +88,11 @@ int main(int argc, char** argv)
       tf::StampedTransform transform;
       bool transformed = false;
       try{
-        listener.lookupTransform("map", "local_costmap", ros::Time(0), transform);
+        listener.lookupTransform(WORLD_FRAME, "local_costmap", ros::Time(0), transform);
         // pathの座標系変換
         for(int i=0;i<robot_path.poses.size();i++){
           geometry_msgs::PoseStamped temp;
-          temp.header.frame_id = "map";
+          temp.header.frame_id = WORLD_FRAME;
           temp.pose = robot_path.poses[i];
           listener.transformPose("local_costmap", temp, temp);
           robot_path.poses[i] = temp.pose;
@@ -91,7 +100,7 @@ int main(int argc, char** argv)
         }
         for(int i=0;i<obstacle_paths.poses.size();i++){
           geometry_msgs::PoseStamped temp;
-          temp.header.frame_id = "map";
+          temp.header.frame_id = WORLD_FRAME;
           temp.pose = obstacle_paths.poses[i];
           listener.transformPose("local_costmap", temp, temp);
           obstacle_paths.poses[i] = temp.pose;
@@ -115,7 +124,7 @@ int main(int argc, char** argv)
               if(predict_approaching(robot_path.poses[i], robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i])){
                 geometry_msgs::PoseStamped collision_pose;
                 collision_pose.pose = obstacle_paths.poses[j*(PREDICTION_STEP+1)+i];
-                collision_pose.header.frame_id = "map";
+                collision_pose.header.frame_id = WORLD_FRAME;
                 if(i > 0){
                   geometry_msgs::Twist vr;
                   vr.linear.x = (robot_path.poses[i].position.x - robot_path.poses[i - 1].position.x) * HZ;
@@ -218,13 +227,13 @@ void set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry
    * cpでの障害物速度ベクトル
    */
   geometry_msgs::Twist synthetic_vector;
-  synthetic_vector.linear.x = (vo.linear.x - vr.linear.x);// * 0.5;
-  synthetic_vector.linear.y = (vo.linear.y - vr.linear.y);// * 0.5;
+  synthetic_vector.linear.x = (vo.linear.x - vr.linear.x) * 0.5;
+  synthetic_vector.linear.y = (vo.linear.y - vr.linear.y) * 0.5;
   double x = collision_pose.pose.position.x;
   double y = collision_pose.pose.position.y;
-  double radius_min = 0.1;// 最小コスト半径=ロボット半径
+  double radius_min = 0.05;// 最小コスト半径
   double radius_max = 1.5 * RADIUS;// 最大回避領域コスト半径
-  double radius_col_max = RADIUS;// 最大衝突領域半径
+  double radius_col_max = 1.0 * RADIUS;// 最大衝突領域半径
   double radius_col_min = radius_min;// 最小衝突領域半径
   double v = sqrt(synthetic_vector.linear.x * synthetic_vector.linear.x + synthetic_vector.linear.y * synthetic_vector.linear.y);
   const double LENGTH = v * PREDICTION_TIME;

@@ -3,10 +3,17 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 
+std::string WORLD_FRAME;
+std::string ROBOT_FRAME;
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "base_costmap");
   ros::NodeHandle nh;
+
+  ros::NodeHandle local_nh("~");
+  local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
+  local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
 
   tf::TransformBroadcaster br;
 
@@ -14,7 +21,7 @@ int main(int argc, char** argv)
 
   tf::TransformListener listener;
 
-  base_costmap.header.frame_id = "map";
+  base_costmap.header.frame_id = WORLD_FRAME;
   base_costmap.header.stamp = ros::Time::now();
   base_costmap.child_frame_id = "local_costmap";
   //base_costmap.transform.translation.x = 0;
@@ -30,7 +37,7 @@ int main(int argc, char** argv)
     bool transformed = false;
     tf::StampedTransform transform;
     try{
-      listener.lookupTransform("map", "base_link", ros::Time(0), transform);
+      listener.lookupTransform(WORLD_FRAME, ROBOT_FRAME, ros::Time(0), transform);
       transformed = true;
     }catch(tf::TransformException ex){
       std::cout << ex.what() << std::endl;

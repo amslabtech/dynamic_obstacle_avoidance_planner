@@ -70,22 +70,28 @@ private:
 };
 
 // ホライゾン長さ
-const int T = 15;
+int T = 15;
 // 周期
-const double DT = 0.1;// [s]
+double DT = 0.1;// [s]
 const double HZ = 10;
 // 目標速度
-const double VREF = 1.0;// [m/s]
+double VREF = 0.5;// [m/s]
 // 最大角速度
-const double MAX_ANGULAR_VELOCITY = 2.0;// [rad/s]
+double MAX_ANGULAR_VELOCITY = 1.5;// [rad/s]
 // ホイール角加速度
-const double WHEEL_ANGULAR_ACCELERATION_LIMIT = 5.0;// [rad/s^2]
+double WHEEL_ANGULAR_ACCELERATION_LIMIT = 2.0;// [rad/s^2]
 // ホイール角速度
-const double WHEEL_ANGULAR_VELOCITY_LIMIT = 16;// [rad/s]
+double WHEEL_ANGULAR_VELOCITY_LIMIT = 24;// [rad/s]
 // ホイール半径
-const double WHEEL_RADIUS = 0.125;// [m]
+double WHEEL_RADIUS = 0.075;// [m]
 // トレッド
-const double TREAD = 0.6;// [m]
+double TREAD = 0.5;// [m]
+// グリッドマップ分解能
+double RESOLUTION = 0.1;// [m]
+
+std::string WORLD_FRAME;
+std::string ROBOT_FRAME;
+std::string VELOCITY_TOPIC_NAME;
 
 // state
 size_t x_start = 0;
@@ -97,6 +103,10 @@ size_t omega_l_start = omega_r_start + T;
 size_t vx_start = omega_l_start + T;
 size_t omega_start = vx_start + T - 1;
 
+// 最適化失敗時は最後の成功データを使う
+int failure_count = 0;
+std::vector<double> result;
+
 double min_distance(nav_msgs::Path&, geometry_msgs::PoseStamped&);
 double get_distance(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&);
 
@@ -104,6 +114,18 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "diff_drive_mpc");
   ros::NodeHandle local_nh("~");
+
+  local_nh.getParam("HORIZON_T", T);
+  local_nh.getParam("VREF", VREF);
+  local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
+  local_nh.getParam("WHEEL_ANGULAR_ACCELERATION_LIMIT", WHEEL_ANGULAR_ACCELERATION_LIMIT);
+  local_nh.getParam("WHEEL_ANGULAR_VELOCITY_LIMIT", WHEEL_ANGULAR_VELOCITY_LIMIT);
+  local_nh.getParam("WHEEL_RADIUS", WHEEL_RADIUS);
+  local_nh.getParam("TREAD", TREAD);
+  local_nh.getParam("/dynamic_avoidance/RESOLUTION", RESOLUTION);
+  local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
+  local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
+  local_nh.getParam("/dynamic_avoidance/VELOCITY_TOPIC_NAME", VELOCITY_TOPIC_NAME);
 
   MPCPathTracker mpc_path_tracker;
 
@@ -180,8 +202,8 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     vars_upper_bound[i] = VREF;
   }
   for(int i=omega_start;i<n_variables;i++){
-    vars_lower_bound[i] = -2.0;
-    vars_upper_bound[i] = 2.0;
+    vars_lower_bound[i] = -MAX_ANGULAR_VELOCITY;
+    vars_upper_bound[i] = MAX_ANGULAR_VELOCITY;
   }
 
   // 等式制約
@@ -226,24 +248,42 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   std::cout << "optimization end" << std::endl;
   ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
   std::cout << solution.status << std::endl;
+  std::cout << ok << std::endl;
 
   auto cost = solution.obj_value;
   std::cout << "Cost " << cost << std::endl;
 
-  std::vector<double> result;
-  // 何故か0だとうまく行かない
-  result.push_back(solution.x[vx_start+1]);
-  result.push_back(solution.x[omega_start+1]);
-  //予測軌道
-  for(int i = 0; i < T-1; i++){
-    result.push_back(solution.x[x_start+i+1]);
-    result.push_back(solution.x[y_start+i+1]);
-    result.push_back(solution.x[yaw_start+i+1]);
+  if(ok){
+    failure_count = 0;
+    result.clear();
+    // 何故か0だとうまく行かない
+    result.push_back(solution.x[vx_start+1]);
+    result.push_back(solution.x[omega_start+1]);
+    //予測軌道
+    for(int i = 0; i < T-1; i++){
+      result.push_back(solution.x[x_start+i+1]);
+      result.push_back(solution.x[y_start+i+1]);
+      result.push_back(solution.x[yaw_start+i+1]);
+    }
+  }else{
+    if(failure_count < T - 1){
+      failure_count++;
+    }
+    result.push_back(solution.x[vx_start+1+failure_count]);
+    result.push_back(solution.x[omega_start+1+failure_count]);
+    //予測軌道
+    for(int i = failure_count; i < T-1; i++){
+      result.push_back(solution.x[x_start+i+1]);
+      result.push_back(solution.x[y_start+i+1]);
+      result.push_back(solution.x[yaw_start+i+1]);
+    }
   }
+  /*
   std::cout << "--- result ---" << std::endl;
   for(int i=0;i<result.size();i++){
     std::cout << result[i] << std::endl;
   }
+  */
   return result;
 }
 
@@ -309,15 +349,15 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     AD<double> cos0 = CppAD::cos(yaw0 + omega0 * DT);
     //fg[2 + yaw_start + i] = yaw1 - CppAD::atan2(sin0, cos0);
     fg[2 + yaw_start + i] = yaw1 - (yaw0 + omega0 * DT);
-    fg[2 + omega_r_start + i] = omega_r0 - (vx0 + omega0 * TREAD / (2.0 * WHEEL_RADIUS)) / WHEEL_RADIUS;
-    fg[2 + omega_l_start + i] = omega_l0 - (vx0 - omega0 * TREAD / (2.0 * WHEEL_RADIUS)) / WHEEL_RADIUS;
+    fg[2 + omega_r_start + i] = omega_r0 - (vx0 + omega0 * TREAD / 2.0) / WHEEL_RADIUS;
+    fg[2 + omega_l_start + i] = omega_l0 - (vx0 - omega0 * TREAD / 2.0) / WHEEL_RADIUS;
   }
   std::cout << "FG_eval() end" << std::endl;
 }
 
 MPCPathTracker::MPCPathTracker(void)
 {
-  velocity_pub = nh.advertise<geometry_msgs::Twist>("/velocity", 100);
+  velocity_pub = nh.advertise<geometry_msgs::Twist>(VELOCITY_TOPIC_NAME, 100);
   path_pub = nh.advertise<geometry_msgs::PoseArray>("/mpc_path", 100);
   path_sub = nh.subscribe("/path", 100, &MPCPathTracker::path_callback, this);
   path_x = Eigen::VectorXd::Zero(T);
@@ -337,7 +377,7 @@ void MPCPathTracker::process(void)
   bool transformed = false;
   geometry_msgs::PoseStamped pose;
   try{
-    listener.lookupTransform("map", "base_link", ros::Time(0), _transform);
+    listener.lookupTransform(WORLD_FRAME, ROBOT_FRAME, ros::Time(0), _transform);
     tf::transformStampedTFToMsg(_transform, transform);
     current_pose.header = transform.header;
     current_pose.pose.position.x = transform.transform.translation.x;
@@ -366,8 +406,8 @@ void MPCPathTracker::process(void)
       double dyaw = tf::getYaw(current_pose.pose.orientation) - tf::getYaw(previous_pose.pose.orientation);
       double v = sqrt(dx * dx + dy * dy) / dt;
       double omega = dyaw / dt;
-      double omega_r = (v + omega * TREAD / (2.0 * WHEEL_RADIUS)) / WHEEL_RADIUS;
-      double omega_l = (v - omega * TREAD / (2.0 * WHEEL_RADIUS)) / WHEEL_RADIUS;
+      double omega_r = (v + omega * TREAD / 2.0) / WHEEL_RADIUS;
+      double omega_l = (v - omega * TREAD / 2.0) / WHEEL_RADIUS;
 
       Eigen::VectorXd state(5);
       state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation), omega_r, omega_l;
@@ -383,7 +423,7 @@ void MPCPathTracker::process(void)
       velocity_pub.publish(velocity);
       // mpc表示
       geometry_msgs::PoseArray mpc_path;
-      mpc_path.header.frame_id = "base_link";
+      mpc_path.header.frame_id = ROBOT_FRAME;
       double yaw0 = tf::getYaw(pose.pose.orientation);
       for(int i=0;i<T-1;i++){
         geometry_msgs::Pose temp;
@@ -403,7 +443,7 @@ void MPCPathTracker::process(void)
 
 void MPCPathTracker::path_to_vector(void)
 {
-  int m = VREF * DT / 0.05;
+  int m = VREF * DT / RESOLUTION + 1;// TODO:delete 1
   int index = 0;
   for(int i=0;i<T;i++){
     if(i*m<path.poses.size()){

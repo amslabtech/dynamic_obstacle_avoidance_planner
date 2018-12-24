@@ -6,8 +6,11 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/Int32.h>
 
-int NUM = 0;
+int NUM = 1;
 double RADIUS = 0;
+std::string WORLD_FRAME;
+std::string ROBOT_FRAME;
+std::string OBS_FRAME;
 
 void obs_num_callback(const std_msgs::Int32ConstPtr& msg)
 {
@@ -22,17 +25,20 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::NodeHandle local_nh("~");
 
-  local_nh.getParam("RADIUS", RADIUS);
+  local_nh.getParam("/dynamic_avoidance/RADIUS", RADIUS);
+  local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
+  local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
+  local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
 
   ros::Subscriber obs_num_sub = nh.subscribe("/obs_num", 100, obs_num_callback);
 
   tf::TransformListener listener;
 
   geometry_msgs::PoseArray current_poses;
-  current_poses.header.frame_id = "map";
+  current_poses.header.frame_id = WORLD_FRAME;
 
   geometry_msgs::PoseStamped current_robot;
-  current_robot.header.frame_id = "map";
+  current_robot.header.frame_id = WORLD_FRAME;
 
   ros::Rate loop_rate(10);
 
@@ -43,7 +49,7 @@ int main(int argc, char** argv)
       try{
         {
           tf::StampedTransform _transform;
-          listener.lookupTransform("map", "base_link", ros::Time(0), _transform);
+          listener.lookupTransform(WORLD_FRAME, ROBOT_FRAME, ros::Time(0), _transform);
           geometry_msgs::TransformStamped transform;
           tf::transformStampedTFToMsg(_transform, transform);
           current_robot.pose.position.x = transform.transform.translation.x;
@@ -51,9 +57,9 @@ int main(int argc, char** argv)
           current_robot.pose.orientation = transform.transform.rotation;
         }
         for(int i=0;i<NUM;i++){
-          std::string frame = "obs" + std::to_string(i);
+          std::string frame = OBS_FRAME;//"obs" + std::to_string(i);
           tf::StampedTransform _transform;
-          listener.lookupTransform("map", frame, ros::Time(0), _transform);
+          listener.lookupTransform(WORLD_FRAME, frame, ros::Time(0), _transform);
           geometry_msgs::TransformStamped transform;
           tf::transformStampedTFToMsg(_transform, transform);
           geometry_msgs::Pose pose;

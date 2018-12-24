@@ -16,29 +16,31 @@ public:
   void set_interval(double);
   void update(double, double, double);
   void predict(void);
-  Eigen::Vector2d get_velocity(void);
+  Eigen::Vector3d get_velocity(void);
 
 private:
   const double SIGMA_A = 0.05;
   Eigen::Matrix<double, 3, 1> Z;// 観測
-  Eigen::Matrix<double, 5, 1> X;// 状態
-  Eigen::Matrix<double, 5, 5> F;// 動作モデル
-  Eigen::Matrix<double, 5, 2> G;// ノイズ
-  Eigen::Matrix<double, 5, 5> Q;//
-  Eigen::Matrix<double, 5, 5> P;//
-  Eigen::Matrix<double, 3, 5> H;// 観測モデル
+  Eigen::Matrix<double, 6, 1> X;// 状態
+  Eigen::Matrix<double, 6, 6> F;// 動作モデル
+  Eigen::Matrix<double, 6, 3> G;// ノイズ
+  Eigen::Matrix<double, 6, 6> Q;//
+  Eigen::Matrix<double, 6, 6> P;//
+  Eigen::Matrix<double, 3, 6> H;// 観測モデル
   Eigen::Matrix<double, 3, 3> R;// 観測ノイズ
-  Eigen::Matrix<double, 5, 5> I;// 単位行列
+  Eigen::Matrix<double, 6, 6> I;// 単位行列
   double last_time;
 };
 
-const double PREDICTION_TIME = 3.5;// [s], 軌道予測時間
+double PREDICTION_TIME;// [s], 軌道予測時間
 const double DT = 0.1;// [s]
-const int PREDICTION_STEP = PREDICTION_TIME / DT;
+int PREDICTION_STEP;
 const int NUM_OF_PATH = 2;// obs1つあたりpath2本
 const double HZ = 10;
+std::string WORLD_FRAME;
+std::string OBS_FRAME;
 
-int NUM = 0;
+int NUM = 1;
 
 geometry_msgs::PoseArray predicted_paths;
 geometry_msgs::PoseArray current_poses;
@@ -48,19 +50,18 @@ std::vector<KalmanFilter> kf;
 
 tf::StampedTransform _transform;
 
-void obs_num_callback(const std_msgs::Int32ConstPtr& msg)
-{
-  NUM = msg->data;
-}
-
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "obstacle_predictor_kf");
   ros::NodeHandle nh;
   ros::NodeHandle local_nh("~");
 
+  local_nh.getParam("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME);
+  local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
+  local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
+  PREDICTION_STEP = PREDICTION_TIME / DT;
+
   ros::Publisher predicted_paths_pub = nh.advertise<geometry_msgs::PoseArray>("/predicted_paths", 100);
-  ros::Subscriber obs_num_sub = nh.subscribe("/obs_num", 100, obs_num_callback);
 
   tf::TransformListener listener;
 
@@ -70,7 +71,7 @@ int main(int argc, char** argv)
 
   double last_time;
 
-  predicted_paths.header.frame_id = "map";
+  predicted_paths.header.frame_id = "world";
 
   ros::Rate loop_rate(HZ);
 
@@ -81,9 +82,9 @@ int main(int argc, char** argv)
       bool transformed = false;
       try{
         for(int i=0;i<NUM;i++){
-          std::string frame = "obs" + std::to_string(i);
-          listener.lookupTransform("map", frame, ros::Time(0), _transform);
-          std::cout << "obs" + std::to_string(i) + " received" << std::endl;
+          std::string frame = OBS_FRAME;
+          listener.lookupTransform(WORLD_FRAME, frame, ros::Time(0), _transform);
+          std::cout << OBS_FRAME + std::to_string(i) + " received" << std::endl;
           geometry_msgs::TransformStamped transform;
           tf::transformStampedTFToMsg(_transform, transform);
           geometry_msgs::Pose pose;
@@ -112,8 +113,8 @@ int main(int argc, char** argv)
           double _vx = (current_poses.poses[i].position.x - previous_poses.poses[i].position.x) / dt;
           double _vy = (current_poses.poses[i].position.y - previous_poses.poses[i].position.y) / dt;
           // 進行方向
-          double direction = atan2(_vy, _vx);
-          current_poses.poses[i].orientation = tf::createQuaternionMsgFromYaw(direction);
+          //double direction = atan2(_vy, _vx);
+          //current_poses.poses[i].orientation = tf::createQuaternionMsgFromYaw(direction);
           KalmanFilter _kf(current_poses.poses[i].position.x, current_poses.poses[i].position.y, tf::getYaw(current_poses.poses[i].orientation));
           kf.push_back(_kf);
         }
@@ -130,13 +131,13 @@ int main(int argc, char** argv)
           double _vx = (current_poses.poses[i].position.x - previous_poses.poses[i].position.x) / dt;
           double _vy = (current_poses.poses[i].position.y - previous_poses.poses[i].position.y) / dt;
           // 進行方向
-          double direction = atan2(_vy, _vx);
-          current_poses.poses[i].orientation = tf::createQuaternionMsgFromYaw(direction);
+          //double direction = atan2(_vy, _vx);
+          //current_poses.poses[i].orientation = tf::createQuaternionMsgFromYaw(direction);
           std::cout << current_poses.poses[i].position.x << ", " << current_poses.poses[i].position.y << ", " << tf::getYaw(current_poses.poses[i].orientation)  << std::endl;
           predicted_paths.poses.push_back(current_poses.poses[i]);
           kf[i].predict();
           kf[i].update(current_poses.poses[i].position.x, current_poses.poses[i].position.y, tf::getYaw(current_poses.poses[i].orientation));
-          Eigen::Vector2d velocity;
+          Eigen::Vector3d velocity;
           velocity = kf[i].get_velocity();
           std::cout << "predicted velocity" << std::endl;
           std::cout << velocity << std::endl;
@@ -146,6 +147,10 @@ int main(int argc, char** argv)
           yaw = atan2(sin(yaw), cos(yaw));
           double vx = v * cos(yaw);
           double vy = v * sin(yaw);
+          vx = velocity[0];
+          vy = velocity[1];
+          v = sqrt(vx*vx+vy+vy);
+          omega = velocity[2];
 
           for(int j=0;j<PREDICTION_STEP;j++){
             geometry_msgs::Pose pose;
@@ -154,8 +159,8 @@ int main(int argc, char** argv)
             yaw += omega * DT;
             yaw = atan2(sin(yaw), cos(yaw));
             pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
-            vx = v * cos(yaw);
-            vy = v * sin(yaw);
+            //vx = v * cos(yaw);
+            //vy = v * sin(yaw);
             v = sqrt(vx*vx + vy*vy);
             omega = omega;
             predicted_paths.poses.push_back(pose);
@@ -176,40 +181,44 @@ int main(int argc, char** argv)
 
 KalmanFilter::KalmanFilter(double x, double y, double yaw)
 {
-  X << x, y, yaw, 0, 0;
+  X << x, y, yaw, 0, 0, 0;
 
   Z << x, y, yaw;
 
-  P <<   0.0,   0.0,    0.0,    0.0,    0.0,
-         0.0,   0.0,    0.0,    0.0,    0.0,
-         0.0,   0.0,    0.0,    0.0,    0.0,
-         0.0,   0.0,    0.0,   1e+0,    0.0,
-         0.0,   0.0,    0.0,    0.0,   1e+0;
+  P <<   0.0,   0.0,    0.0,    0.0,    0.0,  0.0,
+         0.0,   0.0,    0.0,    0.0,    0.0,  0.0,
+         0.0,   0.0,    0.0,    0.0,    0.0,  0.0,
+         0.0,   0.0,    0.0,   1e+0,    0.0,  0.0,
+         0.0,   0.0,    0.0,    0.0,   1e+0,  0.0,
+         0.0,   0.0,    0.0,    0.0,    0.0, 1e+0;
 
-  R << 1e-1,  0.0,  0.0,
-        0.0, 1e-1,  0.0,
-        0.0,  0.0, 1e-1;
+  R << 1e-3,  0.0,  0.0,
+        0.0, 1e-3,  0.0,
+        0.0,  0.0, 1e-3;
 
-  H << 1.0, 0.0, 0.0, 0.0, 0.0,
-       0.0, 1.0, 0.0, 0.0, 0.0,
-       0.0, 0.0, 1.0, 0.0, 0.0,
+  H << 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+       0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
+       0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
 
-  I << 1.0, 0.0, 0.0, 0.0, 0.0,
-       0.0, 1.0, 0.0, 0.0, 0.0,
-       0.0, 0.0, 1.0, 0.0, 0.0,
-       0.0, 0.0, 0.0, 1.0, 0.0,
-       0.0, 0.0, 0.0, 0.0, 1.0;
+  I << 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+       0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
+       0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+       0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+       0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+       0.0, 0.0, 0.0, 0.0, 0.0, 1.0;
 
   last_time = ros::Time::now().toSec();
 }
 
 void KalmanFilter::set_interval(double dt)
 {
-  G << dt*dt / 2.0,         0.0,
-       dt*dt / 2.0,         0.0,
-               0.0, dt*dt / 2.0,
-                dt,         0.0,
-               0.0,          dt;
+	// vx, vy, omega
+  G << dt*dt / 2.0,         0.0,         0.0,
+               0.0, dt*dt / 2.0,         0.0,
+               0.0,         0.0, dt*dt / 2.0,
+                dt,         0.0,         0.0,
+               0.0,          dt,         0.0,
+               0.0,         0.0,          dt;
 
   Q = SIGMA_A * SIGMA_A * G * G.transpose();
 }
@@ -217,21 +226,25 @@ void KalmanFilter::set_interval(double dt)
 void KalmanFilter::update(double x, double y, double yaw)
 {
   Z << x, y, yaw;
-  //std::cout << "Z" << std::endl;
-  //std::cout << Z << std::endl;
+  std::cout << "Z" << std::endl;
+  std::cout << Z << std::endl;
+  std::cout << "HX" << std::endl;
+  std::cout << H*X << std::endl;
   Eigen::Vector3d e = Z - H * X;
   e[2] = atan2(sin(e[2]), cos(e[2]));
-  //std::cout << "e" << std::endl;
-  //std::cout << e << std::endl;
+  std::cout << "e" << std::endl;
+  std::cout << e << std::endl;
   Eigen::Matrix3d S = H * P * H.transpose() + R;
   //std::cout << "S" << std::endl;
   //std::cout << S << std::endl;
-  Eigen::Matrix<double, 5, 3> K = P * H.transpose() * S.inverse();
+  Eigen::Matrix<double, 6, 3> K = P * H.transpose() * S.inverse();
   //std::cout << "K" << std::endl;
   //std::cout << K << std::endl;
 
   X[2] = atan2(sin(X[2]), cos(X[2]));
   X = X + K * e;
+  std::cout << "Ke" << std::endl;
+  std::cout << K*e << std::endl;
   X[2] = atan2(sin(X[2]), cos(X[2]));
   //std::cout << "X" << std::endl;
   //std::cout << X << std::endl;
@@ -248,31 +261,34 @@ void KalmanFilter::predict(void)
 
   set_interval(dt);
 
-  F << 1.0, 0.0, 0.0, dt * cos(X[2]),            0.0,
-       0.0, 1.0, 0.0, dt * sin(X[2]),            0.0,
-       0.0, 0.0, 1.0,            0.0,             dt,
-       0.0, 0.0, 0.0,            1.0,            0.0,
-       0.0, 0.0, 0.0,            0.0,            1.0;
+  F << 1.0, 0.0, 0.0,  dt, 0.0, 0.0,
+       0.0, 1.0, 0.0, 0.0,  dt, 0.0,
+       0.0, 0.0, 1.0, 0.0, 0.0,  dt,
+       0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+       0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+       0.0, 0.0, 0.0, 0.0, 0.0, 1.0;
 
+  /*
   Eigen::Matrix<double, 5, 5> jF;
   jF << 1.0, 0.0, -X[3] * dt * sin(X[2]), dt * cos(X[2]),            0.0,
         0.0, 1.0,  X[3] * dt * cos(X[2]), dt * sin(X[2]),            0.0,
         0.0, 0.0,                    1.0,            0.0,             dt,
         0.0, 0.0,                    0.0,            1.0,            0.0,
         0.0, 0.0,                    0.0,            0.0,            1.0;
+		*/
 
   X = F * X;
-  //X[2] = atan2(sin(X[2]), cos(X[2]));
+  X[2] = atan2(sin(X[2]), cos(X[2]));
   //std::cout << "X" << std::endl;
   //std::cout << X << std::endl;
-  P = jF * P * jF.transpose() + Q;
+  P = F * P * F.transpose() + Q;
   //std::cout << "P" << std::endl;
   //std::cout << P << std::endl;
 }
 
-Eigen::Vector2d KalmanFilter::get_velocity(void)
+Eigen::Vector3d KalmanFilter::get_velocity(void)
 {
-  Eigen::Vector2d velocity;
-  velocity << X[3], X[4];
+  Eigen::Vector3d velocity;
+  velocity << X[3], X[4], X[5];
   return velocity;
 }

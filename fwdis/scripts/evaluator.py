@@ -31,10 +31,10 @@ def process():
 
   while not rospy.is_shutdown():
     try:
-      (trans, rot)= listener.lookupTransform('map', 'base_link', rospy.Time(0))
+      (trans, rot)= listener.lookupTransform('world', '/vicon/base_link/base_link', rospy.Time(0))
       robot_x = trans[0]
       robot_y = trans[1]
-      (trans, rot) = listener.lookupTransform('map', 'obs0', rospy.Time(0))
+      (trans, rot) = listener.lookupTransform('world', '/vicon/obs/obs', rospy.Time(0))
       obs0_x = trans[0]
       obs0_y = trans[1]
       if(not first):

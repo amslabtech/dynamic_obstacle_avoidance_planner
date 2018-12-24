@@ -10,11 +10,11 @@ gnome-terminal -e "/opt/ros/${ROS_DISTRO}/bin/rosrun rviz rviz -d ../config/dyna
 sleep 0.5s
 
 # robot sim
-gnome-terminal -e "docker exec -it ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering sim_3dof.py'" --geometry=45x12+895+0 &
+#gnome-terminal -e "docker exec -it ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering sim_3dof.py'" --geometry=45x12+895+0 &
 sleep 0.1s
 
 # obstacle sim
-gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering diff_drive_sim.launch'" --geometry=45x12+1315+0 &
+#gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering diff_drive_sim.launch'" --geometry=45x12+1315+0 &
 sleep 0.1s
 
 gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering obstacle_predictor_kf'" --geometry=45x12+0+250 &
