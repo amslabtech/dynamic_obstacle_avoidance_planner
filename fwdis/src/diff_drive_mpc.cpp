@@ -91,6 +91,7 @@ double RESOLUTION = 0.1;// [m]
 
 std::string WORLD_FRAME;
 std::string ROBOT_FRAME;
+std::string VELOCITY_TOPIC_NAME;
 
 // state
 size_t x_start = 0;
@@ -124,6 +125,7 @@ int main(int argc, char** argv)
   local_nh.getParam("/dynamic_avoidance/RESOLUTION", RESOLUTION);
   local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
   local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
+  local_nh.getParam("/dynamic_avoidance/VELOCITY_TOPIC_NAME", VELOCITY_TOPIC_NAME);
 
   MPCPathTracker mpc_path_tracker;
 
@@ -355,7 +357,7 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
 
 MPCPathTracker::MPCPathTracker(void)
 {
-  velocity_pub = nh.advertise<geometry_msgs::Twist>("/velocity", 100);
+  velocity_pub = nh.advertise<geometry_msgs::Twist>(VELOCITY_TOPIC_NAME, 100);
   path_pub = nh.advertise<geometry_msgs::PoseArray>("/mpc_path", 100);
   path_sub = nh.subscribe("/path", 100, &MPCPathTracker::path_callback, this);
   path_x = Eigen::VectorXd::Zero(T);

@@ -19,8 +19,9 @@ def velocity_callback(data):
 
 def process():
   ROBOT_FRAME = rospy.get_param("/dynamic_avoidance/ROBOT_FRAME")
+  VELOCITY_TOPIC_NAME = rospy.get_param("/dynamic_avoidance/VELOCITY_TOPIC_NAME")
 
-  rospy.Subscriber('/t_frog/cmd_vel', Twist, velocity_callback)
+  rospy.Subscriber(VELOCITY_TOPIC_NAME, Twist, velocity_callback)
 
   print "=== sim 3dof ==="
 

@@ -17,7 +17,6 @@
     <param name="WHEEL_RADIUS" value="$(arg _WHEEL_RADIUS)"/>
     <param name="TREAD" value="$(arg _TREAD)"/>
     <remap from="path" to="intermediate_path"/>
-    <remap from="velocity" to="t_frog/cmd_vel"/>
   </node>
 
 </launch>
