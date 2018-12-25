@@ -163,6 +163,7 @@ add_executable(base_costmap src/base_costmap.cpp)
 add_executable(obstacle_predictor_kf src/obstacle_predictor_kf.cpp)
 add_executable(collision_detector src/collision_detector.cpp)
 add_executable(trajectory_logger src/trajectory_logger.cpp)
+add_executable(fwdis_mpc src/fwdis_mpc.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -234,6 +235,10 @@ target_link_libraries(collision_detector
 )
 target_link_libraries(trajectory_logger
   ${catkin_LIBRARIES}
+)
+target_link_libraries(fwdis_mpc
+  ${catkin_LIBRARIES}
+  ${IPOPT_LIBRARIES}
 )
 
 add_dependencies(fwdis_controller fwdis_msgs_generate_messages_cpp)
