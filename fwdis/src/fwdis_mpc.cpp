@@ -10,13 +10,37 @@
 
 //ipopt
 #include <Eigen/Core>
+#include <Eigen/Dense>
 #include <cppad/cppad.hpp>
 #include <cppad/ipopt/solve.hpp>
 
 // kinematic model robot_velocity = forward_matrix * wheel_velocity
 Eigen::MatrixXd forward_matrix;
+Eigen::MatrixXd inversed_matrix;
 Eigen::VectorXd wheel_velocity;
 Eigen::Vector3d robot_velocity;
+
+//https://robotics.naist.jp/edu/text/?Robotics%2FEigen#b3b26d13
+template <typename t_matrix>
+t_matrix PseudoInverse(const t_matrix& m, const double &tolerance=1.e-6)
+{
+  using namespace Eigen;
+  typedef JacobiSVD<t_matrix> TSVD;
+  unsigned int svd_opt(ComputeThinU | ComputeThinV);
+  if(m.RowsAtCompileTime!=Dynamic || m.ColsAtCompileTime!=Dynamic)
+  svd_opt= ComputeFullU | ComputeFullV;
+  TSVD svd(m, svd_opt);
+  const typename TSVD::SingularValuesType &sigma(svd.singularValues());
+  typename TSVD::SingularValuesType sigma_inv(sigma.size());
+  for(long i=0; i<sigma.size(); ++i)
+  {
+    if(sigma(i) > tolerance)
+      sigma_inv(i)= 1.0/sigma(i);
+    else
+      sigma_inv(i)= 0.0;
+  }
+  return svd.matrixV()*sigma_inv.asDiagonal()*svd.matrixU().transpose();
+}
 
 using CppAD::AD;
 
@@ -169,6 +193,9 @@ int main(int argc, char** argv)
                     0.0, 1.0, -ROBOT_RADIUS * cos(ROBOT_THETA),
                     1.0, 0.0,  ROBOT_RADIUS * sin(ROBOT_THETA),
                     0.0, 1.0, -ROBOT_RADIUS * cos(ROBOT_THETA);
+
+  inversed_matrix.resize(3, 8);
+  inversed_matrix = PseudoInverse(forward_matrix);
 
   wheel_velocity.resize(8, 1);
 
@@ -476,10 +503,19 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     //制約
     fg[2 + x_start + i] = x1 - (x0 + vx0 * CppAD::cos(yaw0) * DT);
     fg[2 + y_start + i] = y1 - (y0 + vx0 * CppAD::sin(yaw0) * DT);
-    AD<double> sin0 = CppAD::sin(yaw0 + omega0 * DT);
-    AD<double> cos0 = CppAD::cos(yaw0 + omega0 * DT);
-    //fg[2 + yaw_start + i] = yaw1 - CppAD::atan2(sin0, cos0);
     fg[2 + yaw_start + i] = yaw1 - (yaw0 + omega0 * DT);
+    fg[2 + omega_w_fr_start + i] = omega_w_fr1 - (omega_w_fr0 + domega_w_fr0 * DT);
+    fg[2 + omega_w_fl_start + i] = omega_w_fl1 - (omega_w_fl0 + domega_w_fl0 * DT);
+    fg[2 + omega_w_rr_start + i] = omega_w_rr1 - (omega_w_rr0 + domega_w_rr0 * DT);
+    fg[2 + omega_w_rl_start + i] = omega_w_rl1 - (omega_w_rl0 + domega_w_rl0 * DT);
+    fg[2 + theta_s_fr_start + i] = theta_s_fr1 - (theta_s_fr0 + dtheta_s_fr0 * DT);
+    fg[2 + theta_s_fl_start + i] = theta_s_fl1 - (theta_s_fl0 + dtheta_s_fl0 * DT);
+    fg[2 + theta_s_rr_start + i] = theta_s_rr1 - (theta_s_rr0 + dtheta_s_rr0 * DT);
+    fg[2 + theta_s_rl_start + i] = theta_s_rl1 - (theta_s_rl0 + dtheta_s_rl0 * DT);
+    AD<double> v_w_fr1 = WHEEL_RADIUS * omega_w_fr1;
+    AD<double> v_w_fl1 = WHEEL_RADIUS * omega_w_fl1;
+    AD<double> v_w_rr1 = WHEEL_RADIUS * omega_w_rr1;
+    AD<double> v_w_rl1 = WHEEL_RADIUS * omega_w_rl1;
   }
   std::cout << "FG_eval() end" << std::endl;
 }
@@ -605,3 +641,4 @@ double get_distance(geometry_msgs::PoseStamped& pose0, geometry_msgs::PoseStampe
 {
   return sqrt((pose0.pose.position.x - pose1.pose.position.x) * (pose0.pose.position.x - pose1.pose.position.x) + (pose0.pose.position.y - pose1.pose.position.y) * (pose0.pose.position.y - pose1.pose.position.y));
 }
+
