@@ -6,4 +6,8 @@ fwdis:
   MAX_WHEEL_ANGULAR_ACCELERATION: 60 #[rad/ss]
   MAX_STEERING_ANGLE: 2.094395 #[rad] # 120[deg]
   ROBOT_FRAME: "base_link"
+  MAX_VELOCITY: 1.5 #[m/s]
+  MAX_ACCELERATION: 2.0 #[m/ss]
+  MAX_ANGULAR_VELOCITY: 2.0 #[rad/s]
+  MAX_ANGULAR_ACCELERATION: 2.0 #[rad/ss]
 
