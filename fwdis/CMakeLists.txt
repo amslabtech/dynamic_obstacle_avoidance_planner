@@ -247,6 +247,7 @@ target_link_libraries(fwdis_odom
 
 add_dependencies(fwdis_controller fwdis_msgs_generate_messages_cpp)
 add_dependencies(fwdis_gazebo fwdis_msgs_generate_messages_cpp)
+add_dependencies(fwdis_odom fwdis_msgs_generate_messages_cpp)
 
 #############
 ## Install ##
