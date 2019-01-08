@@ -516,6 +516,7 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     AD<double> v_w_fl1 = WHEEL_RADIUS * omega_w_fl1;
     AD<double> v_w_rr1 = WHEEL_RADIUS * omega_w_rr1;
     AD<double> v_w_rl1 = WHEEL_RADIUS * omega_w_rl1;
+    // 見直す
     fg[2 + vx_start + i] = vx1 - (inversed_matrix(0, 0) * v_w_fr1 * CppAD::cos(theta_s_fr1) + inversed_matrix(0, 1) * v_w_fr1 * CppAD::sin(theta_s_fr1) + inversed_matrix(0, 2) * v_w_fl1 * CppAD::cos(theta_s_fl1) + inversed_matrix(0, 3) * v_w_fl1 * CppAD::sin(theta_s_fl1) + inversed_matrix(0, 4) * v_w_rr1 * CppAD::cos(theta_s_rr1) + inversed_matrix(0, 5) * v_w_rr1 * CppAD::sin(theta_s_rr1) + inversed_matrix(0, 6) * v_w_rl1 * CppAD::cos(theta_s_rl1) + inversed_matrix(0, 7) * v_w_rl1 * CppAD::sin(theta_s_rl1));
     fg[2 + vy_start + i] = vy1 - (inversed_matrix(1, 0) * v_w_fr1 * CppAD::cos(theta_s_fr1) + inversed_matrix(1, 1) * v_w_fr1 * CppAD::sin(theta_s_fr1) + inversed_matrix(1, 2) * v_w_fl1 * CppAD::cos(theta_s_fl1) + inversed_matrix(1, 3) * v_w_fl1 * CppAD::sin(theta_s_fl1) + inversed_matrix(1, 4) * v_w_rr1 * CppAD::cos(theta_s_rr1) + inversed_matrix(1, 5) * v_w_rr1 * CppAD::sin(theta_s_rr1) + inversed_matrix(1, 6) * v_w_rl1 * CppAD::cos(theta_s_rl1) + inversed_matrix(1, 7) * v_w_rl1 * CppAD::sin(theta_s_rl1));
     fg[2 + omega_start + i] = omega1 - (inversed_matrix(2, 0) * v_w_fr1 * CppAD::cos(theta_s_fr1) + inversed_matrix(2, 1) * v_w_fr1 * CppAD::sin(theta_s_fr1) + inversed_matrix(2, 2) * v_w_fl1 * CppAD::cos(theta_s_fl1) + inversed_matrix(2, 3) * v_w_fl1 * CppAD::sin(theta_s_fl1) + inversed_matrix(2, 4) * v_w_rr1 * CppAD::cos(theta_s_rr1) + inversed_matrix(2, 5) * v_w_rr1 * CppAD::sin(theta_s_rr1) + inversed_matrix(2, 6) * v_w_rl1 * CppAD::cos(theta_s_rl1) + inversed_matrix(2, 7) * v_w_rl1 * CppAD::sin(theta_s_rl1));
@@ -540,7 +541,7 @@ void MPCPathTracker::path_callback(const nav_msgs::PathConstPtr& msg)
 
 void MPCPathTracker::process(void)
 {
-  std::cout << "=== diff drive mpc ===" << std::endl;
+  std::cout << "=== fwdis mpc ===" << std::endl;
   ros::Time start_time = ros::Time::now();
   bool transformed = false;
   geometry_msgs::PoseStamped pose;
@@ -572,13 +573,25 @@ void MPCPathTracker::process(void)
       double dx = current_pose.pose.position.x - previous_pose.pose.position.x;
       double dy = current_pose.pose.position.y - previous_pose.pose.position.y;
       double dyaw = tf::getYaw(current_pose.pose.orientation) - tf::getYaw(previous_pose.pose.orientation);
-      double v = sqrt(dx * dx + dy * dy) / dt;
+      double vx = dx / dt;
+      double vy = dy /dt;
       double omega = dyaw / dt;
-      double omega_r = (v + omega * TREAD / 2.0) / WHEEL_RADIUS;
-      double omega_l = (v - omega * TREAD / 2.0) / WHEEL_RADIUS;
+      Eigen::VectorXd current_wheel_velocity;
+      current_wheel_velocity.resize(8, 1);
+      Eigen::Vector3d current_velocity;
+      current_velocity << vx, vy, omega;
+      current_wheel_velocity = inversed_matrix * current_velocity;
+      double s_fr = atan2(current_wheel_velocity(1), current_wheel_velocity(0));
+      double w_fr = sqrt(current_wheel_velocity(0) * current_wheel_velocity(0) + current_wheel_velocity(1) * current_wheel_velocity(1)) / WHEEL_RADIUS;
+      double s_fl = atan2(current_wheel_velocity(3), current_wheel_velocity(2));
+      double w_fl = sqrt(current_wheel_velocity(2) * current_wheel_velocity(2) + current_wheel_velocity(3) * current_wheel_velocity(3)) / WHEEL_RADIUS;
+      double s_rl = atan2(current_wheel_velocity(5), current_wheel_velocity(4));
+      double w_rl = sqrt(current_wheel_velocity(4) * current_wheel_velocity(4) + current_wheel_velocity(5) * current_wheel_velocity(5)) / WHEEL_RADIUS;
+      double s_rr = atan2(current_wheel_velocity(7), current_wheel_velocity(6));
+      double w_rr = sqrt(current_wheel_velocity(6) * current_wheel_velocity(6) + current_wheel_velocity(7) * current_wheel_velocity(7)) / WHEEL_RADIUS;
 
-      Eigen::VectorXd state(5);
-      state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation), omega_r, omega_l;
+      Eigen::VectorXd state(14);
+      state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation), vx, vy, omega, w_fr, w_fl, w_rr, w_rl, s_fr, s_fl, s_rr, s_rl;
       std::cout << "path to vector" << std::endl;
       path_to_vector();
       std::cout << "solving" << std::endl;
@@ -586,7 +599,8 @@ void MPCPathTracker::process(void)
       std::cout << "solved" << std::endl;
       geometry_msgs::Twist velocity;
       velocity.linear.x = result[0];
-      velocity.angular.z = result[1];
+      velocity.linear.y = result[1];
+      velocity.angular.z = result[2];
       std::cout << velocity << std::endl;
       velocity_pub.publish(velocity);
       // mpc表示
