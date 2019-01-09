@@ -199,6 +199,9 @@ int main(int argc, char** argv)
 
   wheel_velocity.resize(8, 1);
 
+  std::cout << forward_matrix << std::endl;
+  std::cout << inversed_matrix << std::endl;
+
   MPCPathTracker mpc_path_tracker;
 
   ros::Rate loop_rate(HZ);
@@ -285,7 +288,7 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   }
   for(int i=vx_start;i<omega_start;i++){
     // vx, vy
-    vars_lower_bound[i] = 0;
+    vars_lower_bound[i] = -VREF;
     vars_upper_bound[i] = VREF;
   }
   for(int i=omega_start;i<omega_w_fr_start;i++){
@@ -307,8 +310,8 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   }
   for(int i=dtheta_s_fr_start;i<n_variables;i++){
     // 適当
-    vars_lower_bound[i] = -MAX_WHEEL_ANGULAR_ACCELERATION;
-    vars_upper_bound[i] = MAX_WHEEL_ANGULAR_ACCELERATION;
+    vars_lower_bound[i] = -MAX_WHEEL_ANGULAR_VELOCITY;
+    vars_upper_bound[i] = MAX_WHEEL_ANGULAR_VELOCITY;
   }
 
   // 等式制約
@@ -376,6 +379,8 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   auto cost = solution.obj_value;
   std::cout << "Cost " << cost << std::endl;
 
+  std::cout << "solution.x.size() " << solution.x.size() << std::endl;
+
   if(ok){
     failure_count = 0;
     result.clear();
@@ -430,14 +435,17 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     fg[0] += 0.2 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
     // 向き
     fg[0] += 0.1 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
+    // 速度
+    fg[0] += 0.1 * CppAD::pow(VREF - vars[vx_start + i], 2);
+    // 角加速度
+    fg[0] += 0.1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i+ 1], 2);
   }
   // input
   for(int i=0;i<T-2;i++){
-    // 速度
-    fg[0] += 0.1 * CppAD::pow(VREF - vars[vx_start + i], 2);
-    fg[0] += 0.1 * CppAD::pow(VREF - vars[vy_start + i], 2);
-    // 角加速度
-    fg[0] += 0.1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i+ 1], 2);
+    fg[0] += CppAD::pow(vars[dtheta_s_fr_start + i], 2);
+    fg[0] += CppAD::pow(vars[dtheta_s_fl_start + i], 2);
+    fg[0] += CppAD::pow(vars[dtheta_s_rr_start + i], 2);
+    fg[0] += CppAD::pow(vars[dtheta_s_rl_start + i], 2);
   }
 
   std::cout << "constrains start" << std::endl;
@@ -502,8 +510,8 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     AD<double> dtheta_s_rl0 = vars[dtheta_s_rl_start + i];
 
     //制約
-    fg[2 + x_start + i] = x1 - (x0 + vx0 * CppAD::cos(yaw0) * DT);
-    fg[2 + y_start + i] = y1 - (y0 + vx0 * CppAD::sin(yaw0) * DT);
+    fg[2 + x_start + i] = x1 - (x0 + (vx0 * CppAD::cos(yaw0) - vy0 * CppAD::sin(yaw0)) * DT);
+    fg[2 + y_start + i] = y1 - (y0 + (vx0 * CppAD::sin(yaw0) + vy0 * CppAD::cos(yaw0)) * DT);
     fg[2 + yaw_start + i] = yaw1 - (yaw0 + omega0 * DT);
     fg[2 + omega_w_fr_start + i] = omega_w_fr1 - (omega_w_fr0 + domega_w_fr0 * DT);
     fg[2 + omega_w_fl_start + i] = omega_w_fl1 - (omega_w_fl0 + domega_w_fl0 * DT);
@@ -580,7 +588,7 @@ void MPCPathTracker::process(void)
       current_wheel_velocity.resize(8, 1);
       Eigen::Vector3d current_velocity;
       current_velocity << vx, vy, omega;
-      current_wheel_velocity = inversed_matrix * current_velocity;
+      current_wheel_velocity = forward_matrix * current_velocity;
       double s_fr = atan2(current_wheel_velocity(1), current_wheel_velocity(0));
       double w_fr = sqrt(current_wheel_velocity(0) * current_wheel_velocity(0) + current_wheel_velocity(1) * current_wheel_velocity(1)) / WHEEL_RADIUS;
       double s_fl = atan2(current_wheel_velocity(3), current_wheel_velocity(2));
@@ -589,9 +597,13 @@ void MPCPathTracker::process(void)
       double w_rl = sqrt(current_wheel_velocity(4) * current_wheel_velocity(4) + current_wheel_velocity(5) * current_wheel_velocity(5)) / WHEEL_RADIUS;
       double s_rr = atan2(current_wheel_velocity(7), current_wheel_velocity(6));
       double w_rr = sqrt(current_wheel_velocity(6) * current_wheel_velocity(6) + current_wheel_velocity(7) * current_wheel_velocity(7)) / WHEEL_RADIUS;
+      std::cout << "current_wheel_velocity" << std::endl;
+      std::cout << current_wheel_velocity << std::endl;
 
       Eigen::VectorXd state(14);
       state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation), vx, vy, omega, w_fr, w_fl, w_rr, w_rl, s_fr, s_fl, s_rr, s_rl;
+      std::cout << "state" << std::endl;
+      std::cout << state << std::endl;
       std::cout << "path to vector" << std::endl;
       path_to_vector();
       std::cout << "solving" << std::endl;

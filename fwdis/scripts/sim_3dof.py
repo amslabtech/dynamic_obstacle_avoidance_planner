@@ -28,6 +28,7 @@ def process():
   br = tf.TransformBroadcaster()
 
   pose.pose.orientation.w = 1
+  pose.header.frame_id = ROBOT_FRAME
 
   velocity.linear.x = 0
   velocity.linear.y = 0
