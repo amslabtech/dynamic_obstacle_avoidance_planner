@@ -101,7 +101,7 @@ private:
 // ホライゾン長さ
 int T = 15;
 // 周期
-double DT;// [s]
+double DT = 0.1;// [s]
 const double HZ = 10;
 // 目標速度
 double VREF;// [m/s]
@@ -125,6 +125,8 @@ double ROBOT_RADIUS;
 double ROBOT_THETA;
 // ステア角度制限
 double MAX_STEERING_ANGLE;// [rad]
+// 最高速度
+double MAX_VELOCITY;// [m/s]
 
 std::string WORLD_FRAME;
 std::string ROBOT_FRAME;
@@ -181,6 +183,24 @@ int main(int argc, char** argv)
   local_nh.getParam("/fwdis/TREAD", TREAD);
   local_nh.getParam("/fwdis/MAX_WHEEL_ANGULAR_VELOCITY", MAX_WHEEL_ANGULAR_VELOCITY);
   local_nh.getParam("/fwdis/MAX_WHEEL_ANGULAR_ACCELERATION", MAX_WHEEL_ANGULAR_ACCELERATION);
+  local_nh.getParam("/fwdis/MAX_VELOCITY", MAX_VELOCITY);
+  local_nh.getParam("/fwdis/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
+
+  std::cout << "T: " << T << std::endl;
+  std::cout << "VREF: " << VREF << std::endl;
+  std::cout << "MAX_ANGULAR_VELOCITY: " << MAX_ANGULAR_VELOCITY << std::endl;
+  std::cout << "RESOLUTION: " << RESOLUTION << std::endl;
+  std::cout << "ROBOT_FRAME: " <<  ROBOT_FRAME << std::endl;
+  std::cout << "WORLD_FRAME: " << WORLD_FRAME << std::endl;
+  std::cout << "VELOCITY_TOPIC_NAME: " << VELOCITY_TOPIC_NAME << std::endl;
+  std::cout << "INTERMEDIATE_PATH_TOPIC_NAME: " << INTERMEDIATE_PATH_TOPIC_NAME << std::endl;
+  std::cout << "WHEEL_RADIUS: " << WHEEL_RADIUS << std::endl;
+  std::cout << "WHEEL_BASE: " << WHEEL_BASE << std::endl;
+  std::cout << "TREAD: " << TREAD << std::endl;
+  std::cout << "MAX_WHEEL_ANGULAR_VELOCITY: " << MAX_WHEEL_ANGULAR_VELOCITY << std::endl;
+  std::cout << "MAX_WHEEL_ANGULAR_ACCELERATION: " << MAX_WHEEL_ANGULAR_ACCELERATION << std::endl;
+  std::cout << "MAX_VELOCITY: " << MAX_VELOCITY << std::endl;
+  std::cout << "MAX_STEERING_ANGLE: " << MAX_STEERING_ANGLE << std::endl;
 
   ROBOT_RADIUS = sqrt(pow(WHEEL_BASE, 2) + pow(TREAD, 2)) / 2.0;
   ROBOT_THETA = atan(TREAD / WHEEL_BASE);
@@ -226,21 +246,20 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   size_t i;
   typedef CPPAD_TESTVECTOR(double) Dvector;
 
-  double x = state[i++];
-  double y = state[i++];
-  double yaw = state[i++];
-  double vx = state[i++];
-  double vy = state[i++];
-  double omega = state[i++];
-  double omega_w_fr = state[i++];
-  double omega_w_fl = state[i++];
-  double omega_w_rr = state[i++];
-  double omega_w_rl = state[i++];
-  double theta_s_fr = state[i++];
-  double theta_s_fl = state[i++];
-  double theta_s_rr = state[i++];
-  double theta_s_rl = state[i++];
-  i=0;
+  double x = state[0];
+  double y = state[1];
+  double yaw = state[2];
+  double vx = state[3];
+  double vy = state[4];
+  double omega = state[5];
+  double omega_w_fr = state[6];
+  double omega_w_fl = state[7];
+  double omega_w_rr = state[8];
+  double omega_w_rl = state[9];
+  double theta_s_fr = state[10];
+  double theta_s_fl = state[11];
+  double theta_s_rr = state[12];
+  double theta_s_rl = state[13];
 
   /*
   std::cout << "--- state ---" << std::endl;
@@ -286,15 +305,20 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     vars_lower_bound[i] = -1.0e19;
     vars_upper_bound[i] = 1.0e19;
   }
-  for(int i=vx_start;i<omega_start;i++){
-    // vx, vy
-    vars_lower_bound[i] = -VREF;
-    vars_upper_bound[i] = VREF;
+  for(int i=vx_start;i<vy_start;i++){
+    // vx
+    vars_lower_bound[i] = 0;
+    vars_upper_bound[i] = MAX_VELOCITY;
+  }
+  for(int i=vy_start;i<omega_start;i++){
+    // vy
+    vars_lower_bound[i] = -MAX_VELOCITY;
+    vars_upper_bound[i] = MAX_VELOCITY;
   }
   for(int i=omega_start;i<omega_w_fr_start;i++){
     // omega
     vars_lower_bound[i] = -MAX_ANGULAR_VELOCITY;
-    vars_lower_bound[i] = MAX_ANGULAR_VELOCITY;
+    vars_upper_bound[i] = MAX_ANGULAR_VELOCITY;
   }
   for(int i=omega_w_fr_start;i<theta_s_fr_start;i++){
     vars_lower_bound[i] = -MAX_WHEEL_ANGULAR_VELOCITY;
@@ -432,20 +456,24 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   // state
   for(int i=0;i<T-1;i++){
     // pathとの距離
-    fg[0] += 0.2 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
+    fg[0] += (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
     // 向き
-    fg[0] += 0.1 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
+    fg[0] += CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
     // 速度
-    fg[0] += 0.1 * CppAD::pow(VREF - vars[vx_start + i], 2);
+    fg[0] += 100 * CppAD::pow(CppAD::pow(VREF, 2) - CppAD::pow(vars[vx_start + i], 2) - CppAD::pow(vars[vy_start + i], 2), 2);
     // 角加速度
-    fg[0] += 0.1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i+ 1], 2);
+    fg[0] += CppAD::pow(vars[omega_start + i] - vars[omega_start + i + 1], 2);
   }
   // input
   for(int i=0;i<T-2;i++){
-    fg[0] += CppAD::pow(vars[dtheta_s_fr_start + i], 2);
-    fg[0] += CppAD::pow(vars[dtheta_s_fl_start + i], 2);
-    fg[0] += CppAD::pow(vars[dtheta_s_rr_start + i], 2);
-    fg[0] += CppAD::pow(vars[dtheta_s_rl_start + i], 2);
+    fg[0] += 1e-4 * CppAD::pow(vars[domega_w_fr_start + i], 2);
+    fg[0] += 1e-4 * CppAD::pow(vars[domega_w_fl_start + i], 2);
+    fg[0] += 1e-4 * CppAD::pow(vars[domega_w_rr_start + i], 2);
+    fg[0] += 1e-4 * CppAD::pow(vars[domega_w_rl_start + i], 2);
+    fg[0] += 1e-4 * CppAD::pow(vars[dtheta_s_fr_start + i], 2);
+    fg[0] += 1e-4 * CppAD::pow(vars[dtheta_s_fl_start + i], 2);
+    fg[0] += 1e-4 * CppAD::pow(vars[dtheta_s_rr_start + i], 2);
+    fg[0] += 1e-4 * CppAD::pow(vars[dtheta_s_rl_start + i], 2);
   }
 
   std::cout << "constrains start" << std::endl;
@@ -582,7 +610,7 @@ void MPCPathTracker::process(void)
       double dy = current_pose.pose.position.y - previous_pose.pose.position.y;
       double dyaw = tf::getYaw(current_pose.pose.orientation) - tf::getYaw(previous_pose.pose.orientation);
       double vx = dx / dt;
-      double vy = dy /dt;
+      double vy = dy / dt;
       double omega = dyaw / dt;
       Eigen::VectorXd current_wheel_velocity;
       current_wheel_velocity.resize(8, 1);
@@ -597,15 +625,23 @@ void MPCPathTracker::process(void)
       double w_rl = sqrt(current_wheel_velocity(4) * current_wheel_velocity(4) + current_wheel_velocity(5) * current_wheel_velocity(5)) / WHEEL_RADIUS;
       double s_rr = atan2(current_wheel_velocity(7), current_wheel_velocity(6));
       double w_rr = sqrt(current_wheel_velocity(6) * current_wheel_velocity(6) + current_wheel_velocity(7) * current_wheel_velocity(7)) / WHEEL_RADIUS;
-      std::cout << "current_wheel_velocity" << std::endl;
-      std::cout << current_wheel_velocity << std::endl;
+      //std::cout << "current_wheel_velocity" << std::endl;
+      //std::cout << current_wheel_velocity << std::endl;
 
       Eigen::VectorXd state(14);
       state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation), vx, vy, omega, w_fr, w_fl, w_rr, w_rl, s_fr, s_fl, s_rr, s_rl;
-      std::cout << "state" << std::endl;
-      std::cout << state << std::endl;
+      //std::cout << "state" << std::endl;
+      //std::cout << state << std::endl;
       std::cout << "path to vector" << std::endl;
       path_to_vector();
+      /*
+      std::cout << "path_x" << std::endl;
+      std::cout << path_x << std::endl;
+      std::cout << "path_y" << std::endl;
+      std::cout << path_y << std::endl;
+      std::cout << "path_yaw" << std::endl;
+      std::cout << path_yaw << std::endl;
+      */
       std::cout << "solving" << std::endl;
       auto result = mpc.solve(state, path_x, path_y, path_yaw);
       std::cout << "solved" << std::endl;

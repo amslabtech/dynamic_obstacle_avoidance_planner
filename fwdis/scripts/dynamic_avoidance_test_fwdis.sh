@@ -9,8 +9,8 @@ sleep 0.1s
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering load_param_fwdis.launch" --geometry=45x12+0+0 &
 sleep 0.1s
 
-gnome-terminal -e "/opt/ros/kinetic/bin/rosrun rviz rviz -d ../config/dynamic_avoidance.rviz" --geometry=45x12+475+0 &
-sleep 0.5s
+#gnome-terminal -e "/opt/ros/kinetic/bin/rosrun rviz rviz -d ../config/dynamic_avoidance.rviz" --geometry=45x12+475+0 &
+#sleep 0.5s
 
 # robot sim
 gnome-terminal -e "/opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering sim_3dof.py" --geometry=45x12+895+0 &
@@ -41,7 +41,7 @@ sleep 0.1s
 gnome-terminal -e "/opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering waypoints_test" --geometry=45x12+475+476 &
 sleep 0.1s
 
-#gnome-terminal -e "/opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering fwdis_mpc" --geometry=45x12+895+476 &
+#gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering fwdis_mpc.launch" --geometry=45x12+895+476 &
 sleep 0.1s
 
 gnome-terminal -e "/opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering base_costmap" --geometry=45x12+1315+476 &
