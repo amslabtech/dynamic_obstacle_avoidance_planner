@@ -14,7 +14,7 @@
 #include <cppad/cppad.hpp>
 #include <cppad/ipopt/solve.hpp>
 
-// kinematic model robot_velocity = forward_matrix * wheel_velocity
+// kinematic model wheel_velocity = forward_matrix * robot_velocity
 Eigen::MatrixXd forward_matrix;
 Eigen::MatrixXd inversed_matrix;
 Eigen::VectorXd wheel_velocity;
@@ -185,14 +185,14 @@ int main(int argc, char** argv)
   ROBOT_RADIUS = sqrt(pow(WHEEL_BASE, 2) + pow(TREAD, 2)) / 2.0;
   ROBOT_THETA = atan(TREAD / WHEEL_BASE);
   forward_matrix.resize(8, 3);
-  forward_matrix << 1.0, 0.0,  ROBOT_RADIUS * sin(ROBOT_THETA),
-                    0.0, 1.0,  ROBOT_RADIUS * cos(ROBOT_THETA),
-                    1.0, 0.0, -ROBOT_RADIUS * sin(ROBOT_THETA),
-                    0.0, 1.0,  ROBOT_RADIUS * cos(ROBOT_THETA),
-                    1.0, 0.0, -ROBOT_RADIUS * sin(ROBOT_THETA),
-                    0.0, 1.0, -ROBOT_RADIUS * cos(ROBOT_THETA),
-                    1.0, 0.0,  ROBOT_RADIUS * sin(ROBOT_THETA),
-                    0.0, 1.0, -ROBOT_RADIUS * cos(ROBOT_THETA);
+  forward_matrix << 1.0, 0.0,  ROBOT_RADIUS * cos(ROBOT_THETA),
+                    0.0, 1.0,  ROBOT_RADIUS * sin(ROBOT_THETA),
+                    1.0, 0.0, -ROBOT_RADIUS * cos(ROBOT_THETA),
+                    0.0, 1.0,  ROBOT_RADIUS * sin(ROBOT_THETA),
+                    1.0, 0.0, -ROBOT_RADIUS * cos(ROBOT_THETA),
+                    0.0, 1.0, -ROBOT_RADIUS * sin(ROBOT_THETA),
+                    1.0, 0.0,  ROBOT_RADIUS * cos(ROBOT_THETA),
+                    0.0, 1.0, -ROBOT_RADIUS * sin(ROBOT_THETA);
 
   inversed_matrix.resize(3, 8);
   inversed_matrix = PseudoInverse(forward_matrix);
