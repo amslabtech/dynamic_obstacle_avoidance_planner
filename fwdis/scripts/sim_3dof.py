@@ -3,12 +3,14 @@
 import rospy
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped
+from std_msgs.msg import Empty
 import tf
 
 import math as m
 
 pose = PoseStamped()
 velocity = Twist()
+stop_flag = False
 
 HZ = 100.0
 
@@ -17,11 +19,16 @@ def velocity_callback(data):
   global velocity
   velocity = data
 
+def stop_callback(data):
+  global stop_flag
+  stop_flag = True
+
 def process():
   ROBOT_FRAME = rospy.get_param("/dynamic_avoidance/ROBOT_FRAME")
   VELOCITY_TOPIC_NAME = rospy.get_param("/dynamic_avoidance/VELOCITY_TOPIC_NAME")
 
   rospy.Subscriber(VELOCITY_TOPIC_NAME, Twist, velocity_callback)
+  rospy.Subscriber("/stop", Empty, stop_callback)
 
   print "=== sim 3dof ==="
 
@@ -37,6 +44,10 @@ def process():
   r = rospy.Rate(HZ)
 
   while not rospy.is_shutdown():
+    if stop_flag:
+      velocity.linear.x = 0
+      velocity.linear.y = 0
+
     q_list = [pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w]
     (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(q_list)
     q = tf.transformations.quaternion_from_euler(roll, pitch, yaw + velocity.angular.z / HZ)
