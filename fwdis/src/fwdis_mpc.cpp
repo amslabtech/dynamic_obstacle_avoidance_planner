@@ -462,7 +462,7 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     // 速度
     fg[0] += 100 * CppAD::pow(CppAD::pow(VREF, 2) - CppAD::pow(vars[vx_start + i], 2) - CppAD::pow(vars[vy_start + i], 2), 2);
     // 角加速度
-    fg[0] += CppAD::pow(vars[omega_start + i] - vars[omega_start + i + 1], 2);
+    fg[0] += 0.1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i + 1], 2);
   }
   // input
   for(int i=0;i<T-2;i++){
