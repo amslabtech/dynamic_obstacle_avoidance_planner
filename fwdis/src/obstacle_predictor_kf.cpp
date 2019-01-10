@@ -40,7 +40,7 @@ const double HZ = 10;
 std::string WORLD_FRAME;
 std::string OBS_FRAME;
 
-int NUM = 1;
+int NUM = 0;
 
 geometry_msgs::PoseArray predicted_paths;
 geometry_msgs::PoseArray current_poses;
@@ -49,6 +49,11 @@ geometry_msgs::PoseArray previous_poses;
 std::vector<KalmanFilter> kf;
 
 tf::StampedTransform _transform;
+
+void obs_num_callback(const std_msgs::Int32ConstPtr& msg)
+{
+  NUM = msg->data;
+}
 
 int main(int argc, char** argv)
 {
@@ -62,6 +67,7 @@ int main(int argc, char** argv)
   PREDICTION_STEP = PREDICTION_TIME / DT;
 
   ros::Publisher predicted_paths_pub = nh.advertise<geometry_msgs::PoseArray>("/predicted_paths", 100);
+  ros::Subscriber obs_num_sub = nh.subscribe("/obs_num", 100, obs_num_callback);
 
   tf::TransformListener listener;
 
@@ -82,7 +88,7 @@ int main(int argc, char** argv)
       bool transformed = false;
       try{
         for(int i=0;i<NUM;i++){
-          std::string frame = OBS_FRAME;
+          std::string frame = OBS_FRAME + std::to_string(i);
           listener.lookupTransform(WORLD_FRAME, frame, ros::Time(0), _transform);
           std::cout << OBS_FRAME + std::to_string(i) + " received" << std::endl;
           geometry_msgs::TransformStamped transform;

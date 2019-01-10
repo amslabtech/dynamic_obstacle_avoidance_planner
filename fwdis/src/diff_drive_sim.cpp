@@ -34,6 +34,8 @@ int main(int argc, char** argv)
   local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
   local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
 
+  NUM = 2;
+
   ros::Publisher obs_num_pub = nh.advertise<std_msgs::Int32>("/obs_num", 100);
 
   obs_list.resize(NUM);
@@ -43,10 +45,11 @@ int main(int argc, char** argv)
   // 初期位置設定
   for(int i=0;i<NUM;i++){
     obs_list[i].header.frame_id = WORLD_FRAME;
-    obs_list[i].child_frame_id = OBS_FRAME;//"obs" + std::to_string(i);
+    obs_list[i].child_frame_id = OBS_FRAME + std::to_string(i);
     set_pose(i, 0, 0, 0);
   }
-  set_pose(0, 0, 0.1, M_PI);
+  set_pose(0, 0, 0.4, M_PI);
+  set_pose(1, 0, -0.2, M_PI);
   //set_pose(0, -10, 7, 3*M_PI/2.0);
   //set_pose(0, -8, 0, 0);
 
@@ -58,6 +61,7 @@ int main(int argc, char** argv)
     // 速度
     //update(0, 1.0, 0);
     update(0, 1.2, 0);
+    update(1, 1.2, 0);
     obs_broadcaster.sendTransform(obs_list);
 
     std_msgs::Int32 num;

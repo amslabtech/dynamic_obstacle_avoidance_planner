@@ -15,7 +15,7 @@ const double WIDTH = 10;// [m]
 double RESOLUTION = 0.10;// [m]
 const double HZ = 10;
 double RADIUS;// 衝突判定半径[m]
-int obs_num = 1;//si
+int obs_num = 0;
 const int SEARCH_RANGE = 30;
 const double COST_COL = 90;
 const double MIN_COST = 10;
