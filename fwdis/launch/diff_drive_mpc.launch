@@ -2,7 +2,7 @@
 
   <arg name="_HORIZON_T" default="15"/>
   <arg name="_DT" default="0.1"/>
-  <arg name="_VREF" default="0.5"/>
+  <arg name="_VREF" default="1.0"/>
   <arg name="_WHEEL_ANGULAR_VELOCITY_LIMIT" default="24.5"/>
   <arg name="_WHEEL_ANGULAR_ACCELERATION_LIMIT" default="30"/>
   <arg name="_WHEEL_RADIUS" default="0.0775"/>
