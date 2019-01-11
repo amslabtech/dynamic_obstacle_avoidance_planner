@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 
   double last_time;
 
-  predicted_paths.header.frame_id = "world";
+  predicted_paths.header.frame_id = WORLD_FRAME;
 
   ros::Rate loop_rate(HZ);
 
