@@ -82,7 +82,8 @@ int main(int argc, char** argv)
         double vy = current_velocity.linear.y;
         double v = sqrt(vx*vx + vy*vy);
         double omega = current_velocity.angular.z;
-        double yaw = tf::getYaw(current_pose.orientation);
+        //double yaw = tf::getYaw(current_pose.orientation);
+        double yaw = atan2(vy, vx);
         for(int j=0;j<PREDICTION_STEP;j++){
           geometry_msgs::Pose pose;
           pose.position.x = predicted_path.poses[j].position.x + vx * DT;
@@ -105,8 +106,9 @@ int main(int argc, char** argv)
         double vy = current_velocity.linear.y;
         double v = sqrt(vx*vx + vy*vy);
         double omega = current_velocity.angular.z;
-            omega += ANGULAR_ACCELERATION * DT;
-        double yaw = tf::getYaw(current_pose.orientation);
+        omega += ANGULAR_ACCELERATION * DT;
+        //double yaw = tf::getYaw(current_pose.orientation);
+        double yaw = atan2(vy, vx);
         for(int j=0;j<PREDICTION_STEP;j++){
           geometry_msgs::Pose pose;
           pose.position.x = predicted_path.poses[j+SIZE_OF_LINEAR_PATH].position.x + vx * DT;
@@ -130,8 +132,9 @@ int main(int argc, char** argv)
         double vy = current_velocity.linear.y;
         double v = sqrt(vx*vx + vy*vy);
         double omega = current_velocity.angular.z;
-            omega -= ANGULAR_ACCELERATION * DT;
-        double yaw = tf::getYaw(current_pose.orientation);
+        omega -= ANGULAR_ACCELERATION * DT;
+        //double yaw = tf::getYaw(current_pose.orientation);
+        double yaw = atan2(vy, vx);
         for(int j=0;j<PREDICTION_STEP;j++){
           geometry_msgs::Pose pose;
           pose.position.x = predicted_path.poses[j+SIZE_OF_LINEAR_PATH*2].position.x + vx * DT;
