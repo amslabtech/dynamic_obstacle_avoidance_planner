@@ -151,9 +151,7 @@ add_executable(fwdis_gazebo src/fwdis_gazebo.cpp)
 add_executable(holonomic_dwa src/holonomic_dwa.cpp)
 add_executable(sin_curve src/sin_curve.cpp)
 add_executable(path_to_local_goal src/path_to_local_goal.cpp)
-add_executable(mpc_path_tracker src/mpc_path_tracker.cpp)
 add_executable(diff_drive_sim src/diff_drive_sim.cpp)
-add_executable(obstacle_predictor src/obstacle_predictor.cpp)
 add_executable(robot_predictor src/robot_predictor.cpp)
 add_executable(dynamic_local_costmap src/dynamic_local_costmap.cpp)
 add_executable(avoidance_path_planner src/avoidance_path_planner.cpp)
@@ -201,14 +199,7 @@ target_link_libraries(sin_curve
 target_link_libraries(path_to_local_goal
   ${catkin_LIBRARIES}
 )
-target_link_libraries(mpc_path_tracker
-  ${catkin_LIBRARIES}
-  ${IPOPT_LIBRARIES}
-)
 target_link_libraries(diff_drive_sim
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(obstacle_predictor
   ${catkin_LIBRARIES}
 )
 target_link_libraries(robot_predictor
