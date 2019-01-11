@@ -3,11 +3,19 @@
   <arg name="_HORIZON_T" default="15"/>
   <arg name="_DT" default="0.1"/>
   <arg name="_VREF" default="0.5"/>
+  <arg name="_WHEEL_ANGULAR_VELOCITY_LIMIT" default="24.5"/>
+  <arg name="_WHEEL_ANGULAR_ACCELERATION_LIMIT" default="30"/>
+  <arg name="_WHEEL_RADIUS" default="0.0775"/>
+  <arg name="_TREAD" default="0.5"/>
 
   <node pkg="four_wheel_drive_independent_steering" name="diff_drive_mpc" type="diff_drive_mpc" output="screen">
     <param name="HORIZON_T" value="$(arg _HORIZON_T)"/>
     <param name="DT" value="$(arg _DT)"/>
     <param name="VREF" value="$(arg _VREF)"/>
+    <param name="WHEEL_ANGULAR_VELOCITY_LIMIT" value="$(arg _WHEEL_ANGULAR_VELOCITY_LIMIT)"/>"
+    <param name="WHEEL_ANGULAR_ACCELERATION_LIMIT" value="$(arg _WHEEL_ANGULAR_ACCELERATION_LIMIT)"/>"
+    <param name="WHEEL_RADIUS" value="$(arg _WHEEL_RADIUS)"/>"
+    <param name="TREAD" value="$(arg _TREAD)"/>"
   </node>
 
 </launch>

@@ -75,19 +75,19 @@ int T = 15;
 double DT = 0.1;// [s]
 const double HZ = 10;
 // 目標速度
-double VREF = 0.5;// [m/s]
+double VREF;// [m/s]
 // 最大角速度
-double MAX_ANGULAR_VELOCITY = 1.5;// [rad/s]
+double MAX_ANGULAR_VELOCITY;// [rad/s]
 // ホイール角加速度
-double WHEEL_ANGULAR_ACCELERATION_LIMIT = 2.0;// [rad/s^2]
+double WHEEL_ANGULAR_ACCELERATION_LIMIT;// [rad/s^2]
 // ホイール角速度
-double WHEEL_ANGULAR_VELOCITY_LIMIT = 24;// [rad/s]
+double WHEEL_ANGULAR_VELOCITY_LIMIT;// [rad/s]
 // ホイール半径
-double WHEEL_RADIUS = 0.075;// [m]
+double WHEEL_RADIUS;// [m]
 // トレッド
-double TREAD = 0.5;// [m]
+double TREAD;// [m]
 // グリッドマップ分解能
-double RESOLUTION = 0.1;// [m]
+double RESOLUTION;// [m]
 
 std::string WORLD_FRAME;
 std::string ROBOT_FRAME;
@@ -128,6 +128,19 @@ int main(int argc, char** argv)
   local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
   local_nh.getParam("/dynamic_avoidance/VELOCITY_TOPIC_NAME", VELOCITY_TOPIC_NAME);
   local_nh.getParam("/dynamic_avoidance/INTERMEDIATE_PATH_TOPIC_NAME", INTERMEDIATE_PATH_TOPIC_NAME);
+
+  std::cout << "T: " << T << std::endl;
+  std::cout << "VREF: " << VREF << std::endl;
+  std::cout << "MAX_ANGULAR_VELOCITY: " << MAX_ANGULAR_VELOCITY << std::endl;
+  std::cout << "WHEEL_ANGULAR_VELOCITY_LIMIT: " << WHEEL_ANGULAR_VELOCITY_LIMIT << std::endl;
+  std::cout << "WHEEL_ANGULAR_ACCELERATION_LIMIT: " << WHEEL_ANGULAR_ACCELERATION_LIMIT << std::endl;
+  std::cout << "WHEEL_RADIUS: " << WHEEL_RADIUS << std::endl;
+  std::cout << "TREAD: " << TREAD << std::endl;
+  std::cout << "RESOLUTION: " << RESOLUTION << std::endl;
+  std::cout << "ROBOT_FRAME: " << ROBOT_FRAME << std::endl;
+  std::cout << "WORLD_FRAME: " << WORLD_FRAME << std::endl;
+  std::cout << "VELOCITY_TOPIC_NAME: " << VELOCITY_TOPIC_NAME << std::endl;
+  std::cout << "INTERMEDIATE_PATH_TOPIC_NAME: " << INTERMEDIATE_PATH_TOPIC_NAME << std::endl;
 
   MPCPathTracker mpc_path_tracker;
 
