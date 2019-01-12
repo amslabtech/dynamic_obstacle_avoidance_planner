@@ -165,6 +165,7 @@ add_executable(fwdis_mpc src/fwdis_mpc.cpp)
 add_executable(fwdis_odom src/fwdis_odom.cpp)
 add_executable(fwdis_stopper src/fwdis_stopper.cpp)
 add_executable(velocity_arrow_to_obstacle src/velocity_arrow_to_obstacle.cpp)
+add_executable(odom_to_tf src/odom_to_tf.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -241,6 +242,9 @@ target_link_libraries(fwdis_stopper
   ${catkin_LIBRARIES}
 )
 target_link_libraries(velocity_arrow_to_obstacle
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(odom_to_tf
   ${catkin_LIBRARIES}
 )
 
