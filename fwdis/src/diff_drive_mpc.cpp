@@ -307,11 +307,16 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     }
     result.push_back(solution.x[v_start+1+failure_count]);
     result.push_back(solution.x[omega_start+1+failure_count]);
+    result[v_start] = result[v_start + failure_count];
+    result[omega_start] = result[omega_start + failure_count];
+
     //予測軌道
     for(int i = failure_count; i < T-1; i++){
+      /*
       result.push_back(solution.x[x_start+i+1]);
       result.push_back(solution.x[y_start+i+1]);
       result.push_back(solution.x[yaw_start+i+1]);
+      */
     }
   }
   /*

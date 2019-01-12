@@ -161,6 +161,7 @@ size_t dtheta_s_rl_start = dtheta_s_rr_start + T - 1;
 // 最適化失敗時は最後の成功データを使う
 int failure_count = 0;
 std::vector<double> result;
+std::vector<double> solution_buffer;
 
 double min_distance(nav_msgs::Path&, geometry_msgs::PoseStamped&);
 double get_distance(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&);
@@ -334,8 +335,8 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   }
   for(int i=dtheta_s_fr_start;i<n_variables;i++){
     // 適当
-    vars_lower_bound[i] = -MAX_WHEEL_ANGULAR_VELOCITY;
-    vars_upper_bound[i] = MAX_WHEEL_ANGULAR_VELOCITY;
+    vars_lower_bound[i] = -MAX_WHEEL_ANGULAR_VELOCITY * 23.1 / 56.1;
+    vars_upper_bound[i] = MAX_WHEEL_ANGULAR_VELOCITY * 23.1 / 56.1;
   }
 
   // 等式制約
@@ -406,8 +407,8 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   std::cout << "solution.x.size() " << solution.x.size() << std::endl;
 
   if(ok){
-    failure_count = 0;
     result.clear();
+    failure_count = 0;
     // 何故か0だとうまく行かない
     result.push_back(solution.x[vx_start+1]);
     result.push_back(solution.x[vy_start+1]);
@@ -418,26 +419,61 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
       result.push_back(solution.x[y_start+i+1]);
       result.push_back(solution.x[yaw_start+i+1]);
     }
+    int size = solution.x.size();
+    solution_buffer.reserve(size);
+    for(int i=0;i<size;i++){
+      solution_buffer[i] = solution.x[i];
+    }
   }else{
     if(failure_count < T - 1){
       failure_count++;
+      std::cout << "fail:" << failure_count << std::endl;
     }
-    result.push_back(solution.x[vx_start+1+failure_count]);
-    result.push_back(solution.x[vy_start+1+failure_count]);
-    result.push_back(solution.x[omega_start+1+failure_count]);
-    //予測軌道
-    for(int i = failure_count; i < T-1; i++){
-      result.push_back(solution.x[x_start+i+1]);
-      result.push_back(solution.x[y_start+i+1]);
-      result.push_back(solution.x[yaw_start+i+1]);
+    // いいのか不明
+    if(solution_buffer.size() > 0){
+      result.push_back(solution_buffer[vx_start+1+failure_count]);
+      result.push_back(solution_buffer[vy_start+1+failure_count]);
+      result.push_back(solution_buffer[omega_start+1+failure_count]);
+      //予測軌道
+      for(int i = failure_count; i < T-1; i++){
+        result.push_back(solution.x[x_start+i+1]);
+        result.push_back(solution.x[y_start+i+1]);
+        result.push_back(solution.x[yaw_start+i+1]);
+      }
+    }else{
+      for(int i=0;i<3+3*(T-1);i++){
+        result.push_back(0);
+      }
     }
+    /*
+    if(solution.status == CppAD::ipopt::solve_result<Dvector>::unknown){
+      result[0] = 0;
+      result[1] = 0;
+      result[2] = 0;
+    }
+    */
+    std::cout << "cheat" << std::endl;
   }
-  /*
   std::cout << "--- result ---" << std::endl;
+  /*
   for(int i=0;i<result.size();i++){
     std::cout << result[i] << std::endl;
   }
   */
+  std::cout << solution_buffer[x_start] << std::endl;
+  std::cout << solution_buffer[y_start] << std::endl;
+  std::cout << solution_buffer[yaw_start] << std::endl;
+  std::cout << solution_buffer[vx_start] << std::endl;
+  std::cout << solution_buffer[vy_start] << std::endl;
+  std::cout << solution_buffer[omega_start] << std::endl;
+  std::cout << solution_buffer[omega_w_fr_start] << std::endl;
+  std::cout << solution_buffer[omega_w_fl_start] << std::endl;
+  std::cout << solution_buffer[omega_w_rr_start] << std::endl;
+  std::cout << solution_buffer[omega_w_rl_start] << std::endl;
+  std::cout << solution_buffer[theta_s_fr_start] << std::endl;
+  std::cout << solution_buffer[theta_s_fl_start] << std::endl;
+  std::cout << solution_buffer[theta_s_rr_start] << std::endl;
+  std::cout << solution_buffer[theta_s_rl_start] << std::endl;
   return result;
 }
 
@@ -456,13 +492,13 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   // state
   for(int i=0;i<T-1;i++){
     // pathとの距離
-    fg[0] += (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
+    fg[0] += 10 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
     // 向き
-    fg[0] += CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
+    fg[0] += 10 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
     // 速度
     fg[0] += 100 * CppAD::pow(CppAD::pow(VREF, 2) - CppAD::pow(vars[vx_start + i], 2) - CppAD::pow(vars[vy_start + i], 2), 2);
     // 角加速度
-    fg[0] += 0.1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i + 1], 2);
+    fg[0] += 1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i + 1], 2);
   }
   // input
   for(int i=0;i<T-2;i++){
