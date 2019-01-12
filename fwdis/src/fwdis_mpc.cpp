@@ -167,11 +167,11 @@ double get_distance(geometry_msgs::PoseStamped&, geometry_msgs::PoseStamped&);
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "diff_drive_mpc");
+  ros::init(argc, argv, "fwdis_mpc");
   ros::NodeHandle local_nh("~");
 
   local_nh.getParam("HORIZON_T", T);
-  local_nh.getParam("VREF", VREF);
+  local_nh.getParam("/dynamic_avoidance/VREF", VREF);
   local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
   local_nh.getParam("/dynamic_avoidance/RESOLUTION", RESOLUTION);
   local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);

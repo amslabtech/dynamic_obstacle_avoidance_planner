@@ -1,4 +1,5 @@
 dynamic_avoidance:
+  VREF: 0.5 #[m/s]
   PREDICTION_TIME: 3.5 #[s]
   RESOLUTION: 0.10 #[s]
   RADIUS: 0.6 #[m]

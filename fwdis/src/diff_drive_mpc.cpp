@@ -76,6 +76,8 @@ double DT = 0.1;// [s]
 const double HZ = 10;
 // 目標速度
 double VREF;// [m/s]
+// 最大速度
+double MAX_VELOCITY; // [m/s]
 // 最大角速度
 double MAX_ANGULAR_VELOCITY;// [rad/s]
 // ホイール角加速度
@@ -119,12 +121,13 @@ int main(int argc, char** argv)
   ros::NodeHandle local_nh("~");
 
   local_nh.getParam("HORIZON_T", T);
-  local_nh.getParam("VREF", VREF);
+  local_nh.getParam("/dynamic_avoidance/VREF", VREF);
   local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
-  local_nh.getParam("WHEEL_ANGULAR_ACCELERATION_LIMIT", WHEEL_ANGULAR_ACCELERATION_LIMIT);
-  local_nh.getParam("WHEEL_ANGULAR_VELOCITY_LIMIT", WHEEL_ANGULAR_VELOCITY_LIMIT);
-  local_nh.getParam("WHEEL_RADIUS", WHEEL_RADIUS);
-  local_nh.getParam("TREAD", TREAD);
+  local_nh.getParam("/diff_drive/MAX_WHEEL_ANGULAR_ACCELERATION", WHEEL_ANGULAR_ACCELERATION_LIMIT);
+  local_nh.getParam("/diff_drive/MAX_WHEEL_ANGULAR_VELOCITY", WHEEL_ANGULAR_VELOCITY_LIMIT);
+  local_nh.getParam("/diff_drive/WHEEL_RADIUS", WHEEL_RADIUS);
+  local_nh.getParam("/diff_drive/TREAD", TREAD);
+  local_nh.getParam("/diff_drive/MAX_VELOCITY", MAX_VELOCITY);
   local_nh.getParam("/dynamic_avoidance/RESOLUTION", RESOLUTION);
   local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
   local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
@@ -133,6 +136,7 @@ int main(int argc, char** argv)
 
   std::cout << "T: " << T << std::endl;
   std::cout << "VREF: " << VREF << std::endl;
+  std::cout << "MAX_VELOCITY: " << MAX_VELOCITY << std::endl;
   std::cout << "MAX_ANGULAR_VELOCITY: " << MAX_ANGULAR_VELOCITY << std::endl;
   std::cout << "WHEEL_ANGULAR_VELOCITY_LIMIT: " << WHEEL_ANGULAR_VELOCITY_LIMIT << std::endl;
   std::cout << "WHEEL_ANGULAR_ACCELERATION_LIMIT: " << WHEEL_ANGULAR_ACCELERATION_LIMIT << std::endl;
@@ -216,7 +220,7 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   for(int i=v_start;i<omega_start;i++){
     // v
     vars_lower_bound[i] = 0;
-    vars_upper_bound[i] = VREF;
+    vars_upper_bound[i] = MAX_VELOCITY;
   }
   for(int i=omega_start;i<omega_r_start;i++){
     // omega
@@ -337,13 +341,13 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     fg[0] += 0.2 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
     // 向き
     //fg[0] += 0.1 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
+    // 速度
+    fg[0] += 100 * CppAD::pow(VREF - vars[v_start + i], 2);
+    // 角加速度
+    fg[0] += 0.1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i+ 1], 2);
   }
   // input
   for(int i=0;i<T-2;i++){
-    // 速度
-    fg[0] += 0.1 * CppAD::pow(VREF - vars[v_start + i], 2);
-    // 角加速度
-    fg[0] += 0.1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i+ 1], 2);
   }
 
   std::cout << "constrains start" << std::endl;

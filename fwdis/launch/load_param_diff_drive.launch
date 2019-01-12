@@ -1,5 +1,5 @@
 <launch>
 
-  <rosparam command="load" file="$(find four_wheel_drive_independent_steering)/config/dynamic_avoidance.yaml"/>
+  <rosparam command="load" file="$(find four_wheel_drive_independent_steering)/config/diff_drive.yaml"/>
 
 </launch>

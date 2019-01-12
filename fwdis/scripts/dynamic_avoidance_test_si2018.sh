@@ -1,10 +1,13 @@
 #!/bin/bash
 
 gnome-terminal -e "/opt/ros/${ROS_DISTRO}/bin/roscore" --geometry=45x12+0+0 &
-sleep 3s
+sleep js
 
 gnome-terminal -e "docker exec -it ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering load_param_diff_drive.launch'" --geometry=45x12+0+0 &
-sleep 0.1s
+sleep 1.0s
+
+gnome-terminal -e "docker exec -it ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering load_param_diff_drive.launch'" --geometry=45x12+0+0 &
+sleep 1.0s
 
 gnome-terminal -e "/opt/ros/${ROS_DISTRO}/bin/rosrun rviz rviz -d ../config/dynamic_avoidance.rviz" --geometry=45x12+475+0 &
 sleep 0.5s

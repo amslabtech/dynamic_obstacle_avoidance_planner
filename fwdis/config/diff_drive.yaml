@@ -1,0 +1,10 @@
+diff_drive:
+  MAX_VELOCITY: 0.6 #[m/s]
+  MAX_ACCELERATION: 1.0 #[m/ss]
+  MAX_ANGULAR_ACCELERATION: 0.8 #[rad/ss]
+  MAX_ANGULAR_VELOCITY: 1.0 #[rad/s]
+  MAX_WHEEL_ANGULAR_ACCELERATION: 24.5 #[rad/ss]
+  MAX_WHEEL_ANGULAR_VELOCITY: 30.0 #[rad/s]
+  ROBOT_FRAME: "base_link"
+  TREAD: 0.5 #[m]
+  WHEEL_RADIUS: 0.0775 #[m]
