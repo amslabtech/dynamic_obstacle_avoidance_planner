@@ -95,6 +95,7 @@ private:
   Eigen::VectorXd path_yaw;
   bool first_transform = true;
   double last_time;
+  geometry_msgs::Twist velocity;
 
 };
 
@@ -452,8 +453,8 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
       result[2] = 0;
       std::exit(1);
     }
-    */
     std::cout << "cheat" << std::endl;
+    */
   }
   std::cout << "--- result ---" << std::endl;
   /*
@@ -461,20 +462,20 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     std::cout << result[i] << std::endl;
   }
   */
-  std::cout << solution_buffer[x_start] << std::endl;
-  std::cout << solution_buffer[y_start] << std::endl;
-  std::cout << solution_buffer[yaw_start] << std::endl;
-  std::cout << solution_buffer[vx_start] << std::endl;
-  std::cout << solution_buffer[vy_start] << std::endl;
-  std::cout << solution_buffer[omega_start] << std::endl;
-  std::cout << solution_buffer[omega_w_fr_start] << std::endl;
-  std::cout << solution_buffer[omega_w_fl_start] << std::endl;
-  std::cout << solution_buffer[omega_w_rr_start] << std::endl;
-  std::cout << solution_buffer[omega_w_rl_start] << std::endl;
-  std::cout << solution_buffer[theta_s_fr_start] << std::endl;
-  std::cout << solution_buffer[theta_s_fl_start] << std::endl;
-  std::cout << solution_buffer[theta_s_rr_start] << std::endl;
-  std::cout << solution_buffer[theta_s_rl_start] << std::endl;
+  std::cout << solution_buffer[x_start+1] << std::endl;
+  std::cout << solution_buffer[y_start+1] << std::endl;
+  std::cout << solution_buffer[yaw_start+1] << std::endl;
+  std::cout << solution_buffer[vx_start+1] << std::endl;
+  std::cout << solution_buffer[vy_start+1] << std::endl;
+  std::cout << solution_buffer[omega_start+1] << std::endl;
+  std::cout << solution_buffer[omega_w_fr_start+1] << std::endl;
+  std::cout << solution_buffer[omega_w_fl_start+1] << std::endl;
+  std::cout << solution_buffer[omega_w_rr_start+1] << std::endl;
+  std::cout << solution_buffer[omega_w_rl_start+1] << std::endl;
+  std::cout << solution_buffer[theta_s_fr_start+1] << std::endl;
+  std::cout << solution_buffer[theta_s_fl_start+1] << std::endl;
+  std::cout << solution_buffer[theta_s_rr_start+1] << std::endl;
+  std::cout << solution_buffer[theta_s_rl_start+1] << std::endl;
   return result;
 }
 
@@ -647,10 +648,17 @@ void MPCPathTracker::process(void)
       double dy = current_pose.pose.position.y - previous_pose.pose.position.y;
       double dyaw = tf::getYaw(current_pose.pose.orientation) - tf::getYaw(previous_pose.pose.orientation);
       double _dx = dx * cos(-dyaw) - dy * sin(-dyaw);
-      double _dy = dx * sin(-dyaw) - dy * cos(-dyaw);
+      double _dy = dx * sin(-dyaw) + dy * cos(-dyaw);
+      /*
       double vx = _dx / dt;
       double vy = _dy / dt;
       double omega = dyaw / dt;
+      */
+      double vx = velocity.linear.x;
+      double vy = velocity.linear.y;
+      double omega = velocity.angular.z;
+      std::cout << "last velocity" << std::endl;
+      std::cout << velocity << std::endl;
       Eigen::VectorXd current_wheel_velocity;
       current_wheel_velocity.resize(8, 1);
       Eigen::Vector3d current_velocity;
@@ -684,7 +692,6 @@ void MPCPathTracker::process(void)
       std::cout << "solving" << std::endl;
       auto result = mpc.solve(state, path_x, path_y, path_yaw);
       std::cout << "solved" << std::endl;
-      geometry_msgs::Twist velocity;
       velocity.linear.x = result[0];
       velocity.linear.y = result[1];
       velocity.angular.z = result[2];
