@@ -48,8 +48,8 @@ int main(int argc, char** argv)
     obs_list[i].child_frame_id = OBS_FRAME + std::to_string(i);
     set_pose(i, 0, 0, 0);
   }
-  set_pose(0, 20, 0.4, M_PI);
-  set_pose(1, 20, -0.2, M_PI);
+  set_pose(0, 20, -0.1, M_PI);
+  set_pose(1, 20, -0.4, M_PI);
   //set_pose(0, -10, 7, 3*M_PI/2.0);
   //set_pose(0, -8, 0, 0);
 

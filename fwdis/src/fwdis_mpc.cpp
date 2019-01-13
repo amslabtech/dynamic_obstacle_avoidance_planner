@@ -100,34 +100,34 @@ private:
 };
 
 // ホライゾン長さ
-int T = 15;
+int T = 5;
 // 周期
 double DT = 0.1;// [s]
 const double HZ = 10;
 // 目標速度
-double VREF;// [m/s]
+double VREF = 0.5;// [m/s]
 // 最大角速度
-double MAX_ANGULAR_VELOCITY;// [rad/s]
+double MAX_ANGULAR_VELOCITY = 1.0;// [rad/s]
 // ホイール角加速度
-double MAX_WHEEL_ANGULAR_ACCELERATION;// [rad/s^2]
+double MAX_WHEEL_ANGULAR_ACCELERATION = 60;// [rad/s^2]
 // ホイール角速度
-double MAX_WHEEL_ANGULAR_VELOCITY;// [rad/s]
+double MAX_WHEEL_ANGULAR_VELOCITY = 30;// [rad/s]
 // ホイール半径
-double WHEEL_RADIUS;// [m]
+double WHEEL_RADIUS = 0.1;// [m]
 // トレッド
-double TREAD;// [m]
+double TREAD = 0.4;// [m]
 // ホイールベース
-double WHEEL_BASE;// [m]
+double WHEEL_BASE = 0.4;// [m]
 // グリッドマップ分解能
-double RESOLUTION;// [m]
+double RESOLUTION = 0.1;// [m]
 // ロボットの足まわり半径
 double ROBOT_RADIUS;
 // 足回り配置
 double ROBOT_THETA;
 // ステア角度制限
-double MAX_STEERING_ANGLE;// [rad]
+double MAX_STEERING_ANGLE = M_PI * 2. / 3.;// [rad]
 // 最高速度
-double MAX_VELOCITY;// [m/s]
+double MAX_VELOCITY = 1.5;// [m/s]
 
 std::string WORLD_FRAME;
 std::string ROBOT_FRAME;
@@ -172,7 +172,9 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "fwdis_mpc");
   ros::NodeHandle local_nh("~");
 
+  /*
   local_nh.getParam("HORIZON_T", T);
+  */
   local_nh.getParam("/dynamic_avoidance/VREF", VREF);
   local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
   local_nh.getParam("/dynamic_avoidance/RESOLUTION", RESOLUTION);
@@ -302,8 +304,13 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   Dvector vars_lower_bound(n_variables);
   Dvector vars_upper_bound(n_variables);
 
-  for(int i=0;i<vx_start;i++){
-    // x, y, yaw
+  for(int i=0;i<yaw_start;i++){
+    // x, y
+    vars_lower_bound[i] = -1.0e19;
+    vars_upper_bound[i] = 1.0e19;
+  }
+  for(int i=yaw_start;i<vx_start;i++){
+    // yaw
     vars_lower_bound[i] = -1.0e19;
     vars_upper_bound[i] = 1.0e19;
   }
@@ -494,13 +501,15 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   // state
   for(int i=0;i<T-1;i++){
     // pathとの距離
-    fg[0] += 20 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
+    fg[0] += 10 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
     // 向き
     fg[0] += 10 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
     // 速度
-    fg[0] += 10 * CppAD::pow(CppAD::pow(VREF, 2) - CppAD::pow(vars[vx_start + i], 2) - CppAD::pow(vars[vy_start + i], 2), 2);
+    fg[0] += 5 * CppAD::pow(CppAD::pow(VREF, 2) - CppAD::pow(vars[vx_start + i], 2) - CppAD::pow(vars[vy_start + i], 2), 2);
     // 角加速度
     fg[0] += 1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i + 1], 2);
+    // 角速度
+    fg[0] += 1 * CppAD::pow(vars[omega_start + i], 2);
   }
   // input
   for(int i=0;i<T-2;i++){
@@ -666,12 +675,40 @@ void MPCPathTracker::process(void)
       current_wheel_velocity = forward_matrix * current_velocity;
       double s_fr = atan2(current_wheel_velocity(1), current_wheel_velocity(0));
       double w_fr = sqrt(current_wheel_velocity(0) * current_wheel_velocity(0) + current_wheel_velocity(1) * current_wheel_velocity(1)) / WHEEL_RADIUS;
+      if(s_fr > MAX_STEERING_ANGLE){
+        s_fr -= M_PI;
+        w_fr = -w_fr;
+      }else if(s_fr < -MAX_STEERING_ANGLE){
+        s_fr += M_PI;
+        w_fr = -w_fr;
+      }
       double s_fl = atan2(current_wheel_velocity(3), current_wheel_velocity(2));
       double w_fl = sqrt(current_wheel_velocity(2) * current_wheel_velocity(2) + current_wheel_velocity(3) * current_wheel_velocity(3)) / WHEEL_RADIUS;
+      if(s_fl > MAX_STEERING_ANGLE){
+        s_fl -= M_PI;
+        w_fl = -w_fl;
+      }else if(s_fl < -MAX_STEERING_ANGLE){
+        s_fl += M_PI;
+        w_fl = -w_fl;
+      }
       double s_rl = atan2(current_wheel_velocity(5), current_wheel_velocity(4));
       double w_rl = sqrt(current_wheel_velocity(4) * current_wheel_velocity(4) + current_wheel_velocity(5) * current_wheel_velocity(5)) / WHEEL_RADIUS;
+      if(s_rl > MAX_STEERING_ANGLE){
+        s_rl -= M_PI;
+        w_rl = -w_rl;
+      }else if(s_rl < -MAX_STEERING_ANGLE){
+        s_rl += M_PI;
+        w_rl = -w_rl;
+      }
       double s_rr = atan2(current_wheel_velocity(7), current_wheel_velocity(6));
       double w_rr = sqrt(current_wheel_velocity(6) * current_wheel_velocity(6) + current_wheel_velocity(7) * current_wheel_velocity(7)) / WHEEL_RADIUS;
+      if(s_rr > MAX_STEERING_ANGLE){
+        s_rr -= M_PI;
+        w_rr = -w_rr;
+      }else if(s_rr < -MAX_STEERING_ANGLE){
+        s_rr += M_PI;
+        w_rr = -w_rr;
+      }
       //std::cout << "current_wheel_velocity" << std::endl;
       //std::cout << current_wheel_velocity << std::endl;
 
@@ -703,9 +740,12 @@ void MPCPathTracker::process(void)
       double yaw0 = tf::getYaw(pose.pose.orientation);
       for(int i=0;i<T-1;i++){
         geometry_msgs::Pose temp;
-        temp.position.x = result[3+3*i] * cos(-yaw0) - result[4+3*i] * sin(-yaw0);
-        temp.position.y = result[3+3*i] * sin(-yaw0) + result[4+3*i] * cos(-yaw0);
-        temp.orientation = tf::createQuaternionMsgFromYaw(result[5+3*i] - yaw0);
+        //temp.position.x = result[3+3*i] * cos(-yaw0) - result[4+3*i] * sin(-yaw0);
+        //temp.position.y = result[3+3*i] * sin(-yaw0) + result[4+3*i] * cos(-yaw0);
+        temp.position.x = result[3+3*i];
+        temp.position.y = result[4+3*i];
+        //temp.orientation = tf::createQuaternionMsgFromYaw(result[5+3*i] - yaw0);
+        temp.orientation = tf::createQuaternionMsgFromYaw(result[5+3*i]);
         mpc_path.poses.push_back(temp);
       }
       path_pub.publish(mpc_path);
