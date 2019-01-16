@@ -69,7 +69,7 @@ int main(int argc, char** argv)
   local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
   PREDICTION_STEP = PREDICTION_TIME / DT;
 
-  ros::Publisher costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("/local_costmap", 100);
+  ros::Publisher costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("/dynamic_local_costmap", 100);
   ros::Subscriber robot_predicted_path_sub = nh.subscribe("/robot_predicted_path", 100, robot_path_callback);
   ros::Subscriber obstacle_predicted_paths_sub = nh.subscribe("/predicted_paths", 100, obstacle_paths_callback);
   ros::Subscriber obs_num_sub = nh.subscribe("/obs_num", 100, obs_num_callback);

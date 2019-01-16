@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   cmake_modules
   fwdis_msgs
+  pcl_ros
 )
 
 find_package(Eigen3 REQUIRED COMPONENTS system)
@@ -166,6 +167,7 @@ add_executable(fwdis_odom src/fwdis_odom.cpp)
 add_executable(fwdis_stopper src/fwdis_stopper.cpp)
 add_executable(velocity_arrow_to_obstacle src/velocity_arrow_to_obstacle.cpp)
 add_executable(odom_to_tf src/odom_to_tf.cpp)
+add_executable(local_costmap src/local_costmap.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -245,6 +247,9 @@ target_link_libraries(velocity_arrow_to_obstacle
   ${catkin_LIBRARIES}
 )
 target_link_libraries(odom_to_tf
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(local_costmap
   ${catkin_LIBRARIES}
 )
 

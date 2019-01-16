@@ -1,5 +1,9 @@
 <launch>
 
+  <node pkg="four_wheel_drive_independent_steering" name="local_costmap" type="local_costmap" output="screen">
+
+  </node>
+
   <node pkg="four_wheel_drive_independent_steering" name="dynamic_local_costmap" type="dynamic_local_costmap" output="screen">
 
   </node>

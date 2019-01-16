@@ -132,4 +132,6 @@ WORKDIR /usr/local/include
 
 RUN /bin/bash -c "mv eigen3/* ."
 
+RUN apt-get install -y ros-kinetic-pcl-ros*
+
 WORKDIR /root
