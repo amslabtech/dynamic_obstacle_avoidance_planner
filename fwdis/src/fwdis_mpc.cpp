@@ -11,6 +11,7 @@
 //ipopt
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <Eigen/LU>
 #include <cppad/cppad.hpp>
 #include <cppad/ipopt/solve.hpp>
 
@@ -653,21 +654,23 @@ void MPCPathTracker::process(void)
       double current_time = ros::Time::now().toSec();
       double dt = current_time - last_time;
       last_time = current_time;
-      double dx = current_pose.pose.position.x - previous_pose.pose.position.x;
-      double dy = current_pose.pose.position.y - previous_pose.pose.position.y;
+      double dx_map = current_pose.pose.position.x - previous_pose.pose.position.x;
+      double dy_map = current_pose.pose.position.y - previous_pose.pose.position.y;
       double dyaw = tf::getYaw(current_pose.pose.orientation) - tf::getYaw(previous_pose.pose.orientation);
-      double _dx = dx * cos(-dyaw) - dy * sin(-dyaw);
-      double _dy = dx * sin(-dyaw) + dy * cos(-dyaw);
-      /*
-      double vx = _dx / dt;
-      double vy = _dy / dt;
+      double theta = tf::getYaw(previous_pose.pose.orientation);
+      double dx_base = dx_map * cos(-theta) - dy_map * sin(-theta);
+      double dy_base = dx_map * sin(-theta) + dy_map * cos(-theta);
+      double vx_base = dx_base / dt;
+      double vy_base = dy_base / dt;
       double omega = dyaw / dt;
-      */
-      double vx = velocity.linear.x;
-      double vy = velocity.linear.y;
-      double omega = velocity.angular.z;
-      std::cout << "last velocity" << std::endl;
-      std::cout << velocity << std::endl;
+      Eigen::Vector2d base_velocity;
+      base_velocity << vx_base, vy_base;
+      Eigen::Matrix2d rotation_matrix;
+      rotation_matrix << cos(dyaw), -sin(dyaw),
+                         sin(dyaw),  cos(dyaw);
+      Eigen::Vector2d _robot_velocity = rotation_matrix.inverse() * base_velocity;
+      double vx = _robot_velocity(0);
+      double vy = _robot_velocity(1);
       Eigen::VectorXd current_wheel_velocity;
       current_wheel_velocity.resize(8, 1);
       Eigen::Vector3d current_velocity;
