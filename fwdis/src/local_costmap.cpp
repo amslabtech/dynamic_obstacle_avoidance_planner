@@ -78,6 +78,7 @@ void LocalCostmap::process(void)
 
   while(ros::ok()){
     if(local_costmap_subscribed){
+      /*
       if(cloud_updated){
         pcl_ros::transformPointCloud(ROBOT_FRAME, *cloud_ptr, *cloud_ptr, listener);
         int size = cloud_ptr->points.size();
@@ -88,6 +89,7 @@ void LocalCostmap::process(void)
         }
         cloud_updated = false;
       }
+      */
       map_pub.publish(local_costmap);
     }
     ros::spinOnce();

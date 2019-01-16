@@ -17,10 +17,10 @@ sleep 0.5s
 sleep 0.1s
 
 # obstacle sim
-gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering diff_drive_sim.launch'" --geometry=45x12+1315+0 &
+#gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering diff_drive_sim.launch'" --geometry=45x12+1315+0 &
 sleep 0.1s
 
-gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering obstacle_predictor_kf'" --geometry=45x12+0+250 &
+#gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering obstacle_predictor_kf'" --geometry=45x12+0+250 &
 sleep 0.1s
 
 gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering robot_predictor.launch'" --geometry=45x12+475+250 &
@@ -50,4 +50,7 @@ gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/ca
 sleep 0.1s
 
 #gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rorun four_wheel_drive_independent_steering trajectory_logger'" --geometry=45x12+475+702 &
+sleep 0.1s
+
+gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering velocity_arrow_to_obstacle'" --geometry=45x12+475+702 &
 sleep 0.1s

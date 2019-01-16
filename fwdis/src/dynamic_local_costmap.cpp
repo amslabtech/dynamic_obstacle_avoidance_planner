@@ -118,7 +118,9 @@ int main(int argc, char** argv)
         std::cout << "===calculate cost===" << std::endl;
         // 接近
         double set_cost_v_start = ros::Time::now().toSec();
+        std::cout << "obs_num: " << obs_num << std::endl;
         for(int j=0;j<obs_num;j++){
+          std::cout << "obs: " << j << std::endl;
           for(int k=1;k<3;k++){
             for(int i=0;i<PREDICTION_STEP;i++){
               if(predict_approaching(robot_path.poses[i], robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i])){
