@@ -41,6 +41,7 @@ private:
   double map_min_limit_x;
   double map_max_limit_y;
   double map_min_limit_y;
+  int max_index;
 };
 
 // map function
@@ -78,18 +79,19 @@ void LocalCostmap::process(void)
 
   while(ros::ok()){
     if(local_costmap_subscribed){
-      /*
       if(cloud_updated){
         pcl_ros::transformPointCloud(ROBOT_FRAME, *cloud_ptr, *cloud_ptr, listener);
         int size = cloud_ptr->points.size();
         for(int i=0;i<size;i++){
           if(cloud_ptr->points[i].x < map_max_limit_x && cloud_ptr->points[i].x > map_min_limit_x && cloud_ptr->points[i].y < map_max_limit_y && cloud_ptr->points[i].y > map_min_limit_y){
-            local_costmap.data[get_index(cloud_ptr->points[i].x, cloud_ptr->points[i].y)] = 100;
+            int index = get_index(cloud_ptr->points[i].x, cloud_ptr->points[i].y);
+            if(index < max_index){
+              local_costmap.data[index] = 100;
+            }
           }
         }
         cloud_updated = false;
       }
-      */
       map_pub.publish(local_costmap);
     }
     ros::spinOnce();
@@ -108,10 +110,11 @@ void LocalCostmap::cloud_callback(const sensor_msgs::PointCloud2ConstPtr& msg)
 void LocalCostmap::dynamic_callback(const nav_msgs::OccupancyGridConstPtr& msg)
 {
   local_costmap = *msg;
-  map_max_limit_x = local_costmap.info.resolution * local_costmap.info.height - local_costmap.info.origin.position.x;
-  map_min_limit_x = -local_costmap.info.resolution * local_costmap.info.height - local_costmap.info.origin.position.x;
-  map_max_limit_y = local_costmap.info.resolution * local_costmap.info.width - local_costmap.info.origin.position.y;
-  map_min_limit_y = -local_costmap.info.resolution * local_costmap.info.width - local_costmap.info.origin.position.y;
+  map_max_limit_x = local_costmap.info.resolution * local_costmap.info.height * 0.5;
+  map_min_limit_x = -local_costmap.info.resolution * local_costmap.info.height * 0.5;
+  map_max_limit_y = local_costmap.info.resolution * local_costmap.info.width * 0.5;
+  map_min_limit_y = -local_costmap.info.resolution * local_costmap.info.width * 0.5;
+  max_index = local_costmap.info.width * local_costmap.info.height;
   local_costmap_subscribed = true;
 }
 
