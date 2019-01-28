@@ -15,7 +15,7 @@ int NUM;
 
 std::random_device seed;
 std::mt19937 engine(seed());
-std::normal_distribution<> dist(0.0, 0.005);
+std::normal_distribution<> dist(0.0, 0.01);
 
 std::string WORLD_FRAME;
 std::string OBS_FRAME;
@@ -34,7 +34,7 @@ int main(int argc, char** argv)
   local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
   local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
 
-  NUM = 2;
+  NUM = 1;
 
   ros::Publisher obs_num_pub = nh.advertise<std_msgs::Int32>("/obs_num", 100);
 
@@ -48,8 +48,9 @@ int main(int argc, char** argv)
     obs_list[i].child_frame_id = OBS_FRAME + std::to_string(i);
     set_pose(i, 0, 0, 0);
   }
-  set_pose(0, 20, -0.1, M_PI);
-  set_pose(1, 20, -0.4, M_PI);
+  //set_pose(0, 20, -0.1, M_PI);
+  set_pose(0, 2.5, 6.5, -M_PI/2.0);
+  //set_pose(1, 20, -0.4, M_PI);
   //set_pose(0, -10, 7, 3*M_PI/2.0);
   //set_pose(0, -8, 0, 0);
 
@@ -61,7 +62,7 @@ int main(int argc, char** argv)
     // 速度
     //update(0, 1.0, 0);
     update(0, 1.2, 0);
-    update(1, 1.2, 0);
+    //update(1, 1.2, 0);
     obs_broadcaster.sendTransform(obs_list);
 
     std_msgs::Int32 num;
