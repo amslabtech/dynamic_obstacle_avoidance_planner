@@ -29,16 +29,17 @@ def obs_callback(data):
   global obs_poses
   obs_paths = PoseArray()
   obs_poses = PoseArray()
+  obs_poses.header = data.header
   PREDICTION_STEP = int(PREDICTION_TIME * HZ + 1)
   obs_paths = data
   _size = len(obs_paths.poses)
   obs_num = int(_size / PREDICTION_STEP)
   for i in range(obs_num):
     obs_poses.poses.append(obs_paths.poses[i * PREDICTION_STEP])
-  #print PREDICTION_TIME
-  #print PREDICTION_STEP
-  #print _size
-  #print obs_num
+  print PREDICTION_TIME
+  print PREDICTION_STEP
+  print _size
+  print obs_num
 
 def velocity_callback(data):
   global last_velocity
@@ -97,10 +98,12 @@ def process():
   rospy.Subscriber("/predicted_paths", PoseArray, obs_callback)
   rospy.Subscriber(VELOCITY_TOPIC_NAME, Twist, velocity_callback)
   rospy.Subscriber(INTERMEDIATE_PATH_TOPIC_NAME, Path, path_callback)
+  obs_pub = rospy.Publisher("/evalation/obs", PoseArray, queue_size=1)
 
   time_to_goal = rospy.get_time()
 
   transformed = False
+
 
   while not rospy.is_shutdown():
     try:
@@ -140,6 +143,7 @@ def process():
       last_r_y = robot_y
       first = False
       last_time = current_time
+      obs_pub.publish(obs_poses)
       if(is_goal(robot_x, robot_y)):
         time_to_goal = rospy.get_time() - time_to_goal
         print "time_to_goal=" + str(time_to_goal)
