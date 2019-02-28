@@ -15,7 +15,7 @@ const double WIDTH = 10;// [m]
 double RESOLUTION = 0.10;// [m]
 const double HZ = 10;
 double RADIUS;// 衝突判定半径[m]
-int obs_num = 1;//si
+int obs_num = 0;
 const int SEARCH_RANGE = 30;
 const double COST_COL = 90;
 const double MIN_COST = 10;
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
   local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
   PREDICTION_STEP = PREDICTION_TIME / DT;
 
-  ros::Publisher costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("/local_costmap", 100);
+  ros::Publisher costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("/dynamic_local_costmap", 100);
   ros::Subscriber robot_predicted_path_sub = nh.subscribe("/robot_predicted_path", 100, robot_path_callback);
   ros::Subscriber obstacle_predicted_paths_sub = nh.subscribe("/predicted_paths", 100, obstacle_paths_callback);
   ros::Subscriber obs_num_sub = nh.subscribe("/obs_num", 100, obs_num_callback);
@@ -118,7 +118,9 @@ int main(int argc, char** argv)
         std::cout << "===calculate cost===" << std::endl;
         // 接近
         double set_cost_v_start = ros::Time::now().toSec();
+        std::cout << "obs_num: " << obs_num << std::endl;
         for(int j=0;j<obs_num;j++){
+          std::cout << "obs: " << j << std::endl;
           for(int k=1;k<3;k++){
             for(int i=0;i<PREDICTION_STEP;i++){
               if(predict_approaching(robot_path.poses[i], robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i])){

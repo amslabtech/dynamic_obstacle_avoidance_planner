@@ -3,7 +3,7 @@
 gnome-terminal -e "/opt/ros/${ROS_DISTRO}/bin/roscore" --geometry=45x12+0+0 &
 sleep 1.0s
 
-gnome-terminal -e "docker exec -it ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering load_param_diff_drive.launch'" --geometry=45x12+0+0 &
+gnome-terminal -e "docker exec -it ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering load_param_fwdis.launch'" --geometry=45x12+0+0 &
 sleep 1.0s
 
 gnome-terminal -e "docker exec -it ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering load_param_dynamic_avoidance.launch'" --geometry=45x12+0+0 &
@@ -40,7 +40,7 @@ sleep 0.1s
 gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering waypoints_test'" --geometry=45x12+475+476 &
 sleep 0.1s
 
-gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering diff_drive_mpc.launch'" --geometry=45x12+895+476 &
+gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/roslaunch four_wheel_drive_independent_steering fwdis_mpc.launch'" --geometry=45x12+895+476 &
 sleep 0.1s
 
 gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun four_wheel_drive_independent_steering base_costmap'" --geometry=45x12+1315+476 &

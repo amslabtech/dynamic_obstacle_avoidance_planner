@@ -75,19 +75,21 @@ int T = 15;
 double DT = 0.1;// [s]
 const double HZ = 10;
 // 目標速度
-double VREF = 0.5;// [m/s]
+double VREF;// [m/s]
+// 最大速度
+double MAX_VELOCITY; // [m/s]
 // 最大角速度
-double MAX_ANGULAR_VELOCITY = 1.5;// [rad/s]
+double MAX_ANGULAR_VELOCITY;// [rad/s]
 // ホイール角加速度
-double WHEEL_ANGULAR_ACCELERATION_LIMIT = 2.0;// [rad/s^2]
+double WHEEL_ANGULAR_ACCELERATION_LIMIT;// [rad/s^2]
 // ホイール角速度
-double WHEEL_ANGULAR_VELOCITY_LIMIT = 24;// [rad/s]
+double WHEEL_ANGULAR_VELOCITY_LIMIT;// [rad/s]
 // ホイール半径
-double WHEEL_RADIUS = 0.075;// [m]
+double WHEEL_RADIUS;// [m]
 // トレッド
-double TREAD = 0.5;// [m]
+double TREAD;// [m]
 // グリッドマップ分解能
-double RESOLUTION = 0.1;// [m]
+double RESOLUTION;// [m]
 
 std::string WORLD_FRAME;
 std::string ROBOT_FRAME;
@@ -98,11 +100,13 @@ std::string INTERMEDIATE_PATH_TOPIC_NAME;
 size_t x_start = 0;
 size_t y_start = x_start + T;
 size_t yaw_start = y_start + T;
-size_t omega_r_start = yaw_start + T;
+size_t v_start = yaw_start + T;
+size_t omega_start = v_start + T;
+size_t omega_r_start = omega_start + T;
 size_t omega_l_start = omega_r_start + T;
 // input
-size_t vx_start = omega_l_start + T;
-size_t omega_start = vx_start + T - 1;
+size_t domega_r_start = omega_l_start + T;
+size_t domega_l_start = domega_r_start + T - 1;
 
 // 最適化失敗時は最後の成功データを使う
 int failure_count = 0;
@@ -117,17 +121,32 @@ int main(int argc, char** argv)
   ros::NodeHandle local_nh("~");
 
   local_nh.getParam("HORIZON_T", T);
-  local_nh.getParam("VREF", VREF);
+  local_nh.getParam("/dynamic_avoidance/VREF", VREF);
   local_nh.getParam("/dynamic_avoidance/MAX_ANGULAR_VELOCITY", MAX_ANGULAR_VELOCITY);
-  local_nh.getParam("WHEEL_ANGULAR_ACCELERATION_LIMIT", WHEEL_ANGULAR_ACCELERATION_LIMIT);
-  local_nh.getParam("WHEEL_ANGULAR_VELOCITY_LIMIT", WHEEL_ANGULAR_VELOCITY_LIMIT);
-  local_nh.getParam("WHEEL_RADIUS", WHEEL_RADIUS);
-  local_nh.getParam("TREAD", TREAD);
+  local_nh.getParam("/diff_drive/MAX_WHEEL_ANGULAR_ACCELERATION", WHEEL_ANGULAR_ACCELERATION_LIMIT);
+  local_nh.getParam("/diff_drive/MAX_WHEEL_ANGULAR_VELOCITY", WHEEL_ANGULAR_VELOCITY_LIMIT);
+  local_nh.getParam("/diff_drive/WHEEL_RADIUS", WHEEL_RADIUS);
+  local_nh.getParam("/diff_drive/TREAD", TREAD);
+  local_nh.getParam("/diff_drive/MAX_VELOCITY", MAX_VELOCITY);
   local_nh.getParam("/dynamic_avoidance/RESOLUTION", RESOLUTION);
   local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
   local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
   local_nh.getParam("/dynamic_avoidance/VELOCITY_TOPIC_NAME", VELOCITY_TOPIC_NAME);
   local_nh.getParam("/dynamic_avoidance/INTERMEDIATE_PATH_TOPIC_NAME", INTERMEDIATE_PATH_TOPIC_NAME);
+
+  std::cout << "T: " << T << std::endl;
+  std::cout << "VREF: " << VREF << std::endl;
+  std::cout << "MAX_VELOCITY: " << MAX_VELOCITY << std::endl;
+  std::cout << "MAX_ANGULAR_VELOCITY: " << MAX_ANGULAR_VELOCITY << std::endl;
+  std::cout << "WHEEL_ANGULAR_VELOCITY_LIMIT: " << WHEEL_ANGULAR_VELOCITY_LIMIT << std::endl;
+  std::cout << "WHEEL_ANGULAR_ACCELERATION_LIMIT: " << WHEEL_ANGULAR_ACCELERATION_LIMIT << std::endl;
+  std::cout << "WHEEL_RADIUS: " << WHEEL_RADIUS << std::endl;
+  std::cout << "TREAD: " << TREAD << std::endl;
+  std::cout << "RESOLUTION: " << RESOLUTION << std::endl;
+  std::cout << "ROBOT_FRAME: " << ROBOT_FRAME << std::endl;
+  std::cout << "WORLD_FRAME: " << WORLD_FRAME << std::endl;
+  std::cout << "VELOCITY_TOPIC_NAME: " << VELOCITY_TOPIC_NAME << std::endl;
+  std::cout << "INTERMEDIATE_PATH_TOPIC_NAME: " << INTERMEDIATE_PATH_TOPIC_NAME << std::endl;
 
   MPCPathTracker mpc_path_tracker;
 
@@ -147,7 +166,7 @@ MPC::MPC(){}
 std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eigen::VectorXd ref_y, Eigen::VectorXd ref_yaw)
 {
   /*
-   * state:x, y, yaw, omega_r, omega_l
+   * state:x, y, yaw, v, omega, omega_r, omega_l
    */
   bool ok = true;
   size_t i;
@@ -156,8 +175,10 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   double x = state[0];
   double y = state[1];
   double yaw = state[2];
-  double omega_r = state[3];
-  double omega_l = state[4];
+  double v = state[3];
+  double omega = state[4];
+  double omega_r = state[5];
+  double omega_l = state[6];
 
   /*
   std::cout << "--- state ---" << std::endl;
@@ -170,10 +191,10 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   std::cout << ref_yaw << std::endl;
   */
 
-  // 5(x, y, yaw, omega_r, omega_l), 2(vx, omega)
-  size_t n_variables = 5 * T + 2 * (T - 1);
+  // 7(x, y, yaw, v, omega, omega_r, omega_l), 2(domega_r, domega_l)
+  size_t n_variables = 7 * T + 2 * (T - 1);
 
-  size_t n_constraints = 5 * T;
+  size_t n_constraints = 7 * T;
 
   Dvector vars(n_variables);
   for(int i=0;i<n_variables;i++){
@@ -183,29 +204,38 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   vars[x_start] = x;
   vars[y_start] = y;
   vars[yaw_start] = yaw;
+  vars[v_start] = v;
+  vars[omega_start] = omega;
   vars[omega_r_start] = omega_r;
   vars[omega_l_start] = omega_l;
 
   Dvector vars_lower_bound(n_variables);
   Dvector vars_upper_bound(n_variables);
 
-  for(int i=0;i<omega_r_start;i++){
+  for(int i=0;i<v_start;i++){
     // x, y, yaw
     vars_lower_bound[i] = -1.0e19;
     vars_upper_bound[i] = 1.0e19;
   }
-  for(int i=omega_r_start;i<vx_start;i++){
+  for(int i=v_start;i<omega_start;i++){
+    // v
+    vars_lower_bound[i] = 0;
+    vars_upper_bound[i] = MAX_VELOCITY;
+  }
+  for(int i=omega_start;i<omega_r_start;i++){
+    // omega
+    vars_lower_bound[i] = -MAX_ANGULAR_VELOCITY;
+    vars_upper_bound[i] = MAX_ANGULAR_VELOCITY;
+  }
+  for(int i=omega_r_start;i<domega_r_start;i++){
     // omega_r, omega_l
     vars_lower_bound[i] = -WHEEL_ANGULAR_VELOCITY_LIMIT;
     vars_upper_bound[i] = WHEEL_ANGULAR_VELOCITY_LIMIT;
   }
-  for(int i=vx_start;i<omega_start;i++){
-    vars_lower_bound[i] = 0;
-    vars_upper_bound[i] = VREF;
-  }
   for(int i=omega_start;i<n_variables;i++){
-    vars_lower_bound[i] = -MAX_ANGULAR_VELOCITY;
-    vars_upper_bound[i] = MAX_ANGULAR_VELOCITY;
+    // domega_r, domega_l
+    vars_lower_bound[i] = -WHEEL_ANGULAR_ACCELERATION_LIMIT;
+    vars_upper_bound[i] = WHEEL_ANGULAR_ACCELERATION_LIMIT;
   }
 
   // 等式制約
@@ -221,12 +251,16 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
   constraints_lower_bound[x_start] = x;
   constraints_lower_bound[y_start] = y;
   constraints_lower_bound[yaw_start] = yaw;
+  constraints_lower_bound[v_start] = v;
+  constraints_lower_bound[omega_start] = omega;
   constraints_lower_bound[omega_r_start] = omega_r;
   constraints_lower_bound[omega_l_start] = omega_l;
 
   constraints_upper_bound[x_start] = x;
   constraints_upper_bound[y_start] = y;
   constraints_upper_bound[yaw_start] = yaw;
+  constraints_upper_bound[v_start] = v;
+  constraints_upper_bound[omega_start] = omega;
   constraints_upper_bound[omega_r_start] = omega_r;
   constraints_upper_bound[omega_l_start] = omega_l;
 
@@ -259,7 +293,7 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     failure_count = 0;
     result.clear();
     // 何故か0だとうまく行かない
-    result.push_back(solution.x[vx_start+1]);
+    result.push_back(solution.x[v_start+1]);
     result.push_back(solution.x[omega_start+1]);
     //予測軌道
     for(int i = 0; i < T-1; i++){
@@ -271,13 +305,18 @@ std::vector<double> MPC::solve(Eigen::VectorXd state, Eigen::VectorXd ref_x, Eig
     if(failure_count < T - 1){
       failure_count++;
     }
-    result.push_back(solution.x[vx_start+1+failure_count]);
+    result.push_back(solution.x[v_start+1+failure_count]);
     result.push_back(solution.x[omega_start+1+failure_count]);
+    result[v_start] = result[v_start + failure_count];
+    result[omega_start] = result[omega_start + failure_count];
+
     //予測軌道
     for(int i = failure_count; i < T-1; i++){
+      /*
       result.push_back(solution.x[x_start+i+1]);
       result.push_back(solution.x[y_start+i+1]);
       result.push_back(solution.x[yaw_start+i+1]);
+      */
     }
   }
   /*
@@ -307,13 +346,13 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     fg[0] += 0.2 * (CppAD::pow(vars[x_start + i] - ref_x[i], 2) + CppAD::pow(vars[y_start + i] - ref_y[i], 2));
     // 向き
     //fg[0] += 0.1 * CppAD::pow(vars[yaw_start + i] - ref_yaw[i], 2);
+    // 速度
+    fg[0] += 100 * CppAD::pow(VREF - vars[v_start + i], 2);
+    // 角加速度
+    fg[0] += 0.1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i+ 1], 2);
   }
   // input
   for(int i=0;i<T-2;i++){
-    // 速度
-    fg[0] += 0.1 * CppAD::pow(VREF - vars[vx_start + i], 2);
-    // 角加速度
-    fg[0] += 0.1 * CppAD::pow(vars[omega_start + i] - vars[omega_start + i+ 1], 2);
   }
 
   std::cout << "constrains start" << std::endl;
@@ -322,6 +361,8 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
   fg[1 + x_start] = vars[x_start];
   fg[1 + y_start] = vars[y_start];
   fg[1 + yaw_start] = vars[yaw_start];
+  fg[1 + v_start] = vars[v_start];
+  fg[1 + omega_start] = vars[omega_start];
   fg[1 + omega_r_start] = vars[omega_r_start];
   fg[1 + omega_l_start] = vars[omega_l_start];
 
@@ -332,27 +373,30 @@ void FG_eval::operator()(ADvector& fg, const ADvector& vars)
     AD<double> x1 = vars[x_start + i + 1];
     AD<double> y1 = vars[y_start + i + 1];
     AD<double> yaw1 = vars[yaw_start + i + 1];
+    AD<double> v1 = vars[v_start + i + 1];
+    AD<double> omega1 = vars[omega_start + i + 1];
     AD<double> omega_r1 = vars[omega_r_start + i + 1];
     AD<double> omega_l1 = vars[omega_l_start + i + 1];
     //t
     AD<double> x0 = vars[x_start + i];
     AD<double> y0 = vars[y_start + i];
     AD<double> yaw0 = vars[yaw_start + i];
+    AD<double> v0 = vars[v_start + i];
+    AD<double> omega0 = vars[omega_start + i];
     AD<double> omega_r0 = vars[omega_r_start + i];
     AD<double> omega_l0 = vars[omega_l_start + i];
     //入力ホライゾンはt+1を考慮しない
-    AD<double> vx0 = vars[vx_start + i];
-    AD<double> omega0 = vars[omega_start + i];
+    AD<double> domega_r0 = vars[domega_r_start + i];
+    AD<double> domega_l0 = vars[domega_l_start + i];
 
     //制約
-    fg[2 + x_start + i] = x1 - (x0 + vx0 * CppAD::cos(yaw0) * DT);
-    fg[2 + y_start + i] = y1 - (y0 + vx0 * CppAD::sin(yaw0) * DT);
-    AD<double> sin0 = CppAD::sin(yaw0 + omega0 * DT);
-    AD<double> cos0 = CppAD::cos(yaw0 + omega0 * DT);
-    //fg[2 + yaw_start + i] = yaw1 - CppAD::atan2(sin0, cos0);
+    fg[2 + omega_r_start + i] = omega_r1 - (omega_r0 + domega_r0 * DT);
+    fg[2 + omega_l_start + i] = omega_l1 - (omega_l0 + domega_l0 * DT);
+    fg[2 + v_start + i] = v1 - (WHEEL_RADIUS / 2.0) * (omega_r1 + omega_l1);
+    fg[2 + omega_start + i] = omega1 - (WHEEL_RADIUS / TREAD) * (omega_r1 - omega_l1);
+    fg[2 + x_start + i] = x1 - (x0 + v0 * CppAD::cos(yaw0) * DT);
+    fg[2 + y_start + i] = y1 - (y0 + v0 * CppAD::sin(yaw0) * DT);
     fg[2 + yaw_start + i] = yaw1 - (yaw0 + omega0 * DT);
-    fg[2 + omega_r_start + i] = omega_r0 - (vx0 + omega0 * TREAD / 2.0) / WHEEL_RADIUS;
-    fg[2 + omega_l_start + i] = omega_l0 - (vx0 - omega0 * TREAD / 2.0) / WHEEL_RADIUS;
   }
   std::cout << "FG_eval() end" << std::endl;
 }
@@ -411,8 +455,8 @@ void MPCPathTracker::process(void)
       double omega_r = (v + omega * TREAD / 2.0) / WHEEL_RADIUS;
       double omega_l = (v - omega * TREAD / 2.0) / WHEEL_RADIUS;
 
-      Eigen::VectorXd state(5);
-      state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation), omega_r, omega_l;
+      Eigen::VectorXd state(7);
+      state << pose.pose.position.x, pose.pose.position.y, tf::getYaw(pose.pose.orientation), v, omega, omega_r, omega_l;
       std::cout << "path to vector" << std::endl;
       path_to_vector();
       std::cout << "solving" << std::endl;

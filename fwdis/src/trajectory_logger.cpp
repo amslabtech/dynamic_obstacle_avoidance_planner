@@ -76,7 +76,7 @@ int main(int argc, char** argv)
   viz.scale.x = 0.6;
   viz.scale.y = 0.6;
   viz.scale.z = 0.6;
-  viz.type = visualization_msgs::Marker::CYLINDER;
+  viz.type = visualization_msgs::Marker::CUBE;
   viz.action = visualization_msgs::Marker::ADD;
   viz.header.frame_id = WORLD_FRAME;
   viz.ns = "robot_viz";
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
     tf::StampedTransform obs0_transform;
     try{
       listener.lookupTransform(WORLD_FRAME, ROBOT_FRAME, ros::Time(0), robot_transform);
-      listener.lookupTransform(WORLD_FRAME, OBS_FRAME, ros::Time(0), obs0_transform);
+      listener.lookupTransform(WORLD_FRAME, OBS_FRAME + "0", ros::Time(0), obs0_transform);
       transformed = true;
     }catch(tf::TransformException ex){
       std::cout << ex.what() << std::endl;
