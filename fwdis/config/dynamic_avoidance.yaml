@@ -3,8 +3,8 @@ dynamic_avoidance:
   PREDICTION_TIME: 2.5 #[s]
   RESOLUTION: 0.10 #[s]
   RADIUS: 0.6 #[m]
-  MAX_ANGULAR_ACCELERATION: 0.8 #[rad/ss]
-  MAX_ANGULAR_VELOCITY: 1.0 #[rad/s]
+  MAX_ANGULAR_ACCELERATION: 1.0 #[rad/ss]
+  MAX_ANGULAR_VELOCITY: 0.8 #[rad/s]
   ROBOT_FRAME: "base_link"
   OBSTACLES_FRAME: "obs"
   WORLD_FRAME: "map"
