@@ -15,8 +15,8 @@ velocity = Twist()
 
 HZ = 20.0
 
-#ROBOT = "DD"
-ROBOT = "FWDIS"
+ROBOT = "DD"
+#ROBOT = "FWDIS"
 
 def process():
   ROBOT_FRAME = rospy.get_param("/dynamic_avoidance/ROBOT_FRAME")
@@ -83,9 +83,9 @@ def process():
         print v_robot
         print omega
         #print d_quaternion.radians / dt
-        v_max = 0.5
+        V_MAX = 0.5
         if ROBOT == "DD":
-          velocity.linear.x = v_max
+          velocity.linear.x = V_MAX
           if (v_robot[0] > 0.5) and (not vel_flag):
             vel_flag = True
             flag_time = rospy.get_time()
@@ -93,21 +93,21 @@ def process():
             time = rospy.get_time() - flag_time
             if time > 1.0:
               print time, "[s]"
-              w_max = 0.8
-              dw = 1.0
-              w += dw / HZ
-              if w < -w_max:
-                w = -w_max
-              elif w > w_max:
-                w = w_max
+              W_MAX = 0.8
+              DW = 1.0
+              w += DW / HZ
+              if w < -W_MAX:
+                w = -W_MAX
+              elif w > W_MAX:
+                w = W_MAX
               velocity.angular.z = w
           vel_pub.publish(velocity)
           print velocity
           print "DD"
         elif ROBOT == "FWDIS":
-          w_max = 3
+          W_MAX = 3
           current_v = m.sqrt(v_robot[0] * v_robot[0] + v_robot[1] * v_robot[1])
-          velocity.linear.x = v_max
+          velocity.linear.x = V_MAX
           if (current_v > 0.5) and (not vel_flag):
             vel_flag = True
             flag_time = rospy.get_time()
@@ -115,13 +115,13 @@ def process():
             time = rospy.get_time() - flag_time
             if time > 1.0:
               print time, "[s]"
-              theta_n += w_max / HZ
+              theta_n += W_MAX / HZ
               if theta_n < -theta_n_max:
                 theta_n = -theta_n_max
               elif theta_n > theta_n_max:
                 theta_n = theta_n_max
-              velocity.linear.x = v_max * m.cos(theta_n)
-              velocity.linear.y = v_max * m.sin(theta_n)
+              velocity.linear.x = V_MAX * m.cos(theta_n)
+              velocity.linear.y = V_MAX * m.sin(theta_n)
           vel_pub.publish(velocity)
           print velocity
           print theta_n
