@@ -15,8 +15,8 @@ velocity = Twist()
 
 HZ = 20.0
 
-ROBOT = "DD"
-#ROBOT = "FWDIS"
+#ROBOT = "DD"
+ROBOT = "FWDIS"
 
 def process():
   ROBOT_FRAME = rospy.get_param("/dynamic_avoidance/ROBOT_FRAME")
@@ -49,6 +49,8 @@ def process():
   vel_flag = False
   flag_time = 0
   w = 0
+  theta_n = 0
+  theta_n_max = m.pi / 2.0
 
   while not rospy.is_shutdown():
     try:
@@ -87,7 +89,6 @@ def process():
           if (v_robot[0] > 0.5) and (not vel_flag):
             vel_flag = True
             flag_time = rospy.get_time()
-            print "hogehoge"
           elif vel_flag:
             time = rospy.get_time() - flag_time
             if time > 1.0:
@@ -100,14 +101,30 @@ def process():
               elif w > w_max:
                 w = w_max
               velocity.angular.z = w
-
           vel_pub.publish(velocity)
           print velocity
           print "DD"
         elif ROBOT == "FWDIS":
-          v = 0.5
-          w = 3
+          w_max = 3
+          current_v = m.sqrt(v_robot[0] * v_robot[0] + v_robot[1] * v_robot[1])
+          velocity.linear.x = v_max
+          if (current_v > 0.5) and (not vel_flag):
+            vel_flag = True
+            flag_time = rospy.get_time()
+          elif vel_flag:
+            time = rospy.get_time() - flag_time
+            if time > 1.0:
+              print time, "[s]"
+              theta_n += w_max / HZ
+              if theta_n < -theta_n_max:
+                theta_n = -theta_n_max
+              elif theta_n > theta_n_max:
+                theta_n = theta_n_max
+              velocity.linear.x = v_max * m.cos(theta_n)
+              velocity.linear.y = v_max * m.sin(theta_n)
           vel_pub.publish(velocity)
+          print velocity
+          print theta_n
           print "FWDIS"
       else:
         first_flag = False
