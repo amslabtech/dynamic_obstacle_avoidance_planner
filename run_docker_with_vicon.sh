@@ -13,5 +13,4 @@ docker run -it --rm \
   --volume="${PWD}:/root/catkin_ws/src/avoidance_path_planner" \
   --net='host' \
   --name="ros_mpc" \
-  kazukitakahashi/ros_mpc
-
+  amslabtech/ros_mpc

@@ -11,5 +11,5 @@ docker run -it --rm \
   --volume="${PWD}:/root/catkin_ws/src/dynamic_obstacle_avoidance_planner" \
   --net='host' \
   --name="ros_mpc" \
-  kazukitakahashi/ros_mpc
+  amslabtech/ros_mpc
 
