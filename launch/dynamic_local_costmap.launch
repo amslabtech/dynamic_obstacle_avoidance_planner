@@ -1,0 +1,11 @@
+<launch>
+
+  <node pkg="dynamic_obstacle_avoidance_planner" name="local_costmap" type="local_costmap" output="screen">
+
+  </node>
+
+  <node pkg="dynamic_obstacle_avoidance_planner" name="dynamic_local_costmap" type="dynamic_local_costmap" output="screen">
+
+  </node>
+
+</launch>

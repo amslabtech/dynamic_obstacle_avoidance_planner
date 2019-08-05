@@ -3,7 +3,7 @@
   <arg name="_HORIZON_T" default="15"/>
   <arg name="_DT" default="0.1"/>
 
-  <node pkg="four_wheel_drive_independent_steering" name="diff_drive_mpc" type="diff_drive_mpc" output="screen">
+  <node pkg="dynamic_obstacle_avoidance_planner" name="diff_drive_mpc" type="diff_drive_mpc" output="screen">
     <param name="HORIZON_T" value="$(arg _HORIZON_T)"/>
     <param name="DT" value="$(arg _DT)"/>
   </node>

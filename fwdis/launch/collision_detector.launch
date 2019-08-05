@@ -1,7 +1,0 @@
-<launch>
-
-  <node pkg="four_wheel_drive_independent_steering" type="collision_detector" name="collision_detector" output="screen">
-
-  </node>
-
-</launch>

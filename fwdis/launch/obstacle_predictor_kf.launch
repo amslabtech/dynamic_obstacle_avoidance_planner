@@ -1,7 +1,0 @@
-<launch>
-
-  <node pkg="four_wheel_drive_independent_steering" name="obstacle_predicotr" type="obstacle_predictor_kf" output="screen">
-
-  </node>
-
-</launch>

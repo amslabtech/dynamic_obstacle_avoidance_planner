@@ -1,6 +1,0 @@
-<launch>
-
-  <node pkg="four_wheel_drive_independent_steering" name="robot_predictor" type="robot_predictor" output="screen">
-  </node>
-
-</launch>

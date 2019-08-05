@@ -1,0 +1,7 @@
+<launch>
+
+  <node pkg="dynamic_obstacle_avoidance_planner" name="diff_drive_sim" type="diff_drive_sim">
+    <param name="NUM" value="1"/>
+  </node>
+
+</launch>

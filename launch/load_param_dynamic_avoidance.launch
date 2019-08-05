@@ -1,0 +1,5 @@
+<launch>
+
+  <rosparam command="load" file="$(find dynamic_obstacle_avoidance_planner)/config/dynamic_avoidance.yaml"/>
+
+</launch>

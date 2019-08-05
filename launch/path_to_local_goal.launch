@@ -1,6 +1,6 @@
 <launch>
 
-  <node pkg="four_wheel_drive_independent_steering" name="path_to_local_goal" type="path_to_local_goal" output="screen">
+  <node pkg="dynamic_obstacle_avoidance_planner" name="path_to_local_goal" type="path_to_local_goal" output="screen">
     <remap from="/goal" to="/move_base_simple/goal"/>
 
     <param name="GOAL_DISTANCE" value="1.0"/>

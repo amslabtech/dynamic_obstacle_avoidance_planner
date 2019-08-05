@@ -1,0 +1,7 @@
+<launch>
+
+  <node pkg="dynamic_obstacle_avoidance_planner" type="collision_detector" name="collision_detector" output="screen">
+
+  </node>
+
+</launch>

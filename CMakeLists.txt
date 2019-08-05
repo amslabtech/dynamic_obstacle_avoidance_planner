@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(four_wheel_drive_independent_steering)
+project(dynamic_obstacle_avoidance_planner)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+# add_compile_options(-std=c++11)
+SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall ${CMAKE_CXX_FLAGS}")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -12,9 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
-  message_generation
   cmake_modules
-  fwdis_msgs
   pcl_ros
 )
 
@@ -77,11 +76,11 @@ pkg_check_modules(IPOPT ipopt REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+#   geometry_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -114,8 +113,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES four_wheel_drive_independent_steering
-   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
+#  LIBRARIES dynamic_obstacle_avoidance_planner
+# CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -134,7 +133,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/four_wheel_drive_independent_steering.cpp
+#   src/${PROJECT_NAME}/dynamic_obstacle_avoidance_planner.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -145,12 +144,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/four_wheel_drive_independent_steering_node.cpp)
-add_executable(fwdis_controller src/fwdis_controller.cpp)
-add_executable(teleop_joy src/teleop_joy.cpp)
-add_executable(fwdis_gazebo src/fwdis_gazebo.cpp)
-add_executable(holonomic_dwa src/holonomic_dwa.cpp)
-add_executable(sin_curve src/sin_curve.cpp)
+# add_executable(${PROJECT_NAME}_node src/dynamic_obstacle_avoidance_planner_node.cpp)
 add_executable(path_to_local_goal src/path_to_local_goal.cpp)
 add_executable(diff_drive_sim src/diff_drive_sim.cpp)
 add_executable(robot_predictor src/robot_predictor.cpp)
@@ -163,10 +157,7 @@ add_executable(obstacle_predictor_kf src/obstacle_predictor_kf.cpp)
 add_executable(collision_detector src/collision_detector.cpp)
 add_executable(trajectory_logger src/trajectory_logger.cpp)
 add_executable(fwdis_mpc src/fwdis_mpc.cpp)
-add_executable(fwdis_odom src/fwdis_odom.cpp)
-add_executable(fwdis_stopper src/fwdis_stopper.cpp)
 add_executable(velocity_arrow_to_obstacle src/velocity_arrow_to_obstacle.cpp)
-add_executable(odom_to_tf src/odom_to_tf.cpp)
 add_executable(local_costmap src/local_costmap.cpp)
 
 ## Rename C++ executable without prefix
@@ -184,21 +175,6 @@ add_executable(local_costmap src/local_costmap.cpp)
 #   ${catkin_LIBRARIES}
 # )
 
-target_link_libraries(fwdis_controller
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(teleop_joy
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(fwdis_gazebo
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(holonomic_dwa
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(sin_curve
-  ${catkin_LIBRARIES}
-)
 target_link_libraries(path_to_local_goal
   ${catkin_LIBRARIES}
 )
@@ -237,25 +213,12 @@ target_link_libraries(fwdis_mpc
   ${catkin_LIBRARIES}
   ${IPOPT_LIBRARIES}
 )
-target_link_libraries(fwdis_odom
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(fwdis_stopper
-  ${catkin_LIBRARIES}
-)
 target_link_libraries(velocity_arrow_to_obstacle
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(odom_to_tf
   ${catkin_LIBRARIES}
 )
 target_link_libraries(local_costmap
   ${catkin_LIBRARIES}
 )
-
-add_dependencies(fwdis_controller fwdis_msgs_generate_messages_cpp)
-add_dependencies(fwdis_gazebo fwdis_msgs_generate_messages_cpp)
-add_dependencies(fwdis_odom fwdis_msgs_generate_messages_cpp)
 
 #############
 ## Install ##
@@ -297,7 +260,7 @@ add_dependencies(fwdis_odom fwdis_msgs_generate_messages_cpp)
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_four_wheel_drive_independent_steering.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_dynamic_obstacle_avoidance_planner.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

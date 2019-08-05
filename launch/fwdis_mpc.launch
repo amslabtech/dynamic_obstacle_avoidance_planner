@@ -1,0 +1,16 @@
+<launch>
+
+  <arg name="_HORIZON_T" default="15"/>
+  <arg name="_DT" default="0.1"/>
+  <arg name="_VREF" default="1.2"/>
+
+  <node pkg="dynamic_obstacle_avoidance_planner" name="fwdis_mpc" type="fwdis_mpc" output="screen">
+    <param name="HORIZON_T" value="$(arg _HORIZON_T)"/>
+    <param name="DT" value="$(arg _DT)"/>
+    <param name="VREF" value="$(arg _VREF)"/>
+  </node>
+
+  <node pkg="dynamic_obstacle_avoidance_planner" name="fwdis_stopper" type="fwdis_stopper" output="screen">
+  </node>
+
+</launch>

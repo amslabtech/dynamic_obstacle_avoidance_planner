@@ -1,7 +1,0 @@
-<launch>
-
-  <node pkg="four_wheel_drive_independent_steering" name="diff_drive_sim" type="diff_drive_sim">
-    <param name="NUM" value="1"/>
-  </node>
-
-</launch>
