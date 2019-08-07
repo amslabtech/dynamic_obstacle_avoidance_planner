@@ -1,5 +1,5 @@
-#ifndef __DYNAMIC_LOCAL_COSTMAP_MAKER_H
-#define __DYNAMIC_LOCAL_COSTMAP_MAKER_H
+#ifndef __DYNAMIC_LOCAL_COSTMAP_GENERATOR_H
+#define __DYNAMIC_LOCAL_COSTMAP_GENERATOR_H
 
 #include <ros/ros.h>
 #include <tf/tf.h>
@@ -11,10 +11,10 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Int32.h>
 
-class DynamicLocalCostmapMaker
+class DynamicLocalCostmapGenerator
 {
 public:
-    DynamicLocalCostmapMaker(void);
+    DynamicLocalCostmapGenerator(void);
 
     void process(void);
     void robot_path_callback(const geometry_msgs::PoseArrayConstPtr&);
@@ -33,11 +33,11 @@ public:
 
 private:
     double PREDICTION_TIME;// [s], trafjectory prediction time
+    double HZ;
     double DT;// [s]
     int PREDICTION_STEP;
     double MAP_WIDTH;// [m]
     double RESOLUTION;// [m]
-    double HZ;
     double RADIUS;// radius for collision check[m]
     int SEARCH_RANGE;
     double COST_COLLISION;
@@ -58,4 +58,4 @@ private:
     int obs_num;
 };
 
-#endif// __DYNAMIC_LOCAL_COSTMAP_MAKER_H
+#endif// __DYNAMIC_LOCAL_COSTMAP_GENERATOR_H

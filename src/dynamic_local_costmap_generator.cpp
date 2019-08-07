@@ -1,6 +1,6 @@
-#include "dynamic_obstacle_avoidance_planner/dynamic_local_costmap_maker.h"
+#include "dynamic_obstacle_avoidance_planner/dynamic_local_costmap_generator.h"
 
-DynamicLocalCostmapMaker::DynamicLocalCostmapMaker(void)
+DynamicLocalCostmapGenerator::DynamicLocalCostmapGenerator(void)
 :local_nh("~")
 {
     local_nh.param("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME, {3.5});
@@ -9,20 +9,20 @@ DynamicLocalCostmapMaker::DynamicLocalCostmapMaker(void)
     local_nh.param("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME, {"/base_link"});
     local_nh.param("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME, {"/obs"});
     local_nh.param("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME, {"/map"});
-    local_nh.param("DT", DT, {0.1});
+    local_nh.param("HZ", HZ, {10});
     local_nh.param("MAP_WIDTH", MAP_WIDTH, {10});
     local_nh.param("RESOLUTION", RESOLUTION, {0.1});
     local_nh.param("SEARCH_RANGE", SEARCH_RANGE, {30});
     local_nh.param("COST_COLLISION", COST_COLLISION, {90});
     local_nh.param("MIN_COST", MIN_COST, {10});
 
+    DT = 1.0 / HZ;
     PREDICTION_STEP = PREDICTION_TIME / DT;
-    HZ = 1.0 / DT;
 
     costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("/dynamic_local_costmap", 1);
-    robot_predicted_path_sub = nh.subscribe("/robot_predicted_path", 1, &DynamicLocalCostmapMaker::robot_path_callback, this);
-    obstacle_predicted_paths_sub = nh.subscribe("/predicted_paths", 1, &DynamicLocalCostmapMaker::obstacle_paths_callback, this);
-    obs_num_sub = nh.subscribe("/obs_num", 1, &DynamicLocalCostmapMaker::obs_num_callback, this);
+    robot_predicted_path_sub = nh.subscribe("/robot_predicted_path", 1, &DynamicLocalCostmapGenerator::robot_path_callback, this);
+    obstacle_predicted_paths_sub = nh.subscribe("/predicted_paths", 1, &DynamicLocalCostmapGenerator::obstacle_paths_callback, this);
+    obs_num_sub = nh.subscribe("/obs_num", 1, &DynamicLocalCostmapGenerator::obs_num_callback, this);
 
     std::cout << "=== dynamic local costmap ===" << std::endl;
     std::cout << "PREDICTION_TIME: " << PREDICTION_TIME  << std::endl;
@@ -40,7 +40,7 @@ DynamicLocalCostmapMaker::DynamicLocalCostmapMaker(void)
     std::cout << "HZ: " << HZ  << std::endl;
 }
 
-void DynamicLocalCostmapMaker::process(void)
+void DynamicLocalCostmapGenerator::process(void)
 {
     tf::TransformBroadcaster broadcaster;
     geometry_msgs::TransformStamped base_link_to_local_costmap;
@@ -117,7 +117,7 @@ void DynamicLocalCostmapMaker::process(void)
                 costmap_pub.publish(local_costmap);
                 std::cout << ros::Time::now() - start_time << "[s]" << std::endl;
             }else{
-                    std::cout << "path not received" << std::endl;
+                std::cout << "path not received" << std::endl;
             }
         }
         ros::spinOnce();
@@ -125,22 +125,22 @@ void DynamicLocalCostmapMaker::process(void)
     }
 }
 
-void DynamicLocalCostmapMaker::robot_path_callback(const geometry_msgs::PoseArrayConstPtr& msg)
+void DynamicLocalCostmapGenerator::robot_path_callback(const geometry_msgs::PoseArrayConstPtr& msg)
 {
     robot_path = *msg;
 }
 
-void DynamicLocalCostmapMaker::obstacle_paths_callback(const geometry_msgs::PoseArrayConstPtr& msg)
+void DynamicLocalCostmapGenerator::obstacle_paths_callback(const geometry_msgs::PoseArrayConstPtr& msg)
 {
     obstacle_paths = *msg;
 }
 
-void DynamicLocalCostmapMaker::obs_num_callback(const std_msgs::Int32ConstPtr& msg)
+void DynamicLocalCostmapGenerator::obs_num_callback(const std_msgs::Int32ConstPtr& msg)
 {
     obs_num = msg->data;
 }
 
-void DynamicLocalCostmapMaker::setup_map(void)
+void DynamicLocalCostmapGenerator::setup_map(void)
 {
     local_costmap.data.clear();
     local_costmap.header.frame_id = "local_costmap";
@@ -162,7 +162,7 @@ void DynamicLocalCostmapMaker::setup_map(void)
  * P1(a->b), P2(c->d) collision prediction
  * https://qiita.com/ykob/items/ab7f30c43a0ed52d16f2
  */
-bool DynamicLocalCostmapMaker::predict_intersection(geometry_msgs::Pose a, geometry_msgs::Pose b, geometry_msgs::Pose c, geometry_msgs::Pose d)
+bool DynamicLocalCostmapGenerator::predict_intersection(geometry_msgs::Pose a, geometry_msgs::Pose b, geometry_msgs::Pose c, geometry_msgs::Pose d)
 {
     double ta = (c.position.x - d.position.x) * (a.position.y - c.position.y) + (c.position.y - d.position.y) * (c.position.x - a.position.x);
     double tb = (c.position.x - d.position.x) * (b.position.y - c.position.y) + (c.position.y - d.position.y) * (c.position.x - b.position.x);
@@ -175,7 +175,7 @@ bool DynamicLocalCostmapMaker::predict_intersection(geometry_msgs::Pose a, geome
  * P1(a->b), P2(c->d) collision point
  * http://www.hiramine.com/programming/graphics/2d_segmentintersection.html
  */
-void DynamicLocalCostmapMaker::predict_intersection_point(geometry_msgs::Pose a, geometry_msgs::Pose b, geometry_msgs::Pose c, geometry_msgs::Pose d, geometry_msgs::PoseStamped& result)
+void DynamicLocalCostmapGenerator::predict_intersection_point(geometry_msgs::Pose a, geometry_msgs::Pose b, geometry_msgs::Pose c, geometry_msgs::Pose d, geometry_msgs::PoseStamped& result)
 {
     double denominator = (b.position.x - a.position.x) * (d.position.y - c.position.y) - (b.position.y - a.position.y) * (d.position.x - c.position.x);
     double r = ((d.position.y - c.position.y) * (c.position.x - a.position.x) - (d.position.x - c.position.x) * (c.position.y - a.position.y)) / denominator;
@@ -184,28 +184,27 @@ void DynamicLocalCostmapMaker::predict_intersection_point(geometry_msgs::Pose a,
     result.pose.position.y = a.position.y + r * (b.position.y - a.position.y);
 }
 
-bool DynamicLocalCostmapMaker::predict_approaching(geometry_msgs::Pose p1, geometry_msgs::Pose p2)
+bool DynamicLocalCostmapGenerator::predict_approaching(geometry_msgs::Pose p1, geometry_msgs::Pose p2)
 {
     return RADIUS * RADIUS > (p1.position.x - p2.position.x) * (p1.position.x - p2.position.x) + (p1.position.y - p2.position.y) * (p1.position.y - p2.position.y);
 }
 
-inline int DynamicLocalCostmapMaker::get_i_from_x(double x)
+inline int DynamicLocalCostmapGenerator::get_i_from_x(double x)
 {
     return floor((x - local_costmap.info.origin.position.x) / local_costmap.info.resolution + 0.5);
 }
 
-inline int DynamicLocalCostmapMaker::get_j_from_y(double y)
+inline int DynamicLocalCostmapGenerator::get_j_from_y(double y)
 {
     return floor((y - local_costmap.info.origin.position.y) / local_costmap.info.resolution + 0.5);
 }
 
-inline int DynamicLocalCostmapMaker::get_index(double x, double y)
+inline int DynamicLocalCostmapGenerator::get_index(double x, double y)
 {
     return local_costmap.info.width * get_j_from_y(y) + get_i_from_x(x);
-
 }
 
-void DynamicLocalCostmapMaker::set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry_msgs::Twist& vr, geometry_msgs::Twist& vo)
+void DynamicLocalCostmapGenerator::set_cost_with_velocity(geometry_msgs::PoseStamped& collision_pose, geometry_msgs::Twist& vr, geometry_msgs::Twist& vo)
 {
     /*
      * collsion_pose: collision point
@@ -266,7 +265,7 @@ void DynamicLocalCostmapMaker::set_cost_with_velocity(geometry_msgs::PoseStamped
                         local_costmap.data[local_costmap.info.width * j + i] = cost_l_col + MIN_COST;
                     }
                 }else if(dist <= radius_l_grid){
-                    double cost_l = cost_l_col - cost_l_col * (dist*RESOLUTION - radius_col_l) / (radius_l - radius_col_l);
+                    double cost_l = cost_l_col - cost_l_col * (dist * RESOLUTION - radius_col_l) / (radius_l - radius_col_l);
                     if(local_costmap.data[local_costmap.info.width * j + i] < cost_l + MIN_COST){
                         local_costmap.data[local_costmap.info.width * j + i] = cost_l + MIN_COST;
                     }
@@ -280,7 +279,7 @@ void DynamicLocalCostmapMaker::set_cost_with_velocity(geometry_msgs::PoseStamped
 }
 
 // reference: https://qiita.com/yellow_73/items/bcd4e150e7caa0210ee6
-bool DynamicLocalCostmapMaker::predict_approaching(geometry_msgs::Pose& pr1, geometry_msgs::Pose& pr2, geometry_msgs::Pose& po)
+bool DynamicLocalCostmapGenerator::predict_approaching(geometry_msgs::Pose& pr1, geometry_msgs::Pose& pr2, geometry_msgs::Pose& po)
 {
     double a = pr2.position.x - pr1.position.x;
     double b = pr2.position.y - pr1.position.y;
@@ -304,7 +303,7 @@ bool DynamicLocalCostmapMaker::predict_approaching(geometry_msgs::Pose& pr1, geo
     }
 }
 
-int DynamicLocalCostmapMaker::get_distance_grid(int i0, int j0, int i1, int j1)
+int DynamicLocalCostmapGenerator::get_distance_grid(int i0, int j0, int i1, int j1)
 {
     int di = i0 - i1;
     if(di < 0){
@@ -323,8 +322,9 @@ int DynamicLocalCostmapMaker::get_distance_grid(int i0, int j0, int i1, int j1)
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "dynamic_local_costmap");
-    DynamicLocalCostmapMaker dlcm;
-    dlcm.process();
+    ros::init(argc, argv, "dynamic_local_costmap_generator");
+    DynamicLocalCostmapGenerator dlcg;
+    dlcg.process();
+    return 0;
 }
 

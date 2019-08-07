@@ -148,7 +148,7 @@ include_directories(
 add_executable(path_to_local_goal src/path_to_local_goal.cpp)
 add_executable(diff_drive_sim src/diff_drive_sim.cpp)
 add_executable(robot_predictor src/robot_predictor.cpp)
-add_executable(dynamic_local_costmap_maker src/dynamic_local_costmap_maker.cpp)
+add_executable(dynamic_local_costmap_generator src/dynamic_local_costmap_generator.cpp)
 add_executable(avoidance_path_planner src/avoidance_path_planner.cpp)
 add_executable(waypoints_test src/waypoints_test.cpp)
 add_executable(diff_drive_mpc src/diff_drive_mpc.cpp)
@@ -158,7 +158,7 @@ add_executable(collision_detector src/collision_detector.cpp)
 add_executable(trajectory_logger src/trajectory_logger.cpp)
 add_executable(fwdis_mpc src/fwdis_mpc.cpp)
 add_executable(velocity_arrow_to_obstacle src/velocity_arrow_to_obstacle.cpp)
-add_executable(local_costmap src/local_costmap.cpp)
+add_executable(local_costmap_generator src/local_costmap_generator.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -184,7 +184,7 @@ target_link_libraries(diff_drive_sim
 target_link_libraries(robot_predictor
   ${catkin_LIBRARIES}
 )
-target_link_libraries(dynamic_local_costmap_maker
+target_link_libraries(dynamic_local_costmap_generator
   ${catkin_LIBRARIES}
 )
 target_link_libraries(avoidance_path_planner
@@ -216,7 +216,7 @@ target_link_libraries(fwdis_mpc
 target_link_libraries(velocity_arrow_to_obstacle
   ${catkin_LIBRARIES}
 )
-target_link_libraries(local_costmap
+target_link_libraries(local_costmap_generator
   ${catkin_LIBRARIES}
 )
 

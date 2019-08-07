@@ -2,21 +2,21 @@
 
 <launch>
 
-    <arg name="dt" default="0.1"/>
+    <arg name="hz" default="10"/>
     <arg name="map_width" default="10"/>
     <arg name="resolution" default="0.1"/>
     <arg name="search_range" default="30"/>
     <arg name="cost_collision" default="90"/>
     <arg name="min_cost" default="30"/>
 
-    <group ns="local_costmap_maker">
+    <group ns="local_costmap_generator">
 
-        <node pkg="dynamic_obstacle_avoidance_planner" name="local_costmap" type="local_costmap" output="screen">
-
+        <node pkg="dynamic_obstacle_avoidance_planner" name="local_costmap_generator" type="local_costmap_generator" output="screen">
+            <param name="HZ" value="$(arg hz)"/>
         </node>
 
-        <node pkg="dynamic_obstacle_avoidance_planner" name="dynamic_local_costmap_maker" type="dynamic_local_costmap_maker" output="screen">
-            <param name="DT" value="$(arg dt)"/>
+        <node pkg="dynamic_obstacle_avoidance_planner" name="dynamic_local_costmap_generator" type="dynamic_local_costmap_generator" output="screen">
+            <param name="HZ" value="$(arg hz)"/>
             <param name="MAP_WIDTH" value="$(arg map_width)"/>
             <param name="RESOLUTION" value="$(arg resolution)"/>
             <param name="SEARCH_RANGE" value="$(arg search_range)"/>
