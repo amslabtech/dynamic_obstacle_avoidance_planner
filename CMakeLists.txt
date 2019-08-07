@@ -112,7 +112,7 @@ pkg_check_modules(IPOPT ipopt REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+   INCLUDE_DIRS include
 #  LIBRARIES dynamic_obstacle_avoidance_planner
 # CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
 #  DEPENDS system_lib
@@ -125,7 +125,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
   ${Eigen3_INCLUDE_DIRS}
   ${IPOPT_INCLUDE_DIRS}
@@ -148,7 +148,7 @@ include_directories(
 add_executable(path_to_local_goal src/path_to_local_goal.cpp)
 add_executable(diff_drive_sim src/diff_drive_sim.cpp)
 add_executable(robot_predictor src/robot_predictor.cpp)
-add_executable(dynamic_local_costmap src/dynamic_local_costmap.cpp)
+add_executable(dynamic_local_costmap_maker src/dynamic_local_costmap_maker.cpp)
 add_executable(avoidance_path_planner src/avoidance_path_planner.cpp)
 add_executable(waypoints_test src/waypoints_test.cpp)
 add_executable(diff_drive_mpc src/diff_drive_mpc.cpp)
@@ -184,7 +184,7 @@ target_link_libraries(diff_drive_sim
 target_link_libraries(robot_predictor
   ${catkin_LIBRARIES}
 )
-target_link_libraries(dynamic_local_costmap
+target_link_libraries(dynamic_local_costmap_maker
   ${catkin_LIBRARIES}
 )
 target_link_libraries(avoidance_path_planner
