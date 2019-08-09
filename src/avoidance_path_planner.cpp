@@ -94,13 +94,11 @@ double AvoidancePathPlanner::calculate_astar(const geometry_msgs::PoseStamped& _
     int goal_index = get_index(_goal.pose.position.x, _goal.pose.position.y);
     int goal_i = get_i_from_x(_goal.pose.position.x);
     int goal_j = get_j_from_y(_goal.pose.position.y);
-    //std::cout << "calculating path" << std::endl;
-    /*
+    std::cout << "calculating path" << std::endl;
     std::cout << "from " << _start.pose.position.x << ", " << _start.pose.position.y << ", " << tf::getYaw(_start.pose.orientation) << ", " << start_index << std::endl;
     std::cout << start_i << ", " << start_j << std::endl;
     std::cout << "to " << _goal.pose.position.x << ", " << _goal.pose.position.y << ", " << tf::getYaw(_goal.pose.orientation) << ", " << goal_index << std::endl;
     std::cout << goal_i << ", " << goal_j << std::endl;
-    */
     open_list.push_back(start_index);
     cells[open_list[0]].sum = cells[open_list[0]].step + get_heuristic(start_i - goal_i, start_j - goal_j) + get_distance_to_global_path(start_i, start_j);
 
@@ -109,7 +107,11 @@ double AvoidancePathPlanner::calculate_astar(const geometry_msgs::PoseStamped& _
     int max_openlist_size = 0;
     double max_loop_time = 0;
 
-    while(!open_list.empty() && ros::ok()){
+    while(ros::ok()){
+        if(open_list.empty()){
+            std::cout << "open list is empty!" << std::endl;
+            break;
+        }
         double loop_start_time = ros::Time::now().toSec();
 
         count++;
@@ -125,191 +127,54 @@ double AvoidancePathPlanner::calculate_astar(const geometry_msgs::PoseStamped& _
                 n = cells[n_index].sum;
             }
         }
-        //std::cout << "openlist:" << open_list.size() << std::endl;
-        //std::cout << "goal:" << goal_i << ", " << goal_j << std::endl;
+        // std::cout << "openlist:" << open_list.size() << std::endl;
+        // std::cout << "goal:" << goal_i << ", " << goal_j << std::endl;
         if(n_index != goal_index){
             close_list.push_back(n_index);
             open_list.erase(std::remove(open_list.begin(), open_list.end(), n_index), open_list.end());
         }else{
+            std::cout << "--- goal ---" << std::endl;
             break;
         }
 
         int _index;
         int _i = n_index % local_costmap.info.width;
         int _j = (n_index - _i) / local_costmap.info.width;
-        //std::cout << "current:" << _i << ", " << _j << std::endl;
-        //std::cout << "sum:" << cells[n_index].sum << std::endl;
-        if(_j-1>=0){
-            _index = (_j-1)*local_costmap.info.width+_i;//i, j-1
-            if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
-                if(!cells[_index].is_wall){
-                    cells[_index].step = cells[n_index].step + 1;
-                    cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-_i, goal_j-(_j-1)) + get_distance_to_global_path(_i, _j-1);
-                    cells[_index].parent_index = n_index;
-                    open_list.push_back(_index);
-                }
-            }else if(is_contained(open_list, _index)){
-                if(cells[n_index].step + 1 < cells[_index].step){
-                    cells[_index].parent_index = n_index;
-                }
-            }else if(is_contained(close_list, _index)){
-                if(cells[n_index].step + 1 < cells[_index].step){
-                    cells[_index].parent_index = n_index;
-                }
-            }
-        }
-        if(_j+1<local_costmap.info.width){
-            _index = (_j+1)*local_costmap.info.width+_i;//i, j+1
-            if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
-                if(!cells[_index].is_wall){
-                    cells[_index].step = cells[n_index].step + 1;
-                    cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-_i, goal_j-(_j+1)) + get_distance_to_global_path(_i, _j+1);;
-                    cells[_index].parent_index = n_index;
-                    open_list.push_back(_index);
-                }
-            }else if(is_contained(open_list, _index)){
-                if(cells[n_index].step + 1 < cells[_index].step){
-                    cells[_index].parent_index = n_index;
-                }
-            }else if(is_contained(close_list, _index)){
-                if(cells[n_index].step + 1 < cells[_index].step){
-                    cells[_index].parent_index = n_index;
-                }
-            }
-
-        }
-        if(_i+1<local_costmap.info.height){
-            _index = _j*local_costmap.info.width+(_i+1);//i+1, j
-            if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
-                if(!cells[_index].is_wall){
-                    cells[_index].step = cells[n_index].step + 1;
-                    cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-_j) + get_distance_to_global_path(_i+1, _j);
-                    cells[_index].parent_index = n_index;
-                    open_list.push_back(_index);
-                }
-            }else if(is_contained(open_list, _index)){
-                if(cells[n_index].step + 1 < cells[_index].step){
-                    cells[_index].parent_index = n_index;
-                }
-            }else if(is_contained(close_list, _index)){
-                if(cells[n_index].step + 1 < cells[_index].step){
-                    cells[_index].parent_index = n_index;
-                }
-            }
-
-            if(_j-1>=0){
-                _index = (_j-1)*local_costmap.info.width+(_i+1);//i+1, j-1
-                if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
-                    if(!cells[_index].is_wall){
-                        cells[_index].step = cells[n_index].step + 1;
-                        cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-(_j-1)) + get_distance_to_global_path(_i+1, _j-1);
-                        cells[_index].parent_index = n_index;
-                        open_list.push_back(_index);
-                    }
-                }else if(is_contained(open_list, _index)){
-                    if(cells[n_index].step + 1 < cells[_index].step){
-                        cells[_index].parent_index = n_index;
-                    }
-                }else if(is_contained(close_list, _index)){
-                    if(cells[n_index].step + 1 < cells[_index].step){
-                        cells[_index].parent_index = n_index;
+        // std::cout << "current:" << _i << ", " << _j << std::endl;
+        // std::cout << "sum:" << cells[n_index].sum << std::endl;
+        for(int __i=_i-1;__i<=_i+1;__i++){
+            for(int __j=_j-1;__j<=_j+1;__j++){
+                if(!((__i == _i) && (__j == _j))){
+                    if(__i>=0 && __i<local_costmap.info.width && __j>=0 && __j<local_costmap.info.width){
+                        _index = __j * local_costmap.info.width + __i;
+                        // std::cout << "__i, __j: " << __i << ", " << __j << std::endl;
+                        if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
+                            if(!cells[_index].is_wall){
+                                // std::cout << "=== open ===" << std::endl;
+                                cells[_index].step = cells[n_index].step + 1;
+                                cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-__i, goal_j-__j) + get_distance_to_global_path(__i, __j);
+                                cells[_index].parent_index = n_index;
+                                open_list.push_back(_index);
+                            }
+                        }else if(is_contained(open_list, _index)){
+                            if(cells[n_index].step + 1 < cells[_index].step){
+                                cells[_index].parent_index = n_index;
+                            }
+                        }else if(is_contained(close_list, _index)){
+                            if(cells[n_index].step + 1 < cells[_index].step){
+                                cells[_index].parent_index = n_index;
+                            }
+                        }
                     }
                 }
-
-            }
-            if(_j+1<local_costmap.info.width){
-                _index = (_j+1)*local_costmap.info.width+(_i+1);//i+1, j+1
-                if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
-                    if(!cells[_index].is_wall){
-                        cells[_index].step = cells[n_index].step + 1;
-                        cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i+1), goal_j-(_j+1)) + get_distance_to_global_path(_i+1, _j+1);
-                        cells[_index].parent_index = n_index;
-                        open_list.push_back(_index);
-                    }
-                }else if(is_contained(open_list, _index)){
-                    if(cells[n_index].step + 1 < cells[_index].step){
-                        cells[_index].parent_index = n_index;
-                    }
-                }else if(is_contained(close_list, _index)){
-                    if(cells[n_index].step + 1 < cells[_index].step){
-                        cells[_index].parent_index = n_index;
-                    }
-                }
-
-            }
-
-        }
-        if(_i-1>=0){
-            _index = _j*local_costmap.info.width+(_i-1);//i-1, j
-            if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
-                if(!cells[_index].is_wall){
-                    cells[_index].step = cells[n_index].step + 1;
-                    cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-_j) + get_distance_to_global_path(_i-1, _j);
-                    cells[_index].parent_index = n_index;
-                    open_list.push_back(_index);
-                }
-            }else if(is_contained(open_list, _index)){
-                if(cells[n_index].step + 1 < cells[_index].step){
-                    cells[_index].parent_index = n_index;
-                }
-            }else if(is_contained(close_list, _index)){
-                if(cells[n_index].step + 1 < cells[_index].step){
-                    cells[_index].parent_index = n_index;
-                }
-            }
-
-            if(_j-1>=0){
-                _index = (_j-1)*local_costmap.info.width+(_i-1);//i-1, j-1
-                if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
-                    if(!cells[_index].is_wall){
-                        cells[_index].step = cells[n_index].step + 1;
-                        cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-(_j-1)) + get_distance_to_global_path(_i-1, _j-1);
-                        cells[_index].parent_index = n_index;
-                        open_list.push_back(_index);
-                    }
-                }else if(is_contained(open_list, _index)){
-                    if(cells[n_index].step + 1 < cells[_index].step){
-                        cells[_index].parent_index = n_index;
-                    }
-                }else if(is_contained(close_list, _index)){
-                    if(cells[n_index].step + 1 < cells[_index].step){
-                        cells[_index].parent_index = n_index;
-                    }
-                }
-
-            }
-            if(_j+1<local_costmap.info.width){
-                _index = (_j+1)*local_costmap.info.width+(_i-1);//i-1, j+1
-                if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
-                    if(!cells[_index].is_wall){
-                        cells[_index].step = cells[n_index].step + 1;
-                        cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-(_i-1), goal_j-(_j+1)) + get_distance_to_global_path(_i-1, _j+1);
-                        cells[_index].parent_index = n_index;
-                        open_list.push_back(_index);
-                    }
-                }else if(is_contained(open_list, _index)){
-                    if(cells[n_index].step + 1 < cells[_index].step){
-                        cells[_index].parent_index = n_index;
-                    }
-                }else if(is_contained(close_list, _index)){
-                    if(cells[n_index].step + 1 < cells[_index].step){
-                        cells[_index].parent_index = n_index;
-                    }
-                }
-            }
-            double loop_time = ros::Time::now().toSec() - loop_start_time;
-            if(loop_time > max_loop_time){
-                max_loop_time = loop_time;
-                max_openlist_size = open_list.size();
             }
         }
     }
-    std::cout << "max_loop_time = " << max_loop_time << std::endl;
-    std::cout << "openlist = " << max_openlist_size << std::endl;
     std::cout << "count = " << count << std::endl;
     nav_msgs::Path temp_path;
     temp_path.header.frame_id = "local_costmap";
     int path_index = goal_index;
+    std::cout << "goal_index: " << goal_index << std::endl;
     geometry_msgs::PoseStamped path_pose;
     path_pose.pose.orientation.w = 1;
     path_pose.header.frame_id = "local_costmap";
@@ -319,21 +184,19 @@ double AvoidancePathPlanner::calculate_astar(const geometry_msgs::PoseStamped& _
         path_pose.pose.position.x = (path_index % local_costmap.info.width) * local_costmap.info.resolution + local_costmap.info.origin.position.x;
         path_pose.pose.position.y = (path_index - (path_index % local_costmap.info.width)) / local_costmap.info.width * local_costmap.info.resolution + local_costmap.info.origin.position.y;
         path_pose.pose.orientation = _goal.pose.orientation;
-        //std::cout << path_pose.pose.position.x << ", " << path_pose.pose.position.y << ", " << path_index << ", " << cells[path_index].cost << ", " << (int)local_costmap.data[path_index] << std::endl;
-        //std::cout << cells[path_index].cost << std::endl;
+        std::cout << path_pose.pose.position.x << ", " << path_pose.pose.position.y << ", " << path_index << ", " << cells[path_index].cost << ", " << (int)local_costmap.data[path_index] << std::endl;
+        std::cout << cells[path_index].cost << std::endl;
         temp_path.poses.push_back(path_pose);
         path_index = cells[path_index].parent_index;
-        //std::cout << "next:" << path_index << std::endl;
+        std::cout << "next:" << path_index << std::endl;
         if(path_index < 0){
             std::reverse(temp_path.poses.begin(), temp_path.poses.end());
             _path = temp_path;
-            /*
             std::cout << "=== path length ===" << std::endl;
             std::cout << _path.poses.size() << std::endl;
             std::cout << "=== path cost ===" << std::endl;
             std::cout << total_cost << std::endl;
             std::cout << "path generated!" << std::endl;
-            */
             return total_cost;
         }
     }
