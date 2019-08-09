@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <include file="$(find dynamic_obstacle_avoidance_planner)/launch/diff_drive_sim.launch"/>
+    <include file="$(find dynamic_obstacle_avoidance_planner)/launch/obstacle_predictor_kf.launch"/>
+    <node pkg="dynamic_obstacle_avoidance_planner" type="sim_3dof.py" name="sim_3dof"/>
+    <node pkg="dynamic_obstacle_avoidance_planner" type="waypoint_test" name="waypoint_test"/>
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom_tf_publisher" args="0 0 0 0 0 0 /map /odom 100"/>
+
+    <include file="$(find dynamic_obstacle_avoidance_planner)/launch/collision_detector.launch"/>
+
+</launch>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <rosparam command="load" file="$(find dynamic_obstacle_avoidance_planner)/config/dynamic_avoidance.yaml"/>
+    <rosparam command="load" file="$(find dynamic_obstacle_avoidance_planner)/config/diff_drive.yaml"/>
+
+    <include file="$(find dynamic_obstacle_avoidance_planner)/launch/diff_drive_mpc.launch"/>
+
+</launch>
