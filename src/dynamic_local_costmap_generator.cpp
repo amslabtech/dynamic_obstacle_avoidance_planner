@@ -15,6 +15,7 @@ DynamicLocalCostmapGenerator::DynamicLocalCostmapGenerator(void)
     local_nh.param("SEARCH_RANGE", SEARCH_RANGE, {30});
     local_nh.param("COST_COLLISION", COST_COLLISION, {90});
     local_nh.param("MIN_COST", MIN_COST, {10});
+    local_nh.param("MAX_COST", MAX_COST, {100});
 
     DT = 1.0 / HZ;
     PREDICTION_STEP = PREDICTION_TIME / DT;
@@ -36,6 +37,7 @@ DynamicLocalCostmapGenerator::DynamicLocalCostmapGenerator(void)
     std::cout << "SEARCH_RANGE: " << SEARCH_RANGE  << std::endl;
     std::cout << "COST_COLLISION: " << COST_COLLISION  << std::endl;
     std::cout << "MIN_COST: " << MIN_COST  << std::endl;
+    std::cout << "MAX_COST: " << MAX_COST  << std::endl;
     std::cout << "PREDICTION_STEP: " << PREDICTION_STEP  << std::endl;
     std::cout << "HZ: " << HZ  << std::endl;
 }
@@ -262,12 +264,12 @@ void DynamicLocalCostmapGenerator::set_cost_with_velocity(geometry_msgs::PoseSta
                 double dist = sqrt(d_ix * d_ix + d_jy * d_jy);
                 if(dist <= radius_col_l_grid){
                     if(local_costmap.data[local_costmap.info.width * j + i] < cost_l_col + MIN_COST){
-                        local_costmap.data[local_costmap.info.width * j + i] = cost_l_col + MIN_COST;
+                        local_costmap.data[local_costmap.info.width * j + i] = std::min(cost_l_col + MIN_COST, MAX_COST);
                     }
                 }else if(dist <= radius_l_grid){
                     double cost_l = cost_l_col - cost_l_col * (dist * RESOLUTION - radius_col_l) / (radius_l - radius_col_l);
                     if(local_costmap.data[local_costmap.info.width * j + i] < cost_l + MIN_COST){
-                        local_costmap.data[local_costmap.info.width * j + i] = cost_l + MIN_COST;
+                        local_costmap.data[local_costmap.info.width * j + i] = std::min(cost_l + MIN_COST, MAX_COST);
                     }
                 }
             }

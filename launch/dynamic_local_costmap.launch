@@ -7,7 +7,8 @@
     <arg name="resolution" default="0.1"/>
     <arg name="search_range" default="30"/>
     <arg name="cost_collision" default="90"/>
-    <arg name="min_cost" default="30"/>
+    <arg name="min_cost" default="10"/>
+    <arg name="max_cost" default="100"/>
 
     <group ns="local_costmap_generator">
 
@@ -22,6 +23,7 @@
             <param name="SEARCH_RANGE" value="$(arg search_range)"/>
             <param name="COST_COLLISION" value="$(arg cost_collision)"/>
             <param name="MIN_COST" value="$(arg min_cost)"/>
+            <param name="MAX_COST" value="$(arg max_cost)"/>
         </node>
 
     </group>

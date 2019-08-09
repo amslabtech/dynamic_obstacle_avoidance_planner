@@ -42,6 +42,7 @@ private:
     int SEARCH_RANGE;
     double COST_COLLISION;
     double MIN_COST;
+    double MAX_COST;
     std::string WORLD_FRAME;
     std::string OBS_FRAME;
     std::string ROBOT_FRAME;
