@@ -152,7 +152,7 @@ add_executable(dynamic_local_costmap_generator src/dynamic_local_costmap_generat
 add_executable(avoidance_path_planner src/avoidance_path_planner.cpp)
 add_executable(waypoints_test src/waypoints_test.cpp)
 add_executable(diff_drive_mpc src/diff_drive_mpc.cpp)
-add_executable(base_costmap src/base_costmap.cpp)
+add_executable(base_costmap_tf_publisher src/base_costmap_tf_publisher.cpp)
 add_executable(obstacle_predictor_kf src/obstacle_predictor_kf.cpp)
 add_executable(collision_detector src/collision_detector.cpp)
 add_executable(trajectory_logger src/trajectory_logger.cpp)
@@ -197,7 +197,7 @@ target_link_libraries(diff_drive_mpc
   ${catkin_LIBRARIES}
   ${IPOPT_LIBRARIES}
 )
-target_link_libraries(base_costmap
+target_link_libraries(base_costmap_tf_publisher
   ${catkin_LIBRARIES}
 )
 target_link_libraries(obstacle_predictor_kf

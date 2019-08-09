@@ -44,7 +44,7 @@ sleep 0.1s
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch dynamic_obstacle_avoidance_planner fwdis_mpc.launch" --geometry=45x12+895+476 &
 sleep 0.1s
 
-gnome-terminal -e "/opt/ros/kinetic/bin/rosrun dynamic_obstacle_avoidance_planner base_costmap" --geometry=45x12+1315+476 &
+gnome-terminal -e "/opt/ros/kinetic/bin/rosrun dynamic_obstacle_avoidance_planner base_costmap_tf_publisher" --geometry=45x12+1315+476 &
 sleep 0.1s
 
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch dynamic_obstacle_avoidance_planner collision_detector.launch" --geometry=45x12+0+702 &
