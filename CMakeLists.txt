@@ -157,7 +157,7 @@ add_executable(obstacle_predictor_kf src/obstacle_predictor_kf.cpp)
 add_executable(collision_detector src/collision_detector.cpp)
 add_executable(trajectory_logger src/trajectory_logger.cpp)
 add_executable(fwdis_mpc src/fwdis_mpc.cpp)
-add_executable(velocity_arrow_to_obstacle src/velocity_arrow_to_obstacle.cpp)
+add_executable(velocity_arrow_to_obstacle_converter src/velocity_arrow_to_obstacle_converter.cpp)
 add_executable(local_costmap_generator src/local_costmap_generator.cpp)
 
 ## Rename C++ executable without prefix
@@ -213,7 +213,7 @@ target_link_libraries(fwdis_mpc
   ${catkin_LIBRARIES}
   ${IPOPT_LIBRARIES}
 )
-target_link_libraries(velocity_arrow_to_obstacle
+target_link_libraries(velocity_arrow_to_obstacle_converter
   ${catkin_LIBRARIES}
 )
 target_link_libraries(local_costmap_generator

@@ -52,5 +52,5 @@ sleep 0.1s
 #gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rorun dynamic_obstacle_avoidance_planner trajectory_logger'" --geometry=45x12+475+702 &
 sleep 0.1s
 
-#gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun dynamic_obstacle_avoidance_planner velocity_arrow_to_obstacle'" --geometry=45x12+475+702 &
+#gnome-terminal -e "docker exec ros_mpc /bin/bash -c 'ldconfig && source /root/catkin_ws/devel/setup.bash && /opt/ros/kinetic/bin/rosrun dynamic_obstacle_avoidance_planner velocity_arrow_to_obstacle_converter'" --geometry=45x12+475+702 &
 #sleep 0.1s
