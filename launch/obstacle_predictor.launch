@@ -1,7 +1,0 @@
-<launch>
-
-  <node pkg="dynamic_obstacle_avoidance_planner" name="obstacle_predicotr" type="obstacle_predictor" output="screen">
-
-  </node>
-
-</launch>

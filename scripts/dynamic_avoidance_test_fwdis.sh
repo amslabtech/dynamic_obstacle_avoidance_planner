@@ -20,7 +20,7 @@ sleep 0.1s
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch dynamic_obstacle_avoidance_planner diff_drive_sim.launch" --geometry=45x12+1315+0 &
 sleep 0.1s
 
-gnome-terminal -e "/opt/ros/kinetic/bin/rosrun dynamic_obstacle_avoidance_planner obstacle_predictor_kf" --geometry=45x12+0+250 &
+gnome-terminal -e "/opt/ros/kinetic/bin/rosrun dynamic_obstacle_avoidance_planner obstacle_trajectory_predictor_kf" --geometry=45x12+0+250 &
 sleep 0.1s
 
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch dynamic_obstacle_avoidance_planner robot_predictor.launch" --geometry=45x12+475+250 &

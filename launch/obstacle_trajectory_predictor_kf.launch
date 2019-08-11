@@ -1,0 +1,7 @@
+<launch>
+
+  <node pkg="dynamic_obstacle_avoidance_planner" name="obstacle_trajectory_predictor_kf" type="obstacle_trajectory_predictor_kf" output="screen">
+
+  </node>
+
+</launch>
