@@ -44,9 +44,9 @@ public:
             parent_index = -1;
         }
 
-        int cost;
-        int step;
-        int sum;
+        int cost;// attribute cost
+        int step;// move cost
+        int sum;// cost + step + heuristic
         int parent_index;
         bool is_wall;
     };

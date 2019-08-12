@@ -137,22 +137,24 @@ double AvoidancePathPlanner::calculate_astar(const geometry_msgs::PoseStamped& _
             break;
         }
 
-        int _index;
-        int _i = n_index % local_costmap.info.width;
-        int _j = (n_index - _i) / local_costmap.info.width;
-        // std::cout << "current:" << _i << ", " << _j << std::endl;
+        int n_i = n_index % local_costmap.info.width;
+        int n_j = (n_index - n_i) / local_costmap.info.width;
+        // std::cout << "current:" << n_i << ", " << n_j << std::endl;
         // std::cout << "sum:" << cells[n_index].sum << std::endl;
-        for(int __i=_i-1;__i<=_i+1;__i++){
-            for(int __j=_j-1;__j<=_j+1;__j++){
-                if(!((__i == _i) && (__j == _j))){
-                    if(__i>=0 && __i<local_costmap.info.width && __j>=0 && __j<local_costmap.info.width){
-                        _index = __j * local_costmap.info.width + __i;
-                        // std::cout << "__i, __j: " << __i << ", " << __j << std::endl;
+        for(int _i=n_i-1;_i<=n_i+1;_i++){
+            for(int _j=n_j-1;_j<=n_j+1;_j++){
+                if(!((_i == n_i) && (_j == n_j))){
+                    if(_i>=0 && _i<local_costmap.info.width && _j>=0 && _j<local_costmap.info.width){
+                        int _index = _j * local_costmap.info.width + _i;
+                        // std::cout << "_i, _j: " << _i << ", " << _j << std::endl;
                         if(!is_contained(open_list, _index) && !is_contained(close_list, _index)){
                             if(!cells[_index].is_wall){
                                 // std::cout << "=== open ===" << std::endl;
                                 cells[_index].step = cells[n_index].step + 1;
-                                cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-__i, goal_j-__j) + get_distance_to_global_path(__i, __j);
+                                if(_i != n_i && _j != n_j){
+                                    cells[_index].step++;
+                                }
+                                cells[_index].sum = cells[_index].cost + cells[_index].step + get_heuristic(goal_i-_i, goal_j-_j) + get_distance_to_global_path(_i, _j);
                                 cells[_index].parent_index = n_index;
                                 open_list.push_back(_index);
                             }
