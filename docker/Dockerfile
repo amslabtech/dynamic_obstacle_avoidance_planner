@@ -88,3 +88,7 @@ RUN apt-get update && apt-get install cppad \
 RUN ln -s /usr/include/eigen3/Eigen /usr/include/Eigen
 
 WORKDIR /root
+
+COPY ./ros_entrypoint.sh /
+
+CMD ["/ros_entrypoint.sh"]
