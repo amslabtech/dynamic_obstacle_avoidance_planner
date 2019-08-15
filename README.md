@@ -26,8 +26,7 @@ $ cd catkin_ws && catkin_make
 open another terminal
 
 for collision prediction, local costmap generation, and avoidance path planning
-$ docker exec -it ros_mpc bash 
-$ roslaunch dynamic_obstacle_avoidance_planner dynamic_obstacle_avoidance_core.launch
+$ docker exec -it ros_mpc bash -c "source /ros_entrypoint.sh && roslaunch dynamic_obstacle_avoidance_planner dynamic_obstacle_avoidance_core.launch"
 ```
 
 ## Reference
