@@ -5,6 +5,8 @@ project(dynamic_obstacle_avoidance_planner)
 # add_compile_options(-std=c++11)
 SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall ${CMAKE_CXX_FLAGS}")
 
+string(ASCII 27 ESC)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -19,7 +21,14 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Eigen3 REQUIRED COMPONENTS system)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(IPOPT ipopt REQUIRED)
+pkg_check_modules(IPOPT ipopt)
+
+if(${IPOPT_FOUND})
+  message("-- ${ESC}[32mIPOPT was found!!!${ESC}[0m")
+else()
+  message("-- ${ESC}[31mIPOPT was NOT found!!!${ESC}[0m")
+  message("-- ${ESC}[031mMPC nodes will not be built${ESC}[0m")
+endif()
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -151,14 +160,16 @@ add_executable(robot_predictor src/robot_predictor.cpp)
 add_executable(dynamic_local_costmap_generator src/dynamic_local_costmap_generator.cpp)
 add_executable(avoidance_path_planner src/avoidance_path_planner.cpp)
 add_executable(waypoints_test src/waypoints_test.cpp)
-add_executable(diff_drive_mpc src/diff_drive_mpc.cpp)
 add_executable(base_costmap_tf_publisher src/base_costmap_tf_publisher.cpp)
 add_executable(obstacle_trajectory_predictor_kf src/obstacle_trajectory_predictor_kf.cpp)
 add_executable(collision_detector src/collision_detector.cpp)
 add_executable(trajectory_logger src/trajectory_logger.cpp)
-add_executable(fwdis_mpc src/fwdis_mpc.cpp)
 add_executable(velocity_arrow_to_obstacle_converter src/velocity_arrow_to_obstacle_converter.cpp)
 add_executable(local_costmap_generator src/local_costmap_generator.cpp)
+if(${IPOPT_FOUND})
+  add_executable(diff_drive_mpc src/diff_drive_mpc.cpp)
+  add_executable(fwdis_mpc src/fwdis_mpc.cpp)
+endif()
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -193,10 +204,6 @@ target_link_libraries(avoidance_path_planner
 target_link_libraries(waypoints_test
   ${catkin_LIBRARIES}
 )
-target_link_libraries(diff_drive_mpc
-  ${catkin_LIBRARIES}
-  ${IPOPT_LIBRARIES}
-)
 target_link_libraries(base_costmap_tf_publisher
   ${catkin_LIBRARIES}
 )
@@ -209,16 +216,22 @@ target_link_libraries(collision_detector
 target_link_libraries(trajectory_logger
   ${catkin_LIBRARIES}
 )
-target_link_libraries(fwdis_mpc
-  ${catkin_LIBRARIES}
-  ${IPOPT_LIBRARIES}
-)
 target_link_libraries(velocity_arrow_to_obstacle_converter
   ${catkin_LIBRARIES}
 )
 target_link_libraries(local_costmap_generator
   ${catkin_LIBRARIES}
 )
+if(${IPOPT_FOUND})
+  target_link_libraries(diff_drive_mpc
+    ${catkin_LIBRARIES}
+    ${IPOPT_LIBRARIES}
+  )
+  target_link_libraries(fwdis_mpc
+    ${catkin_LIBRARIES}
+    ${IPOPT_LIBRARIES}
+  )
+endif()
 
 #############
 ## Install ##
