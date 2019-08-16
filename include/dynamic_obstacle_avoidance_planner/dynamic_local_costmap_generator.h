@@ -11,6 +11,8 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Int32.h>
 
+#include "dynamic_obstacle_avoidance_planner/obstacle_tracker_kf.h"
+
 class DynamicLocalCostmapGenerator
 {
 public:

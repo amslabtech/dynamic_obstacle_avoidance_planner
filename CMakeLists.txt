@@ -157,7 +157,7 @@ include_directories(
 add_executable(path_to_local_goal src/path_to_local_goal.cpp)
 add_executable(diff_drive_sim src/diff_drive_sim.cpp)
 add_executable(robot_predictor src/robot_predictor.cpp)
-add_executable(dynamic_local_costmap_generator src/dynamic_local_costmap_generator.cpp)
+add_executable(dynamic_local_costmap_generator src/dynamic_local_costmap_generator.cpp src/obstacle_tracker_kf.cpp)
 add_executable(avoidance_path_planner src/avoidance_path_planner.cpp)
 add_executable(waypoints_test src/waypoints_test.cpp)
 add_executable(base_costmap_tf_publisher src/base_costmap_tf_publisher.cpp)
