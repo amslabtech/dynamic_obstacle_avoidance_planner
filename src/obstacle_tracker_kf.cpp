@@ -43,7 +43,7 @@ Obstacle::Obstacle(void)
 
     last_time = ros::Time::now().toSec();
     likelihood = 1.0;
-    lifetime = 0;
+    lifetime = 10;
     age = 0;
     not_observed_time = 0;
 }
@@ -78,7 +78,7 @@ Obstacle::Obstacle(const Eigen::Vector2d& position)
 
     last_time = ros::Time::now().toSec();
     likelihood = 1.0;
-    lifetime = 0;
+    lifetime = 10;
     age = 0;
     not_observed_time = 0;
 }
@@ -110,6 +110,9 @@ void Obstacle::predict(void)
     double current_time = ros::Time::now().toSec();
     double dt = current_time - last_time;
     last_time = current_time;
+    std::cout << "age: " << age << std::endl;
+    std::cout << "not_observed_time: " << not_observed_time << std::endl;
+    std::cout << "dt: " << dt << std::endl;
     age += dt;
     not_observed_time += dt;
     std::cout << "age: " << age << std::endl;
@@ -170,7 +173,7 @@ void ObstacleTrackerKF::set_obstacles_pose(const geometry_msgs::PoseArray& pose_
     associate_obstacles(observed_obstacles);
     update_tracking(observed_obstacles);
 
-    // remove old obstacles
+    std::cout << "--- predict ---" << std::endl;
     auto it = obstacles.begin();
     while(it != obstacles.end()){
         it->second.predict();
@@ -190,6 +193,7 @@ void ObstacleTrackerKF::set_obstacles_pose(const geometry_msgs::PoseArray& pose_
 
 void ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& observed_obstacles)
 {
+    std::cout << "--- associate obstacles ---" << std::endl;
     int cluster_num = obstacles.size();
     int observed_obstacles_num = observed_obstacles.size();
 
@@ -214,6 +218,7 @@ void ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& 
 
 double ObstacleTrackerKF::get_distance(const Obstacle& obstacle, const Eigen::Vector2d& position)
 {
+    std::cout << "--- get distance ---" << std::endl;
     Obstacle copied_obstacle(obstacle);
     copied_obstacle.update(position);
     copied_obstacle.predict();
@@ -309,11 +314,13 @@ void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
 
 void ObstacleTrackerKF::update_tracking(const std::vector<Eigen::Vector2d>& observed_obstacles)
 {
+    std::cout << "--- update tracking ---" << std::endl;
     for(auto it=observed_obstacles.begin();it!=observed_obstacles.end();++it){
         int id = candidates[it - observed_obstacles.begin()];
         auto obstacle_it = obstacles.find(id);
         if(obstacle_it != obstacles.end()){
             // this obstacle has already been tracked
+            obstacle_it->second.update(*it);
         }else{
             // new obstacle
             Obstacle obstacle(*it);
