@@ -43,7 +43,7 @@ Obstacle::Obstacle(void)
 
     last_time = ros::Time::now().toSec();
     likelihood = 1.0;
-    lifetime = 0;
+    lifetime = 10;
     age = 0;
     not_observed_time = 0;
 }
@@ -78,7 +78,7 @@ Obstacle::Obstacle(const Eigen::Vector2d& position)
 
     last_time = ros::Time::now().toSec();
     likelihood = 1.0;
-    lifetime = 0;
+    lifetime = 10;
     age = 0;
     not_observed_time = 0;
 }
@@ -90,37 +90,37 @@ Eigen::Vector2d Obstacle::get_position(void)
 
 void Obstacle::update(const Eigen::Vector2d& z)
 {
-    std::cout << "update" << std::endl;
-    std::cout << "Z:\n" << z << std::endl;
+    // std::cout << "update" << std::endl;
+    // std::cout << "Z:\n" << z << std::endl;
     Eigen::Vector2d e = z - h * x;
     Eigen::Matrix2d s = h * p * h.transpose() + r;
     Eigen::Matrix<double, 4, 2> k = p * h.transpose() * s.inverse();
-    std::cout << "K:\n" << k << std::endl;
+    // std::cout << "K:\n" << k << std::endl;
     x = x + k * e;
-    std::cout << "X:\n" << x << std::endl;
+    // std::cout << "X:\n" << x << std::endl;
     p = (Eigen::Matrix4d::Identity() - k * h) * p;
-    std::cout << "P:\n" << p << std::endl;
+    // std::cout << "P:\n" << p << std::endl;
 
     not_observed_time = 0;
 }
 
 void Obstacle::predict(void)
 {
-    std::cout << "predict" << std::endl;
+    // std::cout << "predict" << std::endl;
     double current_time = ros::Time::now().toSec();
     double dt = current_time - last_time;
     last_time = current_time;
     age += dt;
     not_observed_time += dt;
-    std::cout << "age: " << age << std::endl;
-    std::cout << "not_observed_time: " << not_observed_time << std::endl;
+    // std::cout << "age: " << age << std::endl;
+    // std::cout << "not_observed_time: " << not_observed_time << std::endl;
 
     Eigen::Matrix4d f = kf.get_f(dt);
     x = f * x;
-    std::cout << "X:\n" << x << std::endl;;
+    // std::cout << "X:\n" << x << std::endl;;
     Eigen::Matrix4d q = kf.get_q(dt);
     p = f * p * f.transpose() + q;
-    std::cout << "P:\n" << p << std::endl;;
+    // std::cout << "P:\n" << p << std::endl;;
 }
 
 double Obstacle::calculate_likelihood(void)
@@ -150,7 +150,7 @@ double Obstacle::calculate_likelihood(void)
 }
 
 ObstacleTrackerKF::ObstacleTrackerKF(void)
-:SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(1.0)
+:SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(0.8)
 , NOT_OBSERVED_TIME_THRESHOLD(5.0), DEFAULT_LIFE_TIME(10.0)
 {
 
@@ -170,26 +170,49 @@ void ObstacleTrackerKF::set_obstacles_pose(const geometry_msgs::PoseArray& pose_
     associate_obstacles(observed_obstacles);
     update_tracking(observed_obstacles);
 
-    // remove old obstacles
+    std::cout << "--- predict ---" << std::endl;
     auto it = obstacles.begin();
     while(it != obstacles.end()){
         it->second.predict();
-        if(it->second.likelihood > ERASE_LIKELIHOOD_THREHSOLD && it->second.not_observed_time < NOT_OBSERVED_TIME_THRESHOLD){
+        std::cout << "not observed: " << it->second.not_observed_time << std::endl;
+        std::cout << "age: " << it->second.age << std::endl;
+        std::cout << "likelihood: " << it->second.likelihood << std::endl;
+        if((it->second.likelihood > ERASE_LIKELIHOOD_THREHSOLD) && (it->second.not_observed_time < NOT_OBSERVED_TIME_THRESHOLD)){
             it->second.lifetime = DEFAULT_LIFE_TIME;
             ++it;
         }else{
             if(it->second.lifetime > it->second.age){
+                // ???
                 ++it;
             }else{
-                std::cout << "obstacle " << it->first << " was erased" << std::endl;
+                std::cout << "\033[31mobstacle " << it->first << " was erased\033[0m" << std::endl;
                 it = obstacles.erase(it);
             }
         }
     }
 }
 
+void ObstacleTrackerKF::get_velocities(std::vector<Eigen::Vector3d>& velocities)
+{
+    for(auto it=obstacles.begin();it!=obstacles.end();++it){
+        Eigen::Vector3d v;
+        v << it->second.x(2), it->second.x(3), 0;
+        velocities.push_back(v);
+    }
+}
+
+void ObstacleTrackerKF::get_poses(std::vector<Eigen::Vector3d>& poses)
+{
+    for(auto it=obstacles.begin();it!=obstacles.end();++it){
+        Eigen::Vector3d p;
+        p << it->second.x(0), it->second.x(1), 0;
+        poses.push_back(p);
+    }
+}
+
 void ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& observed_obstacles)
 {
+    std::cout << "--- associate obstacles ---" << std::endl;
     int cluster_num = obstacles.size();
     int observed_obstacles_num = observed_obstacles.size();
 
@@ -214,6 +237,7 @@ void ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& 
 
 double ObstacleTrackerKF::get_distance(const Obstacle& obstacle, const Eigen::Vector2d& position)
 {
+    std::cout << "--- get distance ---" << std::endl;
     Obstacle copied_obstacle(obstacle);
     copied_obstacle.update(position);
     copied_obstacle.predict();
@@ -309,11 +333,13 @@ void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
 
 void ObstacleTrackerKF::update_tracking(const std::vector<Eigen::Vector2d>& observed_obstacles)
 {
+    std::cout << "--- update tracking ---" << std::endl;
     for(auto it=observed_obstacles.begin();it!=observed_obstacles.end();++it){
         int id = candidates[it - observed_obstacles.begin()];
         auto obstacle_it = obstacles.find(id);
         if(obstacle_it != obstacles.end()){
             // this obstacle has already been tracked
+            obstacle_it->second.update(*it);
         }else{
             // new obstacle
             Obstacle obstacle(*it);

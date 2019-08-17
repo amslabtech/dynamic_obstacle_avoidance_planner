@@ -22,8 +22,7 @@ DynamicLocalCostmapGenerator::DynamicLocalCostmapGenerator(void)
 
     costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("/dynamic_local_costmap", 1);
     robot_predicted_path_sub = nh.subscribe("/robot_predicted_path", 1, &DynamicLocalCostmapGenerator::robot_path_callback, this);
-    obstacle_predicted_paths_sub = nh.subscribe("/predicted_paths", 1, &DynamicLocalCostmapGenerator::obstacle_paths_callback, this);
-    obs_num_sub = nh.subscribe("/obs_num", 1, &DynamicLocalCostmapGenerator::obs_num_callback, this);
+    obstacle_pose_sub = nh.subscribe("/dynamic_obstacles", 1, &DynamicLocalCostmapGenerator::obstacle_pose_callback, this);
 
     std::cout << "=== dynamic local costmap ===" << std::endl;
     std::cout << "PREDICTION_TIME: " << PREDICTION_TIME  << std::endl;
@@ -91,6 +90,7 @@ void DynamicLocalCostmapGenerator::process(void)
                 std::cout << "===calculate cost===" << std::endl;
                 double set_cost_v_start = ros::Time::now().toSec();
                 std::cout << "obs_num: " << obs_num << std::endl;
+                std::cout << "obs path num: " << obstacle_paths.poses.size() << std::endl;
                 for(int j=0;j<obs_num;j++){
                     std::cout << "obs: " << j << std::endl;
                     for(int k=1;k<3;k++){
@@ -132,14 +132,41 @@ void DynamicLocalCostmapGenerator::robot_path_callback(const geometry_msgs::Pose
     robot_path = *msg;
 }
 
-void DynamicLocalCostmapGenerator::obstacle_paths_callback(const geometry_msgs::PoseArrayConstPtr& msg)
+void DynamicLocalCostmapGenerator::obstacle_pose_callback(const geometry_msgs::PoseArrayConstPtr& msg)
 {
-    obstacle_paths = *msg;
-}
+    std::cout << "obstacle pose callback" << std::endl;
+    obstacle_pose = *msg;
+    tracker.set_obstacles_pose(obstacle_pose);
+    std::vector<Eigen::Vector3d> poses;
+    tracker.get_poses(poses);
+    obs_num = poses.size();
+    std::vector<Eigen::Vector3d> velocities;
+    tracker.get_velocities(velocities);
 
-void DynamicLocalCostmapGenerator::obs_num_callback(const std_msgs::Int32ConstPtr& msg)
-{
-    obs_num = msg->data;
+    obstacle_paths.header = obstacle_pose.header;
+    obstacle_paths.poses.clear();
+    for(int i=0;i<obs_num;i++){
+        std::cout << "obstacle " << i << ": "<< std::endl;
+        std::cout << poses[i] << std::endl;
+        std::cout << velocities[i] << std::endl;
+        geometry_msgs::Pose p;
+        p.position.x = poses[i](0);
+        p.position.y = poses[i](1);
+        p.orientation = tf::createQuaternionMsgFromYaw(poses[i](2));
+        obstacle_paths.poses.push_back(p);
+        for(int j=1;j<PREDICTION_STEP;j++){
+            p.position.x += velocities[i](0) * DT;
+            p.position.y += velocities[i](1) * DT;
+            double yaw = tf::getYaw(p.orientation);
+            yaw += velocities[i](2) * DT;
+            yaw = atan2(sin(yaw), cos(yaw));
+            p.orientation = tf::createQuaternionMsgFromYaw(yaw);
+            // std::cout << p << std::endl;
+            obstacle_paths.poses.push_back(p);
+        }
+    }
+    std::cout << "obs num: " << obs_num << std::endl;
+    std::cout << "obs path num: " << obstacle_paths.poses.size() << std::endl;
 }
 
 void DynamicLocalCostmapGenerator::setup_map(void)

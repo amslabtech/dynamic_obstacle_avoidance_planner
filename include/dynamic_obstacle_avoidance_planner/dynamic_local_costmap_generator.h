@@ -11,6 +11,8 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Int32.h>
 
+#include <Eigen/Dense>
+
 #include "dynamic_obstacle_avoidance_planner/obstacle_tracker_kf.h"
 
 class DynamicLocalCostmapGenerator
@@ -20,8 +22,7 @@ public:
 
     void process(void);
     void robot_path_callback(const geometry_msgs::PoseArrayConstPtr&);
-    void obstacle_paths_callback(const geometry_msgs::PoseArrayConstPtr&);
-    void obs_num_callback(const std_msgs::Int32ConstPtr&);
+    void obstacle_pose_callback(const geometry_msgs::PoseArrayConstPtr&);
     void setup_map(void);
     bool predict_intersection(geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose);
     void predict_intersection_point(geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::Pose, geometry_msgs::PoseStamped&);
@@ -55,10 +56,13 @@ private:
     ros::Subscriber robot_predicted_path_sub;
     ros::Subscriber obstacle_predicted_paths_sub;
     ros::Subscriber obs_num_sub;
+    ros::Subscriber obstacle_pose_sub;
     geometry_msgs::PoseArray robot_path;
     geometry_msgs::PoseArray obstacle_paths;
+    geometry_msgs::PoseArray obstacle_pose;
     nav_msgs::OccupancyGrid local_costmap;
     int obs_num;
+    ObstacleTrackerKF tracker;
 };
 
 #endif// __DYNAMIC_LOCAL_COSTMAP_GENERATOR_H
