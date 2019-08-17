@@ -52,6 +52,10 @@ public:
     std::map<int, Obstacle> obstacles;
 
     void set_obstacles_pose(const geometry_msgs::PoseArray&);
+    void get_velocities(std::vector<Eigen::Vector3d>&);
+    void get_poses(std::vector<Eigen::Vector3d>&);
+
+private:
     void associate_obstacles(const std::vector<Eigen::Vector2d>&);
     double get_distance(const Obstacle&, const Eigen::Vector2d&);
     int get_id_from_index(int);
@@ -59,7 +63,6 @@ public:
     void solve_hungarian_method(Eigen::MatrixXi&);
     void update_tracking(const std::vector<Eigen::Vector2d>&);
 
-private:
     int SAME_OBSTACLE_THRESHOLD;
     double ERASE_LIKELIHOOD_THREHSOLD;
     double NOT_OBSERVED_TIME_THRESHOLD;
