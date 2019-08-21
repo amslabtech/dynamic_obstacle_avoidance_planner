@@ -21,6 +21,7 @@ DynamicLocalCostmapGenerator::DynamicLocalCostmapGenerator(void)
     PREDICTION_STEP = PREDICTION_TIME / DT;
 
     costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("/dynamic_local_costmap", 1);
+    obstacles_predicted_path_pub = local_nh.advertise<geometry_msgs::PoseArray>("obstacles_predicted_path", 1);
     robot_predicted_path_sub = nh.subscribe("/robot_predicted_path", 1, &DynamicLocalCostmapGenerator::robot_path_callback, this);
     obstacle_pose_sub = nh.subscribe("/dynamic_obstacles", 1, &DynamicLocalCostmapGenerator::obstacle_pose_callback, this);
 
@@ -167,6 +168,7 @@ void DynamicLocalCostmapGenerator::obstacle_pose_callback(const geometry_msgs::P
     }
     std::cout << "obs num: " << obs_num << std::endl;
     std::cout << "obs path num: " << obstacle_paths.poses.size() << std::endl;
+    obstacles_predicted_path_pub.publish(obstacle_paths);
 }
 
 void DynamicLocalCostmapGenerator::setup_map(void)

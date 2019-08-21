@@ -53,9 +53,8 @@ private:
     ros::NodeHandle nh;
     ros::NodeHandle local_nh;
     ros::Publisher costmap_pub;
+    ros::Publisher obstacles_predicted_path_pub;
     ros::Subscriber robot_predicted_path_sub;
-    ros::Subscriber obstacle_predicted_paths_sub;
-    ros::Subscriber obs_num_sub;
     ros::Subscriber obstacle_pose_sub;
     geometry_msgs::PoseArray robot_path;
     geometry_msgs::PoseArray obstacle_paths;
