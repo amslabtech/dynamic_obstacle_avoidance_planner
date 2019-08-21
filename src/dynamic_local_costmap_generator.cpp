@@ -12,7 +12,6 @@ DynamicLocalCostmapGenerator::DynamicLocalCostmapGenerator(void)
     local_nh.param("HZ", HZ, {10});
     local_nh.param("MAP_WIDTH", MAP_WIDTH, {10});
     local_nh.param("RESOLUTION", RESOLUTION, {0.1});
-    local_nh.param("SEARCH_RANGE", SEARCH_RANGE, {30});
     local_nh.param("COST_COLLISION", COST_COLLISION, {90});
     local_nh.param("MIN_COST", MIN_COST, {10});
     local_nh.param("MAX_COST", MAX_COST, {100});
@@ -34,7 +33,6 @@ DynamicLocalCostmapGenerator::DynamicLocalCostmapGenerator(void)
     std::cout << "WORLD_FRAME: " << WORLD_FRAME  << std::endl;
     std::cout << "DT: " << DT  << std::endl;
     std::cout << "MAP_WIDTH: " << MAP_WIDTH  << std::endl;
-    std::cout << "SEARCH_RANGE: " << SEARCH_RANGE  << std::endl;
     std::cout << "COST_COLLISION: " << COST_COLLISION  << std::endl;
     std::cout << "MIN_COST: " << MIN_COST  << std::endl;
     std::cout << "MAX_COST: " << MAX_COST  << std::endl;
@@ -257,22 +255,6 @@ void DynamicLocalCostmapGenerator::set_cost_with_velocity(geometry_msgs::PoseSta
     for(int s=0;s<PREDICTION_STEP;s+=1){// no reason for PREDICTION_STEP is used here
         int grid_x = get_i_from_x(x);
         int grid_y = get_j_from_y(y);
-        int lower_i = grid_x - SEARCH_RANGE;
-        if(lower_i < 0){
-            lower_i = 0;
-        }
-        int upper_i = grid_x + SEARCH_RANGE;
-        if(upper_i > local_costmap.info.width-1){
-            upper_i = local_costmap.info.width-1;
-        }
-        int lower_j = grid_y - SEARCH_RANGE;
-        if(lower_j < 0){
-            lower_j = 0;
-        }
-        int upper_j = grid_y + SEARCH_RANGE;
-        if(upper_j > local_costmap.info.width-1){
-            upper_j = local_costmap.info.width-1;
-        }
         // collision radius at l[m]
         double radius_col_l = radius_col_min + (radius_col_max - radius_col_min) * (LENGTH - l) / LENGTH;
         double radius_col_l_grid = radius_col_l / RESOLUTION;
@@ -280,8 +262,8 @@ void DynamicLocalCostmapGenerator::set_cost_with_velocity(geometry_msgs::PoseSta
         // avoidance radius at l[m]
         double radius_l = radius_min + (radius_max - radius_min) * (LENGTH - l) / LENGTH;
         double radius_l_grid = radius_l / RESOLUTION;
-        for(int i=lower_i;i<upper_i;i++){
-            for(int j=lower_j;j<upper_j;j++){
+        for(int i=0;i<local_costmap.info.width;i++){
+            for(int j=0;j<local_costmap.info.height;j++){
                 int d_ix = grid_x - i;
                 if(d_ix < 0){
                     d_ix = -d_ix;

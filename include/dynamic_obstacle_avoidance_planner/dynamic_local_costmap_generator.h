@@ -42,7 +42,6 @@ private:
     double MAP_WIDTH;// [m]
     double RESOLUTION;// [m]
     double RADIUS;// radius for collision check[m]
-    int SEARCH_RANGE;
     double COST_COLLISION;
     double MIN_COST;
     double MAX_COST;

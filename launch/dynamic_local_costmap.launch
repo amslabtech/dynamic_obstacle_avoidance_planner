@@ -5,7 +5,6 @@
     <arg name="hz" default="10"/>
     <arg name="map_width" default="10"/>
     <arg name="resolution" default="0.1"/>
-    <arg name="search_range" default="30"/>
     <arg name="cost_collision" default="90"/>
     <arg name="min_cost" default="10"/>
     <arg name="max_cost" default="100"/>
@@ -20,7 +19,6 @@
             <param name="HZ" value="$(arg hz)"/>
             <param name="MAP_WIDTH" value="$(arg map_width)"/>
             <param name="RESOLUTION" value="$(arg resolution)"/>
-            <param name="SEARCH_RANGE" value="$(arg search_range)"/>
             <param name="COST_COLLISION" value="$(arg cost_collision)"/>
             <param name="MIN_COST" value="$(arg min_cost)"/>
             <param name="MAX_COST" value="$(arg max_cost)"/>
