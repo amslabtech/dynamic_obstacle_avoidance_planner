@@ -144,7 +144,9 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/dynamic_obstacle_avoidance_planner.cpp
 # )
-
+add_library(obstacle_tracker_kf
+  src/obstacle_tracker_kf.cpp
+)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -157,7 +159,7 @@ include_directories(
 add_executable(path_to_local_goal src/path_to_local_goal.cpp)
 add_executable(diff_drive_sim src/diff_drive_sim.cpp)
 add_executable(robot_predictor src/robot_predictor.cpp)
-add_executable(dynamic_local_costmap_generator src/dynamic_local_costmap_generator.cpp src/obstacle_tracker_kf.cpp)
+add_executable(dynamic_local_costmap_generator src/dynamic_local_costmap_generator.cpp)
 add_executable(avoidance_path_planner src/avoidance_path_planner.cpp)
 add_executable(waypoints_test src/waypoints_test.cpp)
 add_executable(base_costmap_tf_publisher src/base_costmap_tf_publisher.cpp)
@@ -196,6 +198,7 @@ target_link_libraries(robot_predictor
 )
 target_link_libraries(dynamic_local_costmap_generator
   ${catkin_LIBRARIES}
+  obstacle_tracker_kf
 )
 target_link_libraries(avoidance_path_planner
   ${catkin_LIBRARIES}
