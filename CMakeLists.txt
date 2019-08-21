@@ -161,7 +161,6 @@ add_executable(dynamic_local_costmap_generator src/dynamic_local_costmap_generat
 add_executable(avoidance_path_planner src/avoidance_path_planner.cpp)
 add_executable(waypoints_test src/waypoints_test.cpp)
 add_executable(base_costmap_tf_publisher src/base_costmap_tf_publisher.cpp)
-add_executable(obstacle_trajectory_predictor_kf src/obstacle_trajectory_predictor_kf.cpp)
 add_executable(collision_detector src/collision_detector.cpp)
 add_executable(trajectory_logger src/trajectory_logger.cpp)
 add_executable(velocity_arrow_to_obstacle_converter src/velocity_arrow_to_obstacle_converter.cpp)
@@ -205,9 +204,6 @@ target_link_libraries(waypoints_test
   ${catkin_LIBRARIES}
 )
 target_link_libraries(base_costmap_tf_publisher
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(obstacle_trajectory_predictor_kf
   ${catkin_LIBRARIES}
 )
 target_link_libraries(collision_detector
