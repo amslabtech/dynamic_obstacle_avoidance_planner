@@ -35,6 +35,24 @@ void path_callback(const geometry_msgs::PoseArrayConstPtr& msg)
     }
 }
 
+visualization_msgs::Marker get_marker(int type, double sx, double sy, double sz, double r, double g, double b, const geometry_msgs::Pose& p, const std::string& frame_id, const std::string& ns)
+{
+    visualization_msgs::Marker m;
+    m.header.frame_id = frame_id;
+    m.action = visualization_msgs::Marker::ADD;
+    m.ns = ns;
+    m.pose = p;
+    m.type = type;
+    m.scale.x = sx;
+    m.scale.y = sy;
+    m.scale.z = sz;
+    m.color.r = r;
+    m.color.g = g;
+    m.color.b = b;
+    m.color.a = 1;
+    return m;
+}
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "trajectory_logger");
@@ -72,14 +90,6 @@ int main(int argc, char** argv)
     obs0_path.header.frame_id = WORLD_FRAME;
 
     geometry_msgs::PoseStamped pose;
-    visualization_msgs::Marker viz;
-    viz.scale.x = 0.6;
-    viz.scale.y = 0.6;
-    viz.scale.z = 0.6;
-    viz.type = visualization_msgs::Marker::CUBE;
-    viz.action = visualization_msgs::Marker::ADD;
-    viz.header.frame_id = WORLD_FRAME;
-    viz.ns = "robot_viz";
 
     lines.type = visualization_msgs::Marker::LINE_LIST;
     lines.lifetime = ros::Duration(0.01);
@@ -103,22 +113,11 @@ int main(int argc, char** argv)
         }
         if(transformed){
             robot_path.header.stamp = robot_transform.stamp_;
-            pose.header.frame_id = WORLD_FRAME;
-            pose.header.stamp = robot_transform.stamp_;
-            pose.pose.position.x = robot_transform.getOrigin().getX();
-            pose.pose.position.y = robot_transform.getOrigin().getY();
-            pose.pose.orientation.x = robot_transform.getRotation().getX();
-            pose.pose.orientation.y = robot_transform.getRotation().getY();
-            pose.pose.orientation.z = robot_transform.getRotation().getZ();
-            pose.pose.orientation.w = robot_transform.getRotation().getW();
+            tf::poseStampedTFToMsg(tf::Stamped<tf::Transform>(robot_transform, robot_transform.stamp_, robot_transform.frame_id_), pose);
             robot_path.poses.push_back(pose);
+            visualization_msgs::Marker viz;
+            viz = get_marker(visualization_msgs::Marker::CYLINDER, 0.6, 0.6, 0.2, 0, 1, 0, pose.pose, WORLD_FRAME, "robot");
             viz.header.stamp = ros::Time::now();
-            viz.pose = pose.pose;
-            viz.scale.z = 0.2;
-            viz.color.r = 0;
-            viz.color.g = 1;
-            viz.color.b = 0;
-            viz.color.a = 1;
             viz.lifetime = ros::Duration(0.01);
             robot_viz_pub.publish(viz);
             viz.lifetime = ros::Duration(0);
@@ -127,23 +126,10 @@ int main(int argc, char** argv)
                 robot_viz.markers.push_back(viz);
             }
 
-            obs0_path.header.stamp = obs0_transform.stamp_;
-            pose.header.frame_id = WORLD_FRAME;
-            pose.header.stamp = obs0_transform.stamp_;
-            pose.pose.position.x = obs0_transform.getOrigin().getX();
-            pose.pose.position.y = obs0_transform.getOrigin().getY();
-            pose.pose.orientation.x = obs0_transform.getRotation().getX();
-            pose.pose.orientation.y = obs0_transform.getRotation().getY();
-            pose.pose.orientation.z = obs0_transform.getRotation().getZ();
-            pose.pose.orientation.w = obs0_transform.getRotation().getW();
+            tf::poseStampedTFToMsg(tf::Stamped<tf::Transform>(obs0_transform, obs0_transform.stamp_, obs0_transform.frame_id_), pose);
             obs0_path.poses.push_back(pose);
+            viz = get_marker(visualization_msgs::Marker::CYLINDER, 0.6, 0.6, 0.2, 1, 0, 0, pose.pose, WORLD_FRAME, "robot");
             viz.header.stamp = ros::Time::now();
-            viz.pose = pose.pose;
-            viz.scale.z = 0.1;
-            viz.color.r = 1;
-            viz.color.g = 0;
-            viz.color.b = 0;
-            viz.color.a = 1;
             viz.lifetime = ros::Duration(0.01);
             obs0_viz_pub.publish(viz);
             viz.lifetime = ros::Duration(0);
