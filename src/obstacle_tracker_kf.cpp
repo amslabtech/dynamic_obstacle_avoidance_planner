@@ -123,6 +123,22 @@ void Obstacle::predict(void)
     // std::cout << "P:\n" << p << std::endl;;
 }
 
+void Obstacle::predict(double dt)
+{
+    // std::cout << "predict" << std::endl;
+    age += dt;
+    not_observed_time += dt;
+    // std::cout << "age: " << age << std::endl;
+    // std::cout << "not_observed_time: " << not_observed_time << std::endl;
+
+    Eigen::Matrix4d f = kf.get_f(dt);
+    x = f * x;
+    // std::cout << "X:\n" << x << std::endl;;
+    Eigen::Matrix4d q = kf.get_q(dt);
+    p = f * p * f.transpose() + q;
+    // std::cout << "P:\n" << p << std::endl;;
+}
+
 double Obstacle::calculate_likelihood(void)
 {
     Eigen::Matrix2d m = p.block<2, 2>(0, 0);// up left 2x2

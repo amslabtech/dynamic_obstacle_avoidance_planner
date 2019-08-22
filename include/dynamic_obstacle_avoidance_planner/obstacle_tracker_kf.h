@@ -27,6 +27,7 @@ public:
 
     void update(const Eigen::Vector2d&);
     void predict(void);
+    void predict(double);
     Eigen::Vector2d get_position(void);
     double calculate_likelihood(void);
 
