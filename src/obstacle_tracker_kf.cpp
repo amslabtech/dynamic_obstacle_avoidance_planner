@@ -129,14 +129,14 @@ double Obstacle::calculate_likelihood(void)
     Eigen::EigenSolver<Eigen::Matrix2d> es(m);
     if(!es.info()){
         Eigen::Vector2d e_values = es.eigenvalues().real();
-        const double KAI2 = 9.21034;// chi-square, 99%
+        const double CHI2 = 9.21034;// chi-square, 99%
         double a, b;// ellipse parameter
         if(e_values(0) > e_values(1)){
-            a = sqrt(KAI2 * e_values(0));
-            b = sqrt(KAI2 * e_values(1));
+            a = sqrt(CHI2 * e_values(0));
+            b = sqrt(CHI2 * e_values(1));
         }else{
-            a = sqrt(KAI2 * e_values(1));
-            b = sqrt(KAI2 * e_values(0));
+            a = sqrt(CHI2 * e_values(1));
+            b = sqrt(CHI2 * e_values(0));
         }
         if(a * b > 1e-5){
             likelihood = 1.0 / (a * b);
