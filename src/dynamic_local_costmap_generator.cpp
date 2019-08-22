@@ -45,8 +45,6 @@ void DynamicLocalCostmapGenerator::process(void)
     tf::TransformBroadcaster broadcaster;
     geometry_msgs::TransformStamped base_link_to_local_costmap;
 
-    tf::TransformListener listener;
-
     ros::Rate loop_rate(HZ);
 
     while(ros::ok()){
@@ -135,6 +133,19 @@ void DynamicLocalCostmapGenerator::obstacle_pose_callback(const geometry_msgs::P
 {
     std::cout << "obstacle pose callback" << std::endl;
     obstacle_pose = *msg;
+    try{
+        for(auto& p : obstacle_pose.poses){
+            geometry_msgs::PoseStamped p_;
+            p_.header = obstacle_pose.header;
+            p_.pose = p;
+            listener.transformPose(WORLD_FRAME, p_, p_);
+            p = p_.pose;
+        }
+        obstacle_pose.header.frame_id = WORLD_FRAME;
+    }catch(tf::TransformException ex){
+        std::cout << ex.what() << std::endl;
+        return;
+    }
     tracker.set_obstacles_pose(obstacle_pose);
     std::vector<Eigen::Vector3d> poses;
     tracker.get_poses(poses);

@@ -55,6 +55,8 @@ private:
     ros::Publisher obstacles_predicted_path_pub;
     ros::Subscriber robot_predicted_path_sub;
     ros::Subscriber obstacle_pose_sub;
+    tf::TransformListener listener;
+
     geometry_msgs::PoseArray robot_path;
     geometry_msgs::PoseArray obstacle_paths;
     geometry_msgs::PoseArray obstacle_pose;
