@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <include file="$(find dynamic_obstacle_avoidance_planner)/launch/tf_to_obstacles.launch"/>
+    <node pkg="dynamic_obstacle_avoidance_planner" type="waypoints_test" name="waypoints_test"/>
+    <node pkg="dynamic_obstacle_avoidance_planner" type="trajectory_logger" name="trajectory_logger"/>
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom_tf_publisher" args="0 0 0 0 0 0 /map /odom 100"/>
+
+    <include file="$(find dynamic_obstacle_avoidance_planner)/launch/collision_detector.launch"/>
+
+</launch>
