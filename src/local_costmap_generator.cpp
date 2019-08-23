@@ -10,7 +10,7 @@ LocalCostmapGenerator::LocalCostmapGenerator(void)
 
     map_pub = nh.advertise<nav_msgs::OccupancyGrid>("/local_costmap", 1);
     cloud_sub = nh.subscribe("/cluster/human/removed", 1, &LocalCostmapGenerator::cloud_callback, this);
-    dynamic_sub = nh.subscribe("/dynamic_local_costmap", 1, &LocalCostmapGenerator::dynamic_callback, this);
+    dynamic_sub = nh.subscribe("dynamic_local_costmap", 1, &LocalCostmapGenerator::dynamic_callback, this);
     cloud_ptr = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
     local_costmap_subscribed = false;
     cloud_updated = false;

@@ -19,7 +19,7 @@ DynamicLocalCostmapGenerator::DynamicLocalCostmapGenerator(void)
     DT = 1.0 / HZ;
     PREDICTION_STEP = PREDICTION_TIME / DT;
 
-    costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("/dynamic_local_costmap", 1);
+    costmap_pub = nh.advertise<nav_msgs::OccupancyGrid>("dynamic_local_costmap", 1);
     obstacles_predicted_path_pub = local_nh.advertise<geometry_msgs::PoseArray>("obstacles_predicted_path", 1);
     robot_predicted_path_sub = nh.subscribe("/robot_predicted_path", 1, &DynamicLocalCostmapGenerator::robot_path_callback, this);
     obstacle_pose_sub = nh.subscribe("/dynamic_obstacles", 1, &DynamicLocalCostmapGenerator::obstacle_pose_callback, this);
