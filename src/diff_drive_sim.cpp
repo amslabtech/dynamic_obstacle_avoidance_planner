@@ -8,7 +8,6 @@
 #include <random>
 
 std::vector<geometry_msgs::TransformStamped> obs_list;
-geometry_msgs::PoseArray obstacles;
 
 const double DT = 0.1;//[s]
 const double HZ = 100;
@@ -38,12 +37,6 @@ int main(int argc, char** argv)
 
     NUM = 1;
 
-    ros::Publisher obs_num_pub = nh.advertise<std_msgs::Int32>("/obs_num", 1);
-    ros::Publisher obstacles_pub = nh.advertise<geometry_msgs::PoseArray>("/dynamic_obstacles", 1);
-
-    obstacles.poses.resize(NUM);
-    obstacles.header.frame_id = WORLD_FRAME;
-
     obs_list.resize(NUM);
 
     tf::TransformBroadcaster obs_broadcaster;
@@ -70,11 +63,6 @@ int main(int argc, char** argv)
         update(0, 1.2, 0);
         //update(1, 1.2, 0);
         obs_broadcaster.sendTransform(obs_list);
-        obstacles_pub.publish(obstacles);
-
-        std_msgs::Int32 num;
-        num.data = NUM;
-        obs_num_pub.publish(num);
 
         ros::spinOnce();
         loop_rate.sleep();
@@ -97,10 +85,6 @@ void set_pose(int index, double x, double y, double yaw)
     obs_list[index].transform.translation.x = x;
     obs_list[index].transform.translation.y = y;
     obs_list[index].transform.rotation = tf::createQuaternionMsgFromYaw(yaw);
-
-    obstacles.poses[index].position.x = obs_list[index].transform.translation.x;
-    obstacles.poses[index].position.y = obs_list[index].transform.translation.y;
-    obstacles.poses[index].orientation = obs_list[index].transform.rotation;
 }
 
 // 各obs frame
@@ -113,8 +97,4 @@ void update(int index, double v, double omega)
     obs_list[index].transform.translation.x += v * cos(yaw) / HZ;
     obs_list[index].transform.translation.y += v * sin(yaw) / HZ;
     obs_list[index].transform.rotation = tf::createQuaternionMsgFromYaw(yaw + omega / HZ);
-
-    obstacles.poses[index].position.x = obs_list[index].transform.translation.x;
-    obstacles.poses[index].position.y = obs_list[index].transform.translation.y;
-    obstacles.poses[index].orientation = obs_list[index].transform.rotation;
 }
