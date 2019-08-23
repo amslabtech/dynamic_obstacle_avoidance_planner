@@ -171,6 +171,7 @@ if(${IPOPT_FOUND})
   add_executable(diff_drive_mpc src/diff_drive_mpc.cpp)
   add_executable(fwdis_mpc src/fwdis_mpc.cpp)
 endif()
+add_executable(tf_to_obstacles src/tf_to_obstacles.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -231,6 +232,9 @@ if(${IPOPT_FOUND})
     ${IPOPT_LIBRARIES}
   )
 endif()
+target_link_libraries(tf_to_obstacles
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
