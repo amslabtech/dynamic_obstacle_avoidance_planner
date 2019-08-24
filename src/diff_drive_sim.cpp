@@ -31,7 +31,6 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     ros::NodeHandle local_nh("~");
 
-    local_nh.getParam("NUM", NUM);
     local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
     local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
 
