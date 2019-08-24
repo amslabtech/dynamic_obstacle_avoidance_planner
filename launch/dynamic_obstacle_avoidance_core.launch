@@ -2,6 +2,8 @@
 
 <launch>
 
+    <rosparam command="load" file="$(find dynamic_obstacle_avoidance_planner)/config/dynamic_avoidance.yaml"/>
+
     <include file="$(find dynamic_obstacle_avoidance_planner)/launch/robot_predictor.launch"/>
     <include file="$(find dynamic_obstacle_avoidance_planner)/launch/dynamic_local_costmap.launch"/>
     <include file="$(find dynamic_obstacle_avoidance_planner)/launch/avoidance_path_planner.launch"/>
