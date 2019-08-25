@@ -3,6 +3,7 @@
 import rospy
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Odometry
 from std_msgs.msg import Empty
 import tf
 
@@ -27,6 +28,7 @@ def process():
     ROBOT_FRAME = rospy.get_param("/dynamic_avoidance/ROBOT_FRAME")
     VELOCITY_TOPIC_NAME = rospy.get_param("/dynamic_avoidance/VELOCITY_TOPIC_NAME")
 
+    odom_pub = rospy.Publisher("/odom", Odometry, queue_size=1)
     rospy.Subscriber(VELOCITY_TOPIC_NAME, Twist, velocity_callback)
     rospy.Subscriber("/stop", Empty, stop_callback)
 
@@ -58,6 +60,13 @@ def process():
         pose.pose.position.x += velocity.linear.x * m.cos(yaw) / HZ - velocity.linear.y * m.sin(yaw) / HZ
         pose.pose.position.y += velocity.linear.x * m.sin(yaw) / HZ + velocity.linear.y * m.cos(yaw) / HZ
         br.sendTransform((pose.pose.position.x, pose.pose.position.y, 0), (pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w), rospy.Time.now(), ROBOT_FRAME, "odom")
+        odom = Odometry()
+        odom.header.frame_id = "odom"
+        odom.header.stamp = rospy.Time.now()
+        odom.child_frame_id = ROBOT_FRAME
+        odom.pose.pose = pose.pose
+        odom.twist.twist = velocity
+        odom_pub.publish(odom)
         print pose
         r.sleep()
 
