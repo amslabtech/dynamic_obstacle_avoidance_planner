@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
     local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
 
-    NUM = 1;
+    NUM = 2;
 
     obs_list.resize(NUM);
 
@@ -42,10 +42,10 @@ int main(int argc, char** argv)
         obs_list[i].child_frame_id = OBS_FRAME + std::to_string(i);
         set_pose(i, 0, 0, 0);
     }
-    set_pose(0, 20, -0.1, M_PI);
+    set_pose(0, 20, 0.0, M_PI);
     //set_pose(0, 2.5, 6.5, -M_PI/2.0);
     //set_pose(1, 20, -0.4, M_PI);
-    //set_pose(0, -10, 7, 3*M_PI/2.0);
+    set_pose(1, 5, 7.5, 3*M_PI/2.0);
     //set_pose(0, -8, 0, 0);
 
     ros::Rate loop_rate(HZ);
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
         // 速度
         //update(0, 1.0, 0);
         update(0, 1.2, 0);
-        //update(1, 1.2, 0);
+        update(1, 1.2, 0);
         obs_broadcaster.sendTransform(obs_list);
 
         ros::spinOnce();
