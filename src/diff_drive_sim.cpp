@@ -14,10 +14,6 @@ const double HZ = 100;
 
 int NUM;
 
-std::random_device seed;
-std::mt19937 engine(seed());
-std::normal_distribution<> dist(0.0, 0.01);
-
 std::string WORLD_FRAME;
 std::string OBS_FRAME;
 
@@ -89,8 +85,6 @@ void set_pose(int index, double x, double y, double yaw)
 // 各obs frame
 void update(int index, double v, double omega)
 {
-    v += dist(engine);
-    omega += dist(engine);
     obs_list[index].header.stamp = ros::Time::now();
     double yaw = tf::getYaw(obs_list[index].transform.rotation);
     obs_list[index].transform.translation.x += v * cos(yaw) / HZ;

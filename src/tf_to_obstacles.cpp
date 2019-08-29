@@ -1,11 +1,12 @@
 #include "dynamic_obstacle_avoidance_planner/tf_to_obstacles.h"
 
 TFToObstacles::TFToObstacles(void)
-:local_nh("~")
+:local_nh("~"), engine(seed()), dist(0, 0.05)
 {
     local_nh.param("WORLD_FRAME", WORLD_FRAME, {"map"});
     local_nh.param("OBS_PREFIX", OBS_PREFIX, {"obs"});
     local_nh.param("HZ", HZ, {20});
+    local_nh.param("NOISE_ENABLED", NOISE_ENABLED, {false});
 
     obstacles_pose_pub = nh.advertise<geometry_msgs::PoseArray>("/dynamic_obstacles", 1);
 
@@ -13,6 +14,7 @@ TFToObstacles::TFToObstacles(void)
     std::cout << "WORLD_FRAME: " << WORLD_FRAME << std::endl;
     std::cout << "OBS_PREFIX: " << OBS_PREFIX << std::endl;
     std::cout << "HZ: " << HZ << std::endl;
+    std::cout << "NOISE_ENABLED: " << NOISE_ENABLED << std::endl;
 }
 
 void TFToObstacles::process(void)
@@ -52,6 +54,11 @@ void TFToObstacles::process(void)
                     pose.position.x = transform.getOrigin().x();
                     pose.position.y = transform.getOrigin().y();
                     pose.position.z = transform.getOrigin().z();
+                    if(NOISE_ENABLED){
+                        pose.position.x += dist(engine);
+                        pose.position.y += dist(engine);
+                        pose.position.z += dist(engine);
+                    }
                     tf::quaternionTFToMsg(transform.getRotation(), pose.orientation);
                     obstacles.poses.push_back(pose);
                 }catch(tf::TransformException ex){

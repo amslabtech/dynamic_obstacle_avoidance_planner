@@ -5,11 +5,13 @@
     <arg name="world_frame" default="map"/>
     <arg name="obs_prefix" default="obs"/>
     <arg name="hz" default="20"/>
+    <arg name="noise_enabled" default="false"/>
 
     <node pkg="dynamic_obstacle_avoidance_planner" name="tf_to_obstacles" type="tf_to_obstacles">
         <param name="WORLD_FRAME" value="$(arg world_frame)"/>
         <param name="OBS_PREFIX" value="$(arg obs_prefix)"/>
         <param name="HZ" value="$(arg hz)"/>
+        <param name="NOISE_ENABLED" value="$(arg noise_enabled)"/>
     </node>
 
 </launch>
