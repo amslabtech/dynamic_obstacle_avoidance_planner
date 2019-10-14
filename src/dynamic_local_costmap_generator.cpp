@@ -23,6 +23,7 @@ DynamicLocalCostmapGenerator::DynamicLocalCostmapGenerator(void)
     obstacles_predicted_path_pub = local_nh.advertise<geometry_msgs::PoseArray>("obstacles_predicted_path", 1);
     robot_predicted_path_sub = nh.subscribe("/robot_predicted_path", 1, &DynamicLocalCostmapGenerator::robot_path_callback, this);
     obstacle_pose_sub = nh.subscribe("/dynamic_obstacles", 1, &DynamicLocalCostmapGenerator::obstacle_pose_callback, this);
+    obs_num = 0;
 
     std::cout << "=== dynamic local costmap ===" << std::endl;
     std::cout << "PREDICTION_TIME: " << PREDICTION_TIME  << std::endl;
@@ -48,7 +49,7 @@ void DynamicLocalCostmapGenerator::process(void)
     ros::Rate loop_rate(HZ);
 
     while(ros::ok()){
-        if(!robot_path.poses.empty() && !obstacle_paths.poses.empty()){
+        if(!robot_path.poses.empty()){// && !obstacle_paths.poses.empty()){
             std::cout << "=== dynamic local costmap ===" << std::endl;
             ros::Time start_time = ros::Time::now();
             tf::StampedTransform transform;
@@ -91,7 +92,7 @@ void DynamicLocalCostmapGenerator::process(void)
                 for(int j=0;j<obs_num;j++){
                     std::cout << "obs: " << j << std::endl;
                     for(int k=1;k<3;k++){
-                        for(int i=0;i<PREDICTION_STEP;i++){
+                        for(int i=0;i<PREDICTION_STEP-1;i++){
                             if(predict_approaching(robot_path.poses[i], robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i])){
                                 geometry_msgs::PoseStamped collision_pose;
                                 collision_pose.pose = obstacle_paths.poses[j*(PREDICTION_STEP+1)+i];
@@ -257,7 +258,7 @@ void DynamicLocalCostmapGenerator::set_cost_with_velocity(geometry_msgs::PoseSta
     double x = collision_pose.pose.position.x;
     double y = collision_pose.pose.position.y;
     double radius_min = 0.05;// min cost radius
-    double radius_max = 1.5 * RADIUS;// max avoidance area radius
+    double radius_max = 1.0 * RADIUS;// max avoidance area radius
     double radius_col_max = 1.0 * RADIUS;// max collsion area radius
     double radius_col_min = radius_min;// min collision area radius
     double v = sqrt(synthetic_vector.linear.x * synthetic_vector.linear.x + synthetic_vector.linear.y * synthetic_vector.linear.y);
