@@ -64,7 +64,7 @@ private:
     void solve_hungarian_method(Eigen::MatrixXi&);
     void update_tracking(const std::vector<Eigen::Vector2d>&);
 
-    int SAME_OBSTACLE_THRESHOLD;
+    double SAME_OBSTACLE_THRESHOLD;
     double ERASE_LIKELIHOOD_THREHSOLD;
     double NOT_OBSERVED_TIME_THRESHOLD;
     double DEFAULT_LIFE_TIME;
