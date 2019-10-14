@@ -169,7 +169,7 @@ ObstacleTrackerKF::ObstacleTrackerKF(void)
 :SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(0.8)
 , NOT_OBSERVED_TIME_THRESHOLD(5.0), DEFAULT_LIFE_TIME(10.0)
 {
-
+    obstacles.clear();
 }
 
 void ObstacleTrackerKF::set_obstacles_pose(const geometry_msgs::PoseArray& pose_array)
@@ -305,7 +305,14 @@ void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
             fx[i] = std::max(fx[i], matrix(i, j));
         }
     }
+    int count = 0;
     for(int i = 0;i < n;){
+        if(count>1000){
+            obstacles.clear();
+            candidates.clear();
+            std::cout << "after 1000 times loop,  break!!!!!" << std::endl;
+            return;
+        }
         std::vector<int> t(n, -1), s(n+1, i);
         for(p = q = 0;p <= q && x[i] < 0;++p){
             for(int k = s[p], j = 0;j < n && x[i] < 0;++j){
@@ -340,6 +347,7 @@ void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
         }else{
             ++i;
         }
+        i += 1;
     }
     candidates.resize(n);
     for(int i = 0;i < n;++i){
