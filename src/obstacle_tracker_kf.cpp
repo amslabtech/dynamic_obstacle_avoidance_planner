@@ -2,7 +2,7 @@
 
 KalmanFilter::KalmanFilter(void)
 {
-    sigma_a = 0.05;
+    sigma_a = 0.01;
 }
 
 Eigen::Matrix4d KalmanFilter::get_f(double dt)
@@ -38,8 +38,8 @@ Obstacle::Obstacle(void)
     h << 1.0, 0.0, 0.0, 0.0,
          0.0, 1.0, 0.0, 0.0;
 
-    r << 1e-1,  0.0,
-          0.0, 1e-1;
+    r << 1e-4,  0.0,
+          0.0, 1e-4;
 
     last_time = ros::Time::now().toSec();
     likelihood = 1.0;
@@ -73,8 +73,8 @@ Obstacle::Obstacle(const Eigen::Vector2d& position)
     h << 1.0, 0.0, 0.0, 0.0,
          0.0, 1.0, 0.0, 0.0;
 
-    r << 1e-1,  0.0,
-          0.0, 1e-1;
+    r << 1e-4,  0.0,
+          0.0, 1e-4;
 
     last_time = ros::Time::now().toSec();
     likelihood = 1.0;
