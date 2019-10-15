@@ -2,7 +2,7 @@
 
 <launch>
 
-    <arg name="hz" default="10"/>
+    <arg name="hz" default="20"/>
     <arg name="map_width" default="10"/>
     <arg name="resolution" default="0.1"/>
     <arg name="cost_collision" default="90"/>
