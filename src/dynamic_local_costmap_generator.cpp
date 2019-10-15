@@ -163,7 +163,7 @@ void DynamicLocalCostmapGenerator::obstacle_pose_callback(const geometry_msgs::P
         geometry_msgs::Pose p;
         p.position.x = poses[i](0);
         p.position.y = poses[i](1);
-        p.orientation = tf::createQuaternionMsgFromYaw(poses[i](2));
+        p.orientation = tf::createQuaternionMsgFromYaw(atan2(velocities[i](1), velocities[i](0)));
         obstacle_paths.poses.push_back(p);
         for(int j=1;j<PREDICTION_STEP;j++){
             p.position.x += velocities[i](0) * DT;
