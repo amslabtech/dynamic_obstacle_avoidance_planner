@@ -193,6 +193,11 @@ void ObstacleTrackerKF::set_obstacles_pose(const geometry_msgs::PoseArray& pose_
         std::cout << "not observed: " << it->second.not_observed_time << std::endl;
         std::cout << "age: " << it->second.age << std::endl;
         std::cout << "likelihood: " << it->second.calculate_likelihood() << std::endl;
+        if(it->second.age < 0.0){
+            std::cout << "\033[31mobstacle " << it->first << " was erased\033[0m" << std::endl;
+            it = obstacles.erase(it);
+            continue;
+        }
         if((it->second.calculate_likelihood() > ERASE_LIKELIHOOD_THREHSOLD) && (it->second.not_observed_time < NOT_OBSERVED_TIME_THRESHOLD)){
             it->second.lifetime = DEFAULT_LIFE_TIME;
             ++it;
