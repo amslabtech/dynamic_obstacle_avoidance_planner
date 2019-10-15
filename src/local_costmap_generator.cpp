@@ -48,8 +48,8 @@ void LocalCostmapGenerator::process(void)
                     if(_map.data[i] == 100){
                         int _j = i % local_costmap.info.height;
                         int _k = i / local_costmap.info.height;
-                        for(int j=0;j<local_costmap.info.height;j++){
-                            for(int k=0;k<local_costmap.info.width;k++){
+                        for(unsigned int j=0;j<local_costmap.info.height;j++){
+                            for(unsigned int k=0;k<local_costmap.info.width;k++){
                                 int dj = _j - j;
                                 int dk = _k - k;
                                 if(sqrt(dj*dj+dk*dk) <= RADIUS_GRID){

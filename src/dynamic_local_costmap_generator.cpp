@@ -192,8 +192,8 @@ void DynamicLocalCostmapGenerator::setup_map(void)
     local_costmap.info.origin.position.y = -MAP_WIDTH / 2.0;
     local_costmap.info.origin.orientation = tf::createQuaternionMsgFromYaw(0.0);
     local_costmap.data.resize(local_costmap.info.width * local_costmap.info.height);
-    for(int i=0;i<local_costmap.info.height;i++){
-        for(int j=0;j<local_costmap.info.width;j++){
+    for(unsigned int i=0;i<local_costmap.info.height;i++){
+        for(unsigned int j=0;j<local_costmap.info.width;j++){
             local_costmap.data[i*local_costmap.info.width+j] = 0;
         }
     }
@@ -274,8 +274,8 @@ void DynamicLocalCostmapGenerator::set_cost_with_velocity(geometry_msgs::PoseSta
         // avoidance radius at l[m]
         double radius_l = radius_min + (radius_max - radius_min) * (LENGTH - l) / LENGTH;
         double radius_l_grid = radius_l / RESOLUTION;
-        for(int i=0;i<local_costmap.info.width;i++){
-            for(int j=0;j<local_costmap.info.height;j++){
+        for(unsigned int i=0;i<local_costmap.info.width;i++){
+            for(unsigned int j=0;j<local_costmap.info.height;j++){
                 int d_ix = grid_x - i;
                 if(d_ix < 0){
                     d_ix = -d_ix;
