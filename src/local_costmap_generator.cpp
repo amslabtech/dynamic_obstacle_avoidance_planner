@@ -51,14 +51,8 @@ void LocalCostmapGenerator::process(void)
                         for(int j=0;j<local_costmap.info.height;j++){
                             for(int k=0;k<local_costmap.info.width;k++){
                                 int dj = _j - j;
-                                if(dj < 0){
-                                    dj = -dj;
-                                }
                                 int dk = _k - k;
-                                if(dk < 0){
-                                    dk = -dk;
-                                }
-                                if(dj + dk <= RADIUS_GRID){
+                                if(sqrt(dj*dj+dk*dk) <= RADIUS_GRID){
                                     local_costmap.data[k * local_costmap.info.height + j] = 100;
                                 }
                             }
