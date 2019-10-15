@@ -238,7 +238,8 @@ void ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& 
     for(int i=0;i<matrix_size;i++){
         for(int j=0;j<matrix_size;j++){
             if(i < cluster_num && j < observed_obstacles_num){
-                association_matrix(i, j) = get_distance(obstacles[get_id_from_index(i)], observed_obstacles[j]) * 100;
+                association_matrix(i, j) = get_distance(obstacles[get_id_from_index(i)], observed_obstacles[j]);
+                std::cout << "i, j = " << i << ", " << j << " : " << association_matrix(i, j) << std::endl;
             }else if(i < cluster_num && !(j < observed_obstacles_num)){
                 association_matrix(i, j) = SAME_OBSTACLE_THRESHOLD * 100;
             }else if(!(i < cluster_num) && j < observed_obstacles_num){
@@ -248,16 +249,26 @@ void ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& 
             }
         }
     }
+    std::cout << "association matrix:\n" << association_matrix << std::endl;
     solve_hungarian_method(association_matrix);
 }
 
 double ObstacleTrackerKF::get_distance(const Obstacle& obstacle, const Eigen::Vector2d& position)
 {
     std::cout << "--- get distance ---" << std::endl;
-    Obstacle copied_obstacle(obstacle);
-    copied_obstacle.update(position);
-    copied_obstacle.predict();
-    double likelihood = copied_obstacle.calculate_likelihood();
+    // std::cout << obstacle.x.transpose() << ", " << position.transpose() << std::endl;
+    // Obstacle copied_obstacle(obstacle);
+    // std::cout << copied_obstacle.x.transpose() << std::endl;
+    // std::cout << copied_obstacle.p << std::endl;
+    // copied_obstacle.update(position);
+    // std::cout << copied_obstacle.x.transpose() << std::endl;
+    // std::cout << copied_obstacle.p << std::endl;
+    // copied_obstacle.predict();
+    // std::cout << copied_obstacle.x.transpose() << std::endl;
+    // std::cout << copied_obstacle.p << std::endl;
+    // double likelihood = copied_obstacle.calculate_likelihood();
+    double likelihood = (obstacle.x.segment(0, 2) - position).norm() * 100;
+    std::cout << "distance: " << likelihood << std::endl;
     return likelihood;
 }
 
@@ -302,7 +313,7 @@ void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
     std::vector<int> x(n, -1), y(n, -1);
     for(int i = 0;i < n;++i){
         for(int j = 0;j < n;++j){
-            fx[i] = std::max(fx[i], matrix(i, j));
+            fx[i] = std::min(fx[i], matrix(i, j));
         }
     }
     int count = 0;
@@ -334,7 +345,7 @@ void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
             for(int k = 0;k <= q;++k){
                 for(int j = 0;j < n;++j){
                     if(t[j] < 0){
-                        d = std::min(d, fx[s[k]] + fy[j] - matrix(s[k], j));
+                        d = std::max(d, fx[s[k]] + fy[j] - matrix(s[k], j));
                     }
                 }
                 for(int j = 0;j < n;++j){
