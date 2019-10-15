@@ -78,7 +78,7 @@ Obstacle::Obstacle(const Eigen::Vector2d& position)
 
     last_time = ros::Time::now().toSec();
     likelihood = 1.0;
-    lifetime = 10;
+    lifetime = 1;
     age = 0;
     not_observed_time = 0;
 }
@@ -167,7 +167,7 @@ double Obstacle::calculate_likelihood(void)
 
 ObstacleTrackerKF::ObstacleTrackerKF(void)
 :SAME_OBSTACLE_THRESHOLD(0.8), ERASE_LIKELIHOOD_THREHSOLD(0.8)
-, NOT_OBSERVED_TIME_THRESHOLD(5.0), DEFAULT_LIFE_TIME(10.0)
+, NOT_OBSERVED_TIME_THRESHOLD(3.0), DEFAULT_LIFE_TIME(5.0)
 {
     obstacles.clear();
 }
@@ -192,14 +192,15 @@ void ObstacleTrackerKF::set_obstacles_pose(const geometry_msgs::PoseArray& pose_
         it->second.predict();
         std::cout << "not observed: " << it->second.not_observed_time << std::endl;
         std::cout << "age: " << it->second.age << std::endl;
-        std::cout << "likelihood: " << it->second.likelihood << std::endl;
-        if((it->second.likelihood > ERASE_LIKELIHOOD_THREHSOLD) && (it->second.not_observed_time < NOT_OBSERVED_TIME_THRESHOLD)){
+        std::cout << "likelihood: " << it->second.calculate_likelihood() << std::endl;
+        if((it->second.calculate_likelihood() > ERASE_LIKELIHOOD_THREHSOLD) && (it->second.not_observed_time < NOT_OBSERVED_TIME_THRESHOLD)){
             it->second.lifetime = DEFAULT_LIFE_TIME;
             ++it;
         }else{
             if(it->second.lifetime > it->second.age){
                 // ???
                 ++it;
+                std::cout << "\033[33mthe likelihood of this obstacle is small but not old enough to be erased\033[0m" << std::endl;
             }else{
                 std::cout << "\033[31mobstacle " << it->first << " was erased\033[0m" << std::endl;
                 it = obstacles.erase(it);
@@ -229,6 +230,10 @@ void ObstacleTrackerKF::get_poses(std::vector<Eigen::Vector3d>& poses)
 void ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& observed_obstacles)
 {
     std::cout << "--- associate obstacles ---" << std::endl;
+    std::cout << "observed obstacles:" << std::endl;
+    for(const auto& oo : observed_obstacles){
+        std::cout << oo.transpose() << std::endl;
+    }
     int cluster_num = obstacles.size();
     int observed_obstacles_num = observed_obstacles.size();
 
@@ -238,8 +243,9 @@ void ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& 
     for(int i=0;i<matrix_size;i++){
         for(int j=0;j<matrix_size;j++){
             if(i < cluster_num && j < observed_obstacles_num){
-                association_matrix(i, j) = get_distance(obstacles[get_id_from_index(i)], observed_obstacles[j]);
-                std::cout << "i, j = " << i << ", " << j << " : " << association_matrix(i, j) << std::endl;
+                double distance = get_distance(obstacles[get_id_from_index(i)], observed_obstacles[j]);
+                association_matrix(i, j) = distance;
+                // std::cout << "i, j = " << i << ", " << j << " : " << distance << std::endl;
             }else if(i < cluster_num && !(j < observed_obstacles_num)){
                 association_matrix(i, j) = SAME_OBSTACLE_THRESHOLD * 100;
             }else if(!(i < cluster_num) && j < observed_obstacles_num){
@@ -255,7 +261,7 @@ void ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& 
 
 double ObstacleTrackerKF::get_distance(const Obstacle& obstacle, const Eigen::Vector2d& position)
 {
-    std::cout << "--- get distance ---" << std::endl;
+    // std::cout << "--- get distance ---" << std::endl;
     // std::cout << obstacle.x.transpose() << ", " << position.transpose() << std::endl;
     // Obstacle copied_obstacle(obstacle);
     // std::cout << copied_obstacle.x.transpose() << std::endl;
@@ -268,12 +274,15 @@ double ObstacleTrackerKF::get_distance(const Obstacle& obstacle, const Eigen::Ve
     // std::cout << copied_obstacle.p << std::endl;
     // double likelihood = copied_obstacle.calculate_likelihood();
     double likelihood = (obstacle.x.segment(0, 2) - position).norm() * 100;
-    std::cout << "distance: " << likelihood << std::endl;
+    // std::cout << "distance: " << likelihood << std::endl;
     return likelihood;
 }
 
 int ObstacleTrackerKF::get_id_from_index(int index)
 {
+    if(index < 0){
+        return -1;
+    }
     int index_ = 0;
     for(auto it=obstacles.begin();it!=obstacles.end();++it){
         if(index_ == index){
@@ -358,11 +367,13 @@ void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
         }else{
             ++i;
         }
-        i += 1;
     }
+    // std::cout << "candidates: " << std::endl;
     candidates.resize(n);
     for(int i = 0;i < n;++i){
         candidates[i] = get_id_from_index(y[i]);
+        // std::cout << i << ": " << candidates[i] << std::endl;
+        // std::cout << "index: " << y[i] << std::endl;
     }
 }
 
