@@ -86,15 +86,14 @@ bool collision_detection(geometry_msgs::Pose p0, geometry_msgs::Pose p1)
     double dx = p0.position.x - p1.position.x;
     double dy = p0.position.y - p1.position.y;
     double distance = sqrt(dx*dx + dy*dy);
-    if(distance <= RADIUS){
-        std::cout << distance << "[m]" << std::endl;
-        return true;
-    }
-
     static double min_distance = 1e6;
     if(distance < min_distance){
         min_distance = distance;
         std::cout << "min distance: " << min_distance << "[m]" << std::endl;
+    }
+    if(distance <= RADIUS){
+        std::cout << distance << "[m]" << std::endl;
+        return true;
     }
     return false;
 }
