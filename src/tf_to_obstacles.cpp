@@ -50,6 +50,7 @@ void TFToObstacles::process(void)
                 try{
                     tf::StampedTransform transform;
                     listener.lookupTransform(WORLD_FRAME, obs_name, ros::Time(0), transform);
+                    obstacles.header.stamp = transform.stamp_;
                     geometry_msgs::Pose pose;
                     pose.position.x = transform.getOrigin().x();
                     pose.position.y = transform.getOrigin().y();
