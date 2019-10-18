@@ -93,17 +93,17 @@ void DynamicLocalCostmapGenerator::process(void)
                     std::cout << "obs: " << j << std::endl;
                     for(int k=1;k<3;k++){
                         for(int i=0;i<PREDICTION_STEP-1;i++){
-                            if(predict_approaching(robot_path.poses[i], robot_path.poses[i+k*(PREDICTION_STEP+1)], obstacle_paths.poses[j*(PREDICTION_STEP+1)+i])){
+                            if(predict_approaching(robot_path.poses[i], robot_path.poses[i+k*(PREDICTION_STEP)], obstacle_paths.poses[j*(PREDICTION_STEP)+i])){
                                 geometry_msgs::PoseStamped collision_pose;
-                                collision_pose.pose = obstacle_paths.poses[j*(PREDICTION_STEP+1)+i];
+                                collision_pose.pose = obstacle_paths.poses[j*(PREDICTION_STEP)+i];
                                 collision_pose.header.frame_id = WORLD_FRAME;
                                 if(i > 0){
                                     geometry_msgs::Twist vr;
                                     vr.linear.x = (robot_path.poses[i].position.x - robot_path.poses[i - 1].position.x) * HZ;
                                     vr.linear.y = (robot_path.poses[i].position.y - robot_path.poses[i - 1].position.y) * HZ;
                                     geometry_msgs::Twist vo;
-                                    vo.linear.x = (obstacle_paths.poses[j*(PREDICTION_STEP+1)+i].position.x - obstacle_paths.poses[j*(PREDICTION_STEP+1)+i - 1].position.x) * HZ;
-                                    vo.linear.y = (obstacle_paths.poses[j*(PREDICTION_STEP+1)+i].position.y - obstacle_paths.poses[j*(PREDICTION_STEP+1)+i - 1].position.y) * HZ;
+                                    vo.linear.x = (obstacle_paths.poses[j*(PREDICTION_STEP)+i].position.x - obstacle_paths.poses[j*(PREDICTION_STEP)+i - 1].position.x) * HZ;
+                                    vo.linear.y = (obstacle_paths.poses[j*(PREDICTION_STEP)+i].position.y - obstacle_paths.poses[j*(PREDICTION_STEP)+i - 1].position.y) * HZ;
                                     set_cost_with_velocity(collision_pose, vr, vo);
                                     // this node doesn't predict after collision
                                     break;
@@ -128,6 +128,7 @@ void DynamicLocalCostmapGenerator::process(void)
 void DynamicLocalCostmapGenerator::robot_path_callback(const geometry_msgs::PoseArrayConstPtr& msg)
 {
     robot_path = *msg;
+    std::cout << "robot_path pose size" << robot_path.poses.size() << std::endl;
 }
 
 void DynamicLocalCostmapGenerator::obstacle_pose_callback(const geometry_msgs::PoseArrayConstPtr& msg)

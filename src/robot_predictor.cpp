@@ -87,7 +87,7 @@ int main(int argc, char** argv)
         pose.position = current_pose.position;
         pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
         predicted_path.poses.push_back(pose);
-        for(int j=0;j<PREDICTION_STEP;j++){
+        for(int j=0;j<PREDICTION_STEP-1;j++){
           pose.position.x = predicted_path.poses[j].position.x + vx * DT;
           pose.position.y = predicted_path.poses[j].position.y + vy * DT;
           yaw += omega * DT;
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
         pose.position = current_pose.position;
         pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
         predicted_path.poses.push_back(pose);
-        for(int j=0;j<PREDICTION_STEP;j++){
+        for(int j=0;j<PREDICTION_STEP-1;j++){
           pose.position.x = predicted_path.poses[j+SIZE_OF_LINEAR_PATH].position.x + vx * DT;
           pose.position.y = predicted_path.poses[j+SIZE_OF_LINEAR_PATH].position.y + vy * DT;
           yaw += omega * DT;
@@ -142,7 +142,7 @@ int main(int argc, char** argv)
         pose.position = current_pose.position;
         pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
         predicted_path.poses.push_back(pose);
-        for(int j=0;j<PREDICTION_STEP;j++){
+        for(int j=0;j<PREDICTION_STEP-1;j++){
           pose.position.x = predicted_path.poses[j+SIZE_OF_LINEAR_PATH*2].position.x + vx * DT;
           pose.position.y = predicted_path.poses[+j+SIZE_OF_LINEAR_PATH*2].position.y + vy * DT;
           yaw += omega * DT;
@@ -158,6 +158,7 @@ int main(int argc, char** argv)
         }
       }
       std::cout << predicted_path.poses.size() << std::endl;
+      predicted_path.header.stamp = _transform.stamp_;
       predicted_path_pub.publish(predicted_path);
       previous_velocity = current_velocity;
       previous_pose = current_pose;
