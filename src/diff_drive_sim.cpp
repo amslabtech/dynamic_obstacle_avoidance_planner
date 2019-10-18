@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
     local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
 
-    NUM = 1;
+    NUM = 3;
 
     obs_list.resize(NUM);
 
@@ -43,7 +43,8 @@ int main(int argc, char** argv)
         set_pose(i, 0, 0, 0);
     }
     set_pose(0, 20, 0.0, M_PI);
-    // set_pose(1, 8.2, 4.2, -3*M_PI/4.0);
+    set_pose(1, 8.2, 4.2, -3*M_PI/4.0);
+    set_pose(2, 11.0, -3.6, 5*M_PI/6.0);
 
     ros::Rate loop_rate(HZ);
 
@@ -52,6 +53,8 @@ int main(int argc, char** argv)
     while(ros::ok()){
         // 速度
         update(0, 1.2, 0);
+        update(1, 1.2, 0);
+        update(2, 1.2, 0);
         obs_broadcaster.sendTransform(obs_list);
 
         ros::spinOnce();
@@ -80,8 +83,13 @@ void set_pose(int index, double x, double y, double yaw)
 // 各obs frame
 void update(int index, double v, double omega)
 {
+    std::random_device seed_gen;
+    std::default_random_engine engine(seed_gen());
+    std::normal_distribution<> dist(0.0, 0.05);
     obs_list[index].header.stamp = ros::Time::now();
     double yaw = tf::getYaw(obs_list[index].transform.rotation);
+    v += dist(engine);
+    omega += dist(engine);
     obs_list[index].transform.translation.x += v * cos(yaw) / HZ;
     obs_list[index].transform.translation.y += v * sin(yaw) / HZ;
     obs_list[index].transform.rotation = tf::createQuaternionMsgFromYaw(yaw + omega / HZ);
