@@ -172,6 +172,7 @@ if(${IPOPT_FOUND})
   add_executable(fwdis_mpc src/fwdis_mpc.cpp)
 endif()
 add_executable(tf_to_obstacles src/tf_to_obstacles.cpp)
+add_executable(static_local_costmap_generator src/static_local_costmap_generator.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -233,6 +234,9 @@ if(${IPOPT_FOUND})
   )
 endif()
 target_link_libraries(tf_to_obstacles
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(static_local_costmap_generator
   ${catkin_LIBRARIES}
 )
 
