@@ -77,6 +77,7 @@ int main(int argc, char** argv)
     ros::Publisher obs_viz_pub = nh.advertise<visualization_msgs::MarkerArray>("/marker/obs", 1);
     ros::Publisher robot_viz_array_pub = nh.advertise<visualization_msgs::MarkerArray>("/markers/robot", 1);
     ros::Publisher obs_viz_array_pub = nh.advertise<visualization_msgs::MarkerArray>("/markers/obs", 1);
+    ros::Publisher robot_trajectory_viz_pub = nh.advertise<visualization_msgs::Marker>("/robot_passed_trajectory", 1);
 
     ros::Subscriber robot_path_sub = nh.subscribe("/robot_predicted_path", 1, path_callback);
     ros::Publisher robot_line_pub = nh.advertise<visualization_msgs::Marker>("/lines", 1);
@@ -85,6 +86,7 @@ int main(int argc, char** argv)
     nav_msgs::Path obs_path;
     visualization_msgs::MarkerArray robot_viz;
     visualization_msgs::MarkerArray obs_viz;
+    visualization_msgs::Marker robot_trajectory_viz;
 
     robot_path.header.frame_id = WORLD_FRAME;
     obs_path.header.frame_id = WORLD_FRAME;
@@ -95,6 +97,15 @@ int main(int argc, char** argv)
     lines.header.frame_id = WORLD_FRAME;
     lines.ns = "lines";
     lines.scale.x = 0.01;
+
+    robot_trajectory_viz.type = visualization_msgs::Marker::POINTS;
+    robot_trajectory_viz.lifetime = ros::Duration();
+    robot_trajectory_viz.action = visualization_msgs::Marker::ADD;
+    robot_trajectory_viz.header.frame_id = WORLD_FRAME;
+    robot_trajectory_viz.ns = "robot_trajectory";
+    robot_trajectory_viz.scale.x = 0.02;
+    robot_trajectory_viz.color.b = 1.0;
+    robot_trajectory_viz.color.a = 0.8;
 
     while(ros::ok()){
         static int count = 0;
@@ -140,6 +151,8 @@ int main(int argc, char** argv)
             robot_path_pub.publish(robot_path);
             robot_viz_array_pub.publish(robot_viz);
             robot_line_pub.publish(lines);
+            robot_trajectory_viz.points.push_back(pose.pose.position);
+            robot_trajectory_viz_pub.publish(robot_trajectory_viz);
         }catch(tf::TransformException ex){
             std::cout << ex.what() << std::endl;
         }
