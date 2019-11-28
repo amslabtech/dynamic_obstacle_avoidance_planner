@@ -59,9 +59,9 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     ros::NodeHandle local_nh;
-    local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
-    local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
-    local_nh.getParam("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME);
+    local_nh.param("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME, {"base_link"});
+    local_nh.param("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME, {"map"});
+    local_nh.param("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME, {3.5});
     local_nh.param("OBS_PREFIX", OBS_PREFIX, {"obs"});
     PREDICTION_STEP = PREDICTION_TIME / 0.1 + 1;
 
@@ -96,9 +96,9 @@ int main(int argc, char** argv)
     lines.action = visualization_msgs::Marker::ADD;
     lines.header.frame_id = WORLD_FRAME;
     lines.ns = "lines";
-    lines.scale.x = 0.01;
+    lines.scale.x = 0.02;
 
-    robot_trajectory_viz.type = visualization_msgs::Marker::POINTS;
+    robot_trajectory_viz.type = visualization_msgs::Marker::LINE_STRIP;
     robot_trajectory_viz.lifetime = ros::Duration();
     robot_trajectory_viz.action = visualization_msgs::Marker::ADD;
     robot_trajectory_viz.header.frame_id = WORLD_FRAME;
@@ -141,9 +141,15 @@ int main(int argc, char** argv)
             visualization_msgs::Marker viz;
             viz = get_marker(visualization_msgs::Marker::CYLINDER, 0.6, 0.6, 0.2, 0, 1, 0, pose.pose, WORLD_FRAME, "robot");
             viz.header.stamp = ros::Time::now();
-            viz.lifetime = ros::Duration(0.01);
+            viz.lifetime = ros::Duration();
+            static bool first_flag = true;
             robot_viz_pub.publish(viz);
-            viz.lifetime = ros::Duration(0);
+            if(!first_flag){
+                robot_viz_pub.publish(viz);
+            }
+            first_flag = false;
+            std::cout << viz << std::endl;
+            viz.lifetime = ros::Duration();
             if(count == 0){
                 viz.id = count;
                 robot_viz.markers.push_back(viz);
@@ -167,11 +173,11 @@ int main(int argc, char** argv)
                 visualization_msgs::Marker viz;
                 viz = get_marker(visualization_msgs::Marker::CYLINDER, 0.6, 0.6, 0.2, 1, 0, 0, pose.pose, WORLD_FRAME, obs_name);
                 viz.header.stamp = ros::Time::now();
-                viz.lifetime = ros::Duration(0.01);
+                viz.lifetime = ros::Duration();
                 std::cout << viz << std::endl;
                 obs_markers.markers.push_back(viz);
                 // obs_viz_pub.publish(viz);
-                viz.lifetime = ros::Duration(0);
+                viz.lifetime = ros::Duration();
                 if(count == 0){
                     viz.id = count;
                     obs_viz.markers.push_back(viz);
