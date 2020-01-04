@@ -173,6 +173,7 @@ if(${IPOPT_FOUND})
 endif()
 add_executable(tf_to_obstacles src/tf_to_obstacles.cpp)
 add_executable(static_local_costmap_generator src/static_local_costmap_generator.cpp)
+add_executable(obstacle_tracker_kf_demo src/demo/obstacle_tracker_kf_demo.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -238,6 +239,10 @@ target_link_libraries(tf_to_obstacles
 )
 target_link_libraries(static_local_costmap_generator
   ${catkin_LIBRARIES}
+)
+target_link_libraries(obstacle_tracker_kf_demo
+  ${catkin_LIBRARIES}
+  obstacle_tracker_kf
 )
 
 #############
