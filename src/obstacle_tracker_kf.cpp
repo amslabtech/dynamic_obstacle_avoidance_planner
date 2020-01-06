@@ -332,10 +332,11 @@ void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
     }
     int count = 0;
     for(int i = 0;i < n;){
+        // std::cout << "count: " << count << std::endl;
         if(count>1000){
             obstacles.clear();
             candidates.clear();
-            std::cout << "after 1000 times loop,  break!!!!!" << std::endl;
+            std::cout << "\033[31mafter 1000 times loop,  break!!!!!\033[0m" << std::endl;
             return;
         }
         std::vector<int> t(n, -1), s(n+1, i);
@@ -372,6 +373,7 @@ void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
         }else{
             ++i;
         }
+        count++;
     }
     // std::cout << "candidates: " << std::endl;
     candidates.resize(n);
