@@ -183,7 +183,12 @@ void ObstacleTrackerKF::set_obstacles_pose(const geometry_msgs::PoseArray& pose_
         position << pose.position.x, pose.position.y;
         observed_obstacles.push_back(position);
     }
-    associate_obstacles(observed_obstacles);
+    bool is_suceeded = associate_obstacles(observed_obstacles);
+    if(!is_suceeded){
+        std::cout << "\033[31m=====================\nfailed to associate obstacles\n=====================\033[0m" << std::endl;
+        observed_obstacles.clear();
+        associate_obstacles(observed_obstacles);
+    }
     update_tracking(observed_obstacles);
 
     std::cout << "--- predict ---" << std::endl;
@@ -232,7 +237,7 @@ void ObstacleTrackerKF::get_poses(std::vector<Eigen::Vector3d>& poses)
     }
 }
 
-void ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& observed_obstacles)
+bool ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& observed_obstacles)
 {
     std::cout << "--- associate obstacles ---" << std::endl;
     std::cout << "observed obstacles:" << std::endl;
@@ -261,7 +266,7 @@ void ObstacleTrackerKF::associate_obstacles(const std::vector<Eigen::Vector2d>& 
         }
     }
     std::cout << "association matrix:\n" << association_matrix << std::endl;
-    solve_hungarian_method(association_matrix);
+    return solve_hungarian_method(association_matrix);
 }
 
 double ObstacleTrackerKF::get_distance(const Obstacle& obstacle, const Eigen::Vector2d& position)
@@ -318,7 +323,7 @@ int ObstacleTrackerKF::get_new_id(void)
     return new_id;
 }
 
-void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
+bool ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
 {
     // reference: http://www.prefield.com/algorithm/math/hungarian.html
     const double inf = 1e6;
@@ -330,14 +335,13 @@ void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
             fx[i] = std::min(fx[i], matrix(i, j));
         }
     }
+    const int MAX_ITERATION = 100;
     int count = 0;
     for(int i = 0;i < n;){
         // std::cout << "count: " << count << std::endl;
-        if(count>1000){
-            obstacles.clear();
-            candidates.clear();
-            std::cout << "\033[31mafter 1000 times loop,  break!!!!!\033[0m" << std::endl;
-            return;
+        if(count > MAX_ITERATION){
+            std::cout << "\033[31mafter " << MAX_ITERATION << " times loop,  break!!!!!\033[0m" << std::endl;
+            return false;
         }
         std::vector<int> t(n, -1), s(n+1, i);
         for(p = q = 0;p <= q && x[i] < 0;++p){
@@ -382,6 +386,7 @@ void ObstacleTrackerKF::solve_hungarian_method(Eigen::MatrixXi& matrix)
         // std::cout << i << ": " << candidates[i] << std::endl;
         // std::cout << "index: " << y[i] << std::endl;
     }
+    return true;
 }
 
 void ObstacleTrackerKF::update_tracking(const std::vector<Eigen::Vector2d>& observed_obstacles)

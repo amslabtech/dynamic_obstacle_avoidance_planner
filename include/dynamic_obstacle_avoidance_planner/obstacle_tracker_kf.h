@@ -57,11 +57,11 @@ public:
     void get_poses(std::vector<Eigen::Vector3d>&);
 
 private:
-    void associate_obstacles(const std::vector<Eigen::Vector2d>&);
+    bool associate_obstacles(const std::vector<Eigen::Vector2d>&);
     double get_distance(const Obstacle&, const Eigen::Vector2d&);
     int get_id_from_index(int);
     int get_new_id(void);
-    void solve_hungarian_method(Eigen::MatrixXi&);
+    bool solve_hungarian_method(Eigen::MatrixXi&);
     void update_tracking(const std::vector<Eigen::Vector2d>&);
 
     double SAME_OBSTACLE_THRESHOLD;
