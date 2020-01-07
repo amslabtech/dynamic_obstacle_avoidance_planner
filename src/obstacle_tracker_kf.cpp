@@ -30,22 +30,7 @@ Obstacle::Obstacle(void)
 {
     x = Eigen::Vector4d::Zero();
 
-    p << 1e2, 0.0, 0.0, 0.0,
-         0.0, 1e2, 0.0, 0.0,
-         0.0, 0.0, 1e2, 0.0,
-         0.0, 0.0, 0.0, 1e2;
-
-    h << 1.0, 0.0, 0.0, 0.0,
-         0.0, 1.0, 0.0, 0.0;
-
-    r << 1e-4,  0.0,
-          0.0, 1e-4;
-
-    last_time = ros::Time::now().toSec();
-    likelihood = 1.0;
-    lifetime = 10;
-    age = 0;
-    not_observed_time = 0;
+    initialize();
 }
 
 Obstacle::Obstacle(const Obstacle& obstacle)
@@ -65,10 +50,15 @@ Obstacle::Obstacle(const Eigen::Vector2d& position)
 {
     x << position(0), position(1), 0.0, 0.0;
 
-    p << 1e2, 0.0, 0.0, 0.0,
-         0.0, 1e2, 0.0, 0.0,
-         0.0, 0.0, 1e2, 0.0,
-         0.0, 0.0, 0.0, 1e2;
+    initialize();
+}
+
+void Obstacle::initialize(void)
+{
+    p << 1e1, 0.0, 0.0, 0.0,
+         0.0, 1e1, 0.0, 0.0,
+         0.0, 0.0, 1e1, 0.0,
+         0.0, 0.0, 0.0, 1e1;
 
     h << 1.0, 0.0, 0.0, 0.0,
          0.0, 1.0, 0.0, 0.0;

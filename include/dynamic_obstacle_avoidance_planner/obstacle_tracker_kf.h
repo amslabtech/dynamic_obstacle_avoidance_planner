@@ -40,6 +40,8 @@ public:
     double age;
     double not_observed_time;
 private:
+    void initialize(void);
+
     Eigen::Matrix2d r;
     KalmanFilter kf;
     double last_time;
