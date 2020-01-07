@@ -2,7 +2,7 @@
 
 KalmanFilter::KalmanFilter(void)
 {
-    sigma_a = 0.01;
+    sigma_a = 0.1;
 }
 
 Eigen::Matrix4d KalmanFilter::get_f(double dt)
