@@ -191,7 +191,7 @@ int main(int argc, char** argv)
     local_nh.param<double>("HZ", HZ, {20.0});
     local_nh.param<int>("NUM_OBSTACLE", NUM_OBSTACLE, {20});
     local_nh.param<double>("DESIRED_FORCE_FACTOR", DESIRED_FORCE_FACTOR, {20.0});
-    local_nh.param<double>("SOCIAL_FORCE_FACTOR", SOCIAL_FORCE_FACTOR, {5.0});
+    local_nh.param<double>("SOCIAL_FORCE_FACTOR", SOCIAL_FORCE_FACTOR, {20.0});
     local_nh.param<double>("SIMULATION_SQUARE_LENGTH", SIMULATION_SQUARE_LENGTH, {15.0});
 
     std::cout << "HZ: " << HZ << std::endl;
