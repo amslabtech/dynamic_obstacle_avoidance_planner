@@ -43,6 +43,7 @@ def process():
     # print MAX_D_YAWRATE
 
     odom_pub = rospy.Publisher("/odom", Odometry, queue_size=1)
+    pose_pub = rospy.Publisher("pose", PoseStamped, queue_size=1)
     rospy.Subscriber(VELOCITY_TOPIC_NAME, Twist, velocity_callback)
     rospy.Subscriber("/stop", Empty, stop_callback)
 
@@ -54,6 +55,7 @@ def process():
     pose.pose.orientation.w = 1
     pose.header.frame_id = ROBOT_FRAME
 
+    global velocity
     velocity.linear.x = 0
     velocity.linear.y = 0
     velocity.angular.z = 0
@@ -66,7 +68,6 @@ def process():
             velocity.linear.x = 0
             velocity.linear.y = 0
 
-        global velocity
         print "velocity"
         # print velocity
         dt = 1. / HZ
@@ -103,6 +104,7 @@ def process():
         odom.twist.twist = cmd
         odom_pub.publish(odom)
         print pose
+        pose_pub.publish(pose)
         r.sleep()
 
 if __name__=='__main__':
