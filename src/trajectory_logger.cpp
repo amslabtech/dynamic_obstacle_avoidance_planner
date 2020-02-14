@@ -106,6 +106,7 @@ int main(int argc, char** argv)
     robot_trajectory_viz.scale.x = 0.02;
     robot_trajectory_viz.color.b = 1.0;
     robot_trajectory_viz.color.a = 0.8;
+    robot_trajectory_viz.pose.orientation.w = 1;
 
     while(ros::ok()){
         static int count = 0;
