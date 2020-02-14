@@ -103,6 +103,7 @@ def process():
         odom.pose.pose = pose.pose
         odom.twist.twist = cmd
         odom_pub.publish(odom)
+        pose.header = odom.header
         print pose
         pose_pub.publish(pose)
         r.sleep()
