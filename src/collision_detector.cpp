@@ -44,6 +44,11 @@ void CollisionDetector::process(void)
     ros::Rate loop_rate(10);
 
     std::cout << "=== collision detector ===" << std::endl;
+
+    unsigned int collision_count = 0;
+
+    std::map<int, bool> collision_list;
+
     while(ros::ok()){
         bool transformed_flag = false;
         try{
@@ -60,8 +65,17 @@ void CollisionDetector::process(void)
             int obs_num = obstacles.poses.size();
             // std::cout << "obs num:" << obs_num << std::endl;
             for(int i=0;i<obs_num;i++){
-                if(detect_collision(current_robot.pose, obstacles.poses[i])){
+                bool is_collision = detect_collision(current_robot.pose, obstacles.poses[i]);
+                if(is_collision){
                     ROS_INFO_STREAM("\033[31m" << "collision detected with obs" << std::to_string(i) << "\033[0m");
+                    if(collision_list[i] == false){
+                        // new collision
+                        collision_count++;
+                        std::cout << "\033[033m" << "collision count: " << collision_count << "\033[0m" << std::endl;
+                    }
+                    collision_list[i] = true;
+                }else{
+                    collision_list[i] = false;
                 }
             }
             obstacles.poses.clear();
