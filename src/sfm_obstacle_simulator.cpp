@@ -4,6 +4,7 @@
 #include <geometry_msgs/PoseArray.h>
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 
 #include <Eigen/Dense>
 
@@ -18,6 +19,8 @@ double DESIRED_FORCE_FACTOR;
 double SOCIAL_FORCE_FACTOR;
 double HZ;
 
+
+std::string ROBOT_FRAME;
 std::string WORLD_FRAME;
 std::string OBS_FRAME;
 double SIMULATION_SQUARE_LENGTH;
@@ -157,7 +160,9 @@ void simulate_one_step(std::vector<SFMObstacle>& obstacles, double dt)
     if(dt < 0.0){
         return;
     }
+    // std::cout << "simulate one step" << std::endl;
     for(auto& obs : obstacles){
+        // std::cout << obs << std::endl;
         Eigen::Vector3d relative_goal = obs.current_goal - obs.pose;
         if(relative_goal.norm() < 0.5){
             obs.current_goal = Eigen::Vector3d::Random() * SIMULATION_SQUARE_LENGTH * 0.5;
@@ -166,15 +171,19 @@ void simulate_one_step(std::vector<SFMObstacle>& obstacles, double dt)
         }
         Eigen::Vector3d desired_force = get_desired_force(obs);
         obs.last_desired_force = desired_force;
+        // std::cout << obs.last_desired_force.transpose() << std::endl;
         Eigen::Vector3d social_force = get_social_force(obs, obstacles);
         obs.last_social_force = social_force;
+        // std::cout << obs.last_social_force.transpose() << std::endl;
         Eigen::Vector3d force = DESIRED_FORCE_FACTOR * desired_force + SOCIAL_FORCE_FACTOR * social_force;
         obs.velocity += obs.velocity + force * dt;
+        // std::cout << obs.velocity.transpose() << std::endl;
         double speed = obs.velocity.norm();
         if(speed > obs.preferred_speed){
             obs.velocity = obs.velocity.normalized() * obs.preferred_speed;
         }
         obs.pose += obs.velocity * dt;
+        // std::cout << obs.pose.transpose() << std::endl;
     }
 }
 
@@ -186,6 +195,7 @@ int main(int argc, char** argv)
 
     ros::NodeHandle local_nh("~");
 
+    local_nh.param<std::string>("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME, {"base_link"});
     local_nh.param<std::string>("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME, {"map"});
     local_nh.param<std::string>("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME, {"obs"});
     local_nh.param<double>("HZ", HZ, {20.0});
@@ -202,8 +212,6 @@ int main(int argc, char** argv)
 
     ros::Rate loop_rate(HZ);
 
-    std::vector<geometry_msgs::TransformStamped> obs_list;
-    obs_list.clear();
     tf::TransformBroadcaster obs_broadcaster;
 
     srand((unsigned int)time(0));// for Eigen
@@ -229,13 +237,65 @@ int main(int argc, char** argv)
         obstacles.push_back(o);
     }
 
+    tf::TransformListener listener;
+
     while(ros::ok()){
+        bool robot_added_flag = false;
+        try{
+            static bool first_tf_flag = true;
+            static double last_tf_time = 0;
+            static Eigen::Vector3d last_robot_pose = Eigen::Vector3d::Zero();
+            Eigen::Vector3d robot_velocity = Eigen::Vector3d::Zero();
+            Eigen::Vector3d robot_pose = Eigen::Vector3d::Zero();
+
+            geometry_msgs::PoseStamped robot_p;
+            robot_p.header.frame_id = ROBOT_FRAME;
+            robot_p.header.stamp = ros::Time(0);
+            robot_p.pose.orientation = tf::createQuaternionMsgFromYaw(0);
+            listener.transformPose(WORLD_FRAME, robot_p, robot_p);
+            robot_pose(0) = robot_p.pose.position.x;
+            robot_pose(1) = robot_p.pose.position.y;
+            if(!first_tf_flag){
+                double dt = robot_p.header.stamp.toSec() - last_tf_time;
+                if(dt > 1e-4){
+                    robot_velocity = (robot_pose - last_robot_pose) / dt;
+                }else{
+                    robot_velocity = Eigen::Vector3d::Zero();
+                }
+            }else{
+                first_tf_flag = false;
+            }
+            SFMObstacle robot_o;
+            robot_o.id = obstacles.size();
+            robot_o.pose = robot_pose;
+            robot_o.velocity = robot_velocity;
+            robot_o.current_goal = robot_o.pose + robot_o.velocity * 5.0;// 5[s] after
+            obstacles.push_back(robot_o);
+            std::cout << "robot is added" << std::endl;
+            std::cout << robot_o << std::endl;
+            std::cout << robot_p.header.stamp.toSec() - last_tf_time << std::endl;
+            std::cout << last_robot_pose.transpose() << std::endl;
+
+            robot_added_flag = true;
+            last_robot_pose = robot_pose;
+            last_tf_time = robot_p.header.stamp.toSec();
+        }catch(tf::TransformException& ex){
+            std::cout << ex.what() << std::endl;
+        }
+
         simulate_one_step(obstacles, 1 / HZ);
+
+        if(robot_added_flag){
+            obstacles.pop_back();
+        }
+
+        std::vector<geometry_msgs::TransformStamped> obs_list;
+        obs_list.clear();
         set_obs_list(obstacles, obs_list);
 
         std::cout << "===" << std::endl;
         for(const auto obs : obstacles){
-            std::cout << obs << std::endl;
+            // std::cout << obs << std::endl;
         }
 
         obs_broadcaster.sendTransform(obs_list);
