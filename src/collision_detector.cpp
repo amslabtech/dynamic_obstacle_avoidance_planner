@@ -66,7 +66,8 @@ int main(int argc, char** argv)
             if(transformed){
                 for(int i=0;i<obs_num;i++){
                     if(collision_detection(current_robot.pose, obstacles.poses[i])){
-                        std::cout << "\033[31m" << "collision detected with obs" << std::to_string(i) << "\033[0m" << std::endl;
+                        // std::cout << "\033[31m" << "collision detected with obs" << std::to_string(i) << "\033[0m" << std::endl;
+                        ROS_INFO_STREAM("\033[31m" << "collision detected with obs" << std::to_string(i) << "\033[0m");
                     }
                 }
             }
