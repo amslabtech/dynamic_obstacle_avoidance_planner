@@ -30,10 +30,10 @@ private:
 CollisionDetector::CollisionDetector(void)
 :local_nh("~")
 {
-    local_nh.getParam("/dynamic_avoidance/RADIUS", RADIUS);
-    local_nh.getParam("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME);
-    local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
-    local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_PREFIX);
+    local_nh.param<double>("/dynamic_avoidance/RADIUS", RADIUS, {0.6});
+    local_nh.param<std::string>("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME, {"base_link"});
+    local_nh.param<std::string>("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME, {"world"});
+    local_nh.param<std::string>("/dynamic_avoidance/OBSTACLES_FRAME", OBS_PREFIX, {"obs"});
 }
 
 void CollisionDetector::process(void)
