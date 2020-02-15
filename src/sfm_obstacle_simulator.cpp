@@ -18,6 +18,9 @@ double MAX_VELOCITY = 1.5;
 double DESIRED_FORCE_FACTOR;
 double SOCIAL_FORCE_FACTOR;
 double HZ;
+double INITIAL_KEEP_OUT_POSITION_X;
+double INITIAL_KEEP_OUT_POSITION_Y;
+double INITIAL_KEEP_OUT_RANGE;
 
 
 std::string ROBOT_FRAME;
@@ -201,14 +204,20 @@ int main(int argc, char** argv)
     local_nh.param<double>("HZ", HZ, {20.0});
     local_nh.param<int>("NUM_OBSTACLE", NUM_OBSTACLE, {20});
     local_nh.param<double>("DESIRED_FORCE_FACTOR", DESIRED_FORCE_FACTOR, {20.0});
-    local_nh.param<double>("SOCIAL_FORCE_FACTOR", SOCIAL_FORCE_FACTOR, {20.0});
-    local_nh.param<double>("SIMULATION_SQUARE_LENGTH", SIMULATION_SQUARE_LENGTH, {15.0});
+    local_nh.param<double>("SOCIAL_FORCE_FACTOR", SOCIAL_FORCE_FACTOR, {100.0});
+    local_nh.param<double>("SIMULATION_SQUARE_LENGTH", SIMULATION_SQUARE_LENGTH, {20.0});
+    local_nh.param<double>("INITIAL_KEEP_OUT_POSITION_X", INITIAL_KEEP_OUT_POSITION_X, {-10.0});
+    local_nh.param<double>("INITIAL_KEEP_OUT_POSITION_Y", INITIAL_KEEP_OUT_POSITION_Y, {0.0});
+    local_nh.param<double>("INITIAL_KEEP_OUT_RANGE", INITIAL_KEEP_OUT_RANGE, {3.0});
 
     std::cout << "HZ: " << HZ << std::endl;
     std::cout << "NUM_OBSTACLE: " << NUM_OBSTACLE << std::endl;
     std::cout << "DESIRED_FORCE_FACTOR: " << DESIRED_FORCE_FACTOR << std::endl;
     std::cout << "SOCIAL_FORCE_FACTOR: " << SOCIAL_FORCE_FACTOR << std::endl;
     std::cout << "SIMULATION_SQUARE_LENGTH: " << SIMULATION_SQUARE_LENGTH << std::endl;
+    std::cout << "INITIAL_KEEP_OUT_POSITION_X: " << INITIAL_KEEP_OUT_POSITION_X << std::endl;
+    std::cout << "INITIAL_KEEP_OUT_POSITION_Y: " << INITIAL_KEEP_OUT_POSITION_Y << std::endl;
+    std::cout << "INITIAL_KEEP_OUT_RANGE: " << INITIAL_KEEP_OUT_RANGE << std::endl;
 
     ros::Rate loop_rate(HZ);
 
@@ -223,11 +232,17 @@ int main(int argc, char** argv)
     std::vector<SFMObstacle> obstacles;
     obstacles.clear();
     // initialize
+    Eigen::Vector3d init_pos(INITIAL_KEEP_OUT_POSITION_X, INITIAL_KEEP_OUT_POSITION_Y, 0.0);
     for(int i=0;i<NUM_OBSTACLE;i++){
         SFMObstacle o;
         o.id = i;
-        o.pose = Eigen::Vector3d::Random() * SIMULATION_SQUARE_LENGTH * 0.5;
-        o.pose(2) = 0;
+        while(1){
+            o.pose = Eigen::Vector3d::Random() * SIMULATION_SQUARE_LENGTH * 0.5;
+            o.pose(2) = 0;
+            if((o.pose - init_pos).norm() > INITIAL_KEEP_OUT_RANGE){
+                break;
+            }
+        }
         o.velocity = Eigen::Vector3d::Random();
         o.velocity(2) = 0;
         o.current_goal = Eigen::Vector3d::Random() * SIMULATION_SQUARE_LENGTH * 0.5;
