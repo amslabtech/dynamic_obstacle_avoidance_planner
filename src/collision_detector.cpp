@@ -51,11 +51,13 @@ void CollisionDetector::process(void)
 
     while(ros::ok()){
         bool transformed_flag = false;
+        geometry_msgs::Twist robot_vel;
         try{
             tf::StampedTransform transform;
             listener.lookupTransform(WORLD_FRAME, ROBOT_FRAME, ros::Time(0), transform);
             current_robot.header.stamp = transform.stamp_;
             tf::poseTFToMsg(transform, current_robot.pose);
+            listener.lookupTwist(ROBOT_FRAME, WORLD_FRAME, ros::Time(0), ros::Duration(0.1), robot_vel);
             transformed_flag = true;
         }catch(tf::TransformException& ex){
             std::cout << ex.what() << std::endl;
@@ -72,6 +74,7 @@ void CollisionDetector::process(void)
                         // new collision
                         collision_count++;
                         std::cout << "\033[033m" << "collision count: " << collision_count << "\033[0m" << std::endl;
+                        std::cout << "robot speed: " << sqrt(robot_vel.linear.x * robot_vel.linear.x + robot_vel.linear.y * robot_vel.linear.y) << "[m/s]" << std::endl;
                     }
                     collision_list[i] = true;
                 }else{
