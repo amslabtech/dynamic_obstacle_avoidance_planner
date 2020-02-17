@@ -6,6 +6,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/Int32.h>
 
+#include <Eigen/Dense>
+
 class CollisionDetector
 {
 public:
@@ -51,13 +53,22 @@ void CollisionDetector::process(void)
 
     while(ros::ok()){
         bool transformed_flag = false;
-        geometry_msgs::Twist robot_vel;
+        static Eigen::Vector3d last_robot_position = Eigen::Vector3d::Zero();
+        double robot_speed = 0;
         try{
+            static double last_transform_time = ros::Time::now().toSec();
             tf::StampedTransform transform;
             listener.lookupTransform(WORLD_FRAME, ROBOT_FRAME, ros::Time(0), transform);
             current_robot.header.stamp = transform.stamp_;
+            double transform_time = current_robot.header.stamp.toSec();
             tf::poseTFToMsg(transform, current_robot.pose);
-            listener.lookupTwist(ROBOT_FRAME, WORLD_FRAME, ros::Time(0), ros::Duration(0.1), robot_vel);
+            Eigen::Vector3d robot_position(current_robot.pose.position.x, current_robot.pose.position.y, current_robot.pose.position.z);
+            double dt = transform_time - last_transform_time;
+            if(dt > 0.0){
+                robot_speed = (robot_position - last_robot_position).norm() / dt;
+            }
+            last_robot_position = robot_position;
+            last_transform_time = transform_time;
             transformed_flag = true;
         }catch(tf::TransformException& ex){
             std::cout << ex.what() << std::endl;
@@ -74,7 +85,9 @@ void CollisionDetector::process(void)
                         // new collision
                         collision_count++;
                         std::cout << "\033[033m" << "collision count: " << collision_count << "\033[0m" << std::endl;
-                        std::cout << "robot speed: " << sqrt(robot_vel.linear.x * robot_vel.linear.x + robot_vel.linear.y * robot_vel.linear.y) << "[m/s]" << std::endl;
+                        // std::cout << "robot speed: " << sqrt(robot_vel.linear.x * robot_vel.linear.x + robot_vel.linear.y * robot_vel.linear.y) << "[m/s]" << std::endl;
+                        std::cout << "robot speed: " << robot_speed << "[m/s]" << std::endl;
+                        // std::cout << robot_vel << std::endl;
                     }
                     collision_list[i] = true;
                 }else{
