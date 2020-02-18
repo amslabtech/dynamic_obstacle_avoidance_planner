@@ -9,7 +9,7 @@
 #include <Eigen/Dense>
 
 int NUM_OBSTACLE;
-double NEIGHBER_RANGE = 3.0;
+double NEIGHBER_RANGE = 5.0;
 double LAMBDA = 2.0;
 double GAMMA = 0.35;
 double N_PRIME = 3.0;
@@ -100,7 +100,7 @@ Eigen::Vector3d get_social_force(const SFMObstacle& agent, const std::vector<SFM
         double agent_angle = atan2(agent.velocity(1), agent.velocity(0));
         double angle_fov = other_angle - agent_angle;
         angle_fov = atan2(sin(angle_fov), cos(angle_fov));
-        if(fabs(angle_fov) > M_PI / 6.0){
+        if(fabs(angle_fov) > M_PI * 5.0 / 6.0){
             continue;
         }
 
@@ -113,7 +113,7 @@ Eigen::Vector3d get_social_force(const SFMObstacle& agent, const std::vector<SFM
         double theta_angle = other_angle - interaction_angle;
         theta_angle = atan2(sin(theta_angle), cos(theta_angle));
 
-        double sign_of_theta = (fabs(theta_angle) < 1e-2) ? 0.0 : theta_angle / fabs(theta_angle);
+        double sign_of_theta = (fabs(theta_angle) == 0.00) ? 0.0 : theta_angle / fabs(theta_angle);
 
         double b = GAMMA * interaction_vector.norm();
 
@@ -310,7 +310,7 @@ int main(int argc, char** argv)
 
         std::cout << "===" << std::endl;
         for(const auto obs : obstacles){
-            // std::cout << obs << std::endl;
+            std::cout << obs << std::endl;
         }
 
         obs_broadcaster.sendTransform(obs_list);
