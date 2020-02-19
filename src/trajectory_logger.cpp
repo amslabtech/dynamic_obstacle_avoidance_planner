@@ -140,7 +140,7 @@ int main(int argc, char** argv)
             tf::poseStampedTFToMsg(tf::Stamped<tf::Transform>(robot_transform, robot_transform.stamp_, robot_transform.frame_id_), pose);
             robot_path.poses.push_back(pose);
             visualization_msgs::Marker viz;
-            viz = get_marker(visualization_msgs::Marker::CYLINDER, 0.6, 0.6, 0.2, 0, 1, 0, pose.pose, WORLD_FRAME, "robot");
+            viz = get_marker(visualization_msgs::Marker::CUBE, 0.6, 0.6, 0.2, 0, 1, 0, pose.pose, WORLD_FRAME, "robot");
             viz.header.stamp = ros::Time::now();
             viz.lifetime = ros::Duration();
             static bool first_flag = true;
@@ -172,7 +172,7 @@ int main(int argc, char** argv)
                 tf::poseStampedTFToMsg(tf::Stamped<tf::Transform>(obs_transform, obs_transform.stamp_, obs_transform.frame_id_), pose);
                 obs_path.poses.push_back(pose);
                 visualization_msgs::Marker viz;
-                viz = get_marker(visualization_msgs::Marker::CYLINDER, 0.6, 0.6, 0.2, 1, 0, 0, pose.pose, WORLD_FRAME, obs_name);
+                viz = get_marker(visualization_msgs::Marker::CUBE, 0.6, 0.6, 0.2, 1, 0, 0, pose.pose, WORLD_FRAME, obs_name);
                 viz.header.stamp = ros::Time::now();
                 viz.lifetime = ros::Duration();
                 std::cout << viz << std::endl;
