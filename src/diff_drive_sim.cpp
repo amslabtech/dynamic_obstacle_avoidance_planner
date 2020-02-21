@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     local_nh.getParam("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME);
     local_nh.getParam("/dynamic_avoidance/OBSTACLES_FRAME", OBS_FRAME);
 
-    NUM = 3;
+    NUM = 5;
 
     obs_list.resize(NUM);
 
@@ -42,9 +42,12 @@ int main(int argc, char** argv)
         obs_list[i].child_frame_id = OBS_FRAME + std::to_string(i);
         set_pose(i, 0, 0, 0);
     }
-    set_pose(0, 20, 0.0, M_PI);
+    set_pose(0, -5, 0.5, 0);
+    // set_pose(0, 20, 0.0, M_PI);
     set_pose(1, 8.2, 4.2, -3*M_PI/4.0);
     set_pose(2, 11.0, -3.6, 5*M_PI/6.0);
+    set_pose(3, 10, 1.0, M_PI);
+    set_pose(4, 15, -0.5, M_PI);
 
     ros::Rate loop_rate(HZ);
 
@@ -52,9 +55,11 @@ int main(int argc, char** argv)
 
     while(ros::ok()){
         // 速度
-        update(0, 1.2, 0);
-        update(1, 1.2, 0);
-        update(2, 1.2, 0);
+        update(0, 1.5, 0);
+        update(1, 1.5, 0);
+        update(2, 1.5, 0);
+        update(3, 1.5, 0);
+        update(4, 1.5, 0);
         obs_broadcaster.sendTransform(obs_list);
 
         ros::spinOnce();
@@ -85,7 +90,7 @@ void update(int index, double v, double omega)
 {
     std::random_device seed_gen;
     std::default_random_engine engine(seed_gen());
-    std::normal_distribution<> dist(0.0, 0.05);
+    std::normal_distribution<> dist(0.0, 0.20);
     obs_list[index].header.stamp = ros::Time::now();
     double yaw = tf::getYaw(obs_list[index].transform.rotation);
     v += dist(engine);
