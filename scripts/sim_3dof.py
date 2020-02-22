@@ -3,6 +3,7 @@
 import rospy
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Quaternion
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Empty
 import tf
@@ -35,12 +36,19 @@ def process():
     global MAX_D_YAWRATE
     ROBOT_FRAME = rospy.get_param("/dynamic_avoidance/ROBOT_FRAME")
     VELOCITY_TOPIC_NAME = rospy.get_param("/dynamic_avoidance/VELOCITY_TOPIC_NAME")
-    MAX_ACCELERATION = rospy.get_param("MAX_ACCELERATION", 1.0)
-    MAX_YAWRATE = rospy.get_param("MAX_ANGULAR_VELOCITY", 1.0)
-    MAX_D_YAWRATE = rospy.get_param("MAX_ANGULAR_ACCCELERATION", 3.14)
+    MAX_ACCELERATION = rospy.get_param("~MAX_ACCELERATION", 1.0)
+    MAX_YAWRATE = rospy.get_param("/dynamic_avoidance/MAX_ANGULAR_VELOCITY", 1.0)
+    MAX_D_YAWRATE = rospy.get_param("/dynamic_avoidance/MAX_ANGULAR_ACCCELERATION", 3.14)
+    INIT_X = rospy.get_param("~INIT_X", 0)
+    INIT_Y = rospy.get_param("~INIT_Y", 0)
+    INIT_YAW = rospy.get_param("~INIT_YAW", 0)
 
-    # print MAX_ACCELERATION
-    # print MAX_D_YAWRATE
+    print MAX_ACCELERATION
+    print MAX_YAWRATE
+    print MAX_D_YAWRATE
+    print INIT_X
+    print INIT_Y
+    print INIT_YAW
 
     odom_pub = rospy.Publisher("/odom", Odometry, queue_size=1)
     pose_pub = rospy.Publisher("pose", PoseStamped, queue_size=1)
@@ -51,8 +59,9 @@ def process():
 
     br = tf.TransformBroadcaster()
 
-    pose.pose.position.x = -10
-    pose.pose.orientation.w = 1
+    pose.pose.position.x = INIT_X
+    pose.pose.position.y = INIT_Y
+    pose.pose.orientation = Quaternion(*(tf.transformations.quaternion_from_euler(0, 0, INIT_YAW)))
     pose.header.frame_id = ROBOT_FRAME
 
     global velocity

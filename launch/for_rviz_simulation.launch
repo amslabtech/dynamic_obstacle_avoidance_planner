@@ -6,7 +6,11 @@
     <include file="$(find dynamic_obstacle_avoidance_planner)/launch/tf_to_obstacles.launch">
         <arg name="noise_enabled" value="true"/>
     </include>
-    <node pkg="dynamic_obstacle_avoidance_planner" type="sim_3dof.py" name="sim_3dof"/>
+    <node pkg="dynamic_obstacle_avoidance_planner" type="sim_3dof.py" name="sim_3dof">
+        <param name="INIT_X" value="-10.0"/>
+        <param name="INIT_Y" value="0.0"/>
+        <param name="INIT_YAW" value="0.0"/>
+    </node>
     <node pkg="dynamic_obstacle_avoidance_planner" type="waypoints_test" name="waypoints_test"/>
     <node pkg="dynamic_obstacle_avoidance_planner" type="trajectory_logger" name="trajectory_logger"/>
     <node pkg="tf" type="static_transform_publisher" name="map_to_odom_tf_publisher" args="0 0 0 0 0 0 /map /odom 10"/>
