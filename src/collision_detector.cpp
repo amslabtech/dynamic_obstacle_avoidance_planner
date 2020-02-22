@@ -4,7 +4,7 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <std_msgs/Int32.h>
+#include <std_msgs/Float64MultiArray.h>
 
 #include <Eigen/Dense>
 
@@ -26,7 +26,11 @@ private:
     ros::NodeHandle nh;
     ros::NodeHandle local_nh;
 
+    ros::Publisher collision_pub;
+
     tf::TransformListener listener;
+
+    double min_distance;
 };
 
 CollisionDetector::CollisionDetector(void)
@@ -36,6 +40,10 @@ CollisionDetector::CollisionDetector(void)
     local_nh.param<std::string>("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME, {"base_link"});
     local_nh.param<std::string>("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME, {"world"});
     local_nh.param<std::string>("/dynamic_avoidance/OBSTACLES_FRAME", OBS_PREFIX, {"obs"});
+
+    collision_pub = nh.advertise<std_msgs::Float64MultiArray>("/collision_info", 1);
+
+    min_distance = 1e6;
 }
 
 void CollisionDetector::process(void)
@@ -95,6 +103,10 @@ void CollisionDetector::process(void)
                 }
             }
             obstacles.poses.clear();
+            std_msgs::Float64MultiArray data;
+            data.data.push_back(collision_count);
+            data.data.push_back(min_distance);
+            collision_pub.publish(data);
         }
         ros::spinOnce();
         loop_rate.sleep();
@@ -117,7 +129,6 @@ bool CollisionDetector::detect_collision(geometry_msgs::Pose p0, geometry_msgs::
     double dx = p0.position.x - p1.position.x;
     double dy = p0.position.y - p1.position.y;
     double distance = sqrt(dx*dx + dy*dy);
-    static double min_distance = 1e6;
     if(distance < min_distance){
         min_distance = distance;
         std::cout << "min distance: " << min_distance << "[m]" << std::endl;
