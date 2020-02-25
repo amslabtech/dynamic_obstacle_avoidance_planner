@@ -15,6 +15,7 @@ double GAMMA = 0.35;
 double N_PRIME = 3.0;
 double N = 2.0;
 double MAX_VELOCITY = 1.5;
+double RELAXATION_TIME = 0.5;
 double DESIRED_FORCE_FACTOR;
 double SOCIAL_FORCE_FACTOR;
 double HZ;
@@ -94,6 +95,7 @@ Eigen::Vector3d get_social_force(const SFMObstacle& agent, const std::vector<SFM
         if (distance > NEIGHBER_RANGE){
             continue;
         }
+        // e_{ij}
         Eigen::Vector3d diff_direction = diff_vector.normalized();
 
         double other_angle = atan2(diff_direction(1), diff_direction(0));
@@ -106,7 +108,9 @@ Eigen::Vector3d get_social_force(const SFMObstacle& agent, const std::vector<SFM
 
         Eigen::Vector3d velocity_diff = agent.velocity - obstacle.velocity;
 
+        // D_{ij}
         Eigen::Vector3d interaction_vector = LAMBDA * velocity_diff + diff_direction;
+        // t_{ij}
         Eigen::Vector3d interaction_direction = interaction_vector.normalized();
 
         double interaction_angle = atan2(interaction_direction(1), interaction_direction(0));
@@ -139,7 +143,9 @@ Eigen::Vector3d get_social_force(const SFMObstacle& agent, const std::vector<SFM
 Eigen::Vector3d get_desired_force(const SFMObstacle& agent)
 {
     Eigen::Vector3d force = Eigen::Vector3d::Zero();
-    force = (agent.current_goal - agent.pose).normalized();
+    // force = (agent.current_goal - agent.pose).normalized();
+    Eigen::Vector3d desired_vector = (agent.current_goal - agent.pose).normalized();
+    force = (agent.preferred_speed * desired_vector - agent.velocity) / RELAXATION_TIME;
     return force;
 }
 
@@ -209,6 +215,8 @@ int main(int argc, char** argv)
     local_nh.param<double>("INITIAL_KEEP_OUT_POSITION_X", INITIAL_KEEP_OUT_POSITION_X, {-10.0});
     local_nh.param<double>("INITIAL_KEEP_OUT_POSITION_Y", INITIAL_KEEP_OUT_POSITION_Y, {0.0});
     local_nh.param<double>("INITIAL_KEEP_OUT_RANGE", INITIAL_KEEP_OUT_RANGE, {3.0});
+    int SEED;
+    local_nh.param<int>("SEED", SEED, {0});
 
     std::cout << "HZ: " << HZ << std::endl;
     std::cout << "NUM_OBSTACLE: " << NUM_OBSTACLE << std::endl;
@@ -218,14 +226,17 @@ int main(int argc, char** argv)
     std::cout << "INITIAL_KEEP_OUT_POSITION_X: " << INITIAL_KEEP_OUT_POSITION_X << std::endl;
     std::cout << "INITIAL_KEEP_OUT_POSITION_Y: " << INITIAL_KEEP_OUT_POSITION_Y << std::endl;
     std::cout << "INITIAL_KEEP_OUT_RANGE: " << INITIAL_KEEP_OUT_RANGE << std::endl;
+    std::cout << "SEED: " << SEED << std::endl;
 
     ros::Rate loop_rate(HZ);
 
     tf::TransformBroadcaster obs_broadcaster;
 
-    srand((unsigned int)time(0));// for Eigen
+    // srand((unsigned int)time(0));// for Eigen
+    srand((unsigned int)SEED);// for Eigen
     std::random_device rnd;
-    std::mt19937 mt(rnd());
+    // std::mt19937 mt(rnd());
+    std::mt19937 mt(SEED);
     std::uniform_real_distribution<> dist(1.0, MAX_VELOCITY);
     std::uniform_int_distribution<> dist_bool(0, 1);
 
@@ -250,6 +261,7 @@ int main(int argc, char** argv)
         o.preferred_speed = dist(mt);
         o.dodging_right = dist(mt);
         obstacles.push_back(o);
+        std::cout << o << std::endl;
     }
 
     tf::TransformListener listener;
@@ -286,10 +298,10 @@ int main(int argc, char** argv)
             robot_o.velocity = robot_velocity;
             robot_o.current_goal = robot_o.pose + robot_o.velocity * 5.0;// 5[s] after
             obstacles.push_back(robot_o);
-            std::cout << "robot is added" << std::endl;
-            std::cout << robot_o << std::endl;
-            std::cout << robot_p.header.stamp.toSec() - last_tf_time << std::endl;
-            std::cout << last_robot_pose.transpose() << std::endl;
+            // std::cout << "robot is added" << std::endl;
+            // std::cout << robot_o << std::endl;
+            // std::cout << robot_p.header.stamp.toSec() - last_tf_time << std::endl;
+            // std::cout << last_robot_pose.transpose() << std::endl;
 
             robot_added_flag = true;
             last_robot_pose = robot_pose;
