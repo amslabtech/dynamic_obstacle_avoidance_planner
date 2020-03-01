@@ -216,7 +216,7 @@ int main(int argc, char** argv)
     local_nh.param<double>("INITIAL_KEEP_OUT_POSITION_Y", INITIAL_KEEP_OUT_POSITION_Y, {0.0});
     local_nh.param<double>("INITIAL_KEEP_OUT_RANGE", INITIAL_KEEP_OUT_RANGE, {3.0});
     int SEED;
-    local_nh.param<int>("SEED", SEED, {0});
+    local_nh.param<int>("SEED", SEED, {-1});
 
     std::cout << "HZ: " << HZ << std::endl;
     std::cout << "NUM_OBSTACLE: " << NUM_OBSTACLE << std::endl;
@@ -233,10 +233,10 @@ int main(int argc, char** argv)
     tf::TransformBroadcaster obs_broadcaster;
 
     // srand((unsigned int)time(0));// for Eigen
-    srand((unsigned int)SEED);// for Eigen
+    // srand((unsigned int)SEED);// for Eigen
+    srand(SEED < 0 ? (unsigned int)time(0) : (unsigned int)SEED);// for Eigen
     std::random_device rnd;
-    // std::mt19937 mt(rnd());
-    std::mt19937 mt(SEED);
+    std::mt19937 mt(SEED < 0 ? rnd() : SEED);
     std::uniform_real_distribution<> dist(1.0, MAX_VELOCITY);
     std::uniform_int_distribution<> dist_bool(0, 1);
 
