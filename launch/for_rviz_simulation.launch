@@ -2,7 +2,13 @@
 
 <launch>
 
-    <include file="$(find dynamic_obstacle_avoidance_planner)/launch/diff_drive_sim.launch"/>
+    <!-- <include file="$(find dynamic_obstacle_avoidance_planner)/launch/diff_drive_sim.launch"/> -->
+    <node pkg="dynamic_obstacle_avoidance_planner" type="sfm_obstacle_simulator" name="sfm_obstacle_simulator">
+        <param name="SIMULATION_SQUARE_LENGTH" value="20"/>
+        <param name="DESIRED_FORCE_FACTOR" value="1.0"/>
+        <param name="SOCIAL_FORCE_FACTOR" value="20.0"/>
+        <param name="NUM_OBSTACLE" value="30"/>
+    </node>
     <include file="$(find dynamic_obstacle_avoidance_planner)/launch/tf_to_obstacles.launch">
         <arg name="noise_enabled" value="true"/>
     </include>
