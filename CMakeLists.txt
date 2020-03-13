@@ -61,6 +61,7 @@ add_executable(tf_to_obstacles src/tf_to_obstacles.cpp)
 add_executable(static_local_costmap_generator src/static_local_costmap_generator.cpp)
 add_executable(obstacle_tracker_kf_demo src/demo/obstacle_tracker_kf_demo.cpp)
 add_executable(sfm_obstacle_simulator src/sfm_obstacle_simulator.cpp)
+add_executable(measurer src/measurer.cpp)
 
 target_link_libraries(path_to_local_goal
   ${catkin_LIBRARIES}
@@ -117,5 +118,8 @@ target_link_libraries(obstacle_tracker_kf_demo
   obstacle_tracker_kf
 )
 target_link_libraries(sfm_obstacle_simulator
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(measurer
   ${catkin_LIBRARIES}
 )
