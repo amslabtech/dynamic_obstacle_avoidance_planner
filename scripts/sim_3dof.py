@@ -52,6 +52,7 @@ def process():
 
     odom_pub = rospy.Publisher("/odom", Odometry, queue_size=1)
     pose_pub = rospy.Publisher("pose", PoseStamped, queue_size=1)
+    vel_pub = rospy.Publisher("/velocity/debug", Twist, queue_size=1)
     rospy.Subscriber(VELOCITY_TOPIC_NAME, Twist, velocity_callback)
     rospy.Subscriber("/stop", Empty, stop_callback)
 
@@ -94,6 +95,7 @@ def process():
         # print ang_acc_z
         cmd.angular.z += ang_acc_z * dt
         print cmd
+        vel_pub.publish(cmd)
 
         q_list = [pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w]
         (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(q_list)
