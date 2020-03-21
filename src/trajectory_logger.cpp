@@ -16,6 +16,9 @@ std::string OBS_PREFIX;
 std::string WORLD_FRAME;
 double PREDICTION_TIME;
 int PREDICTION_STEP;
+const double TRAJ_WIDTH = 0.03;
+
+typedef std::map<std::string, visualization_msgs::Marker> NamedTrajectory;
 
 void path_callback(const geometry_msgs::PoseArrayConstPtr& msg)
 {
@@ -53,6 +56,15 @@ visualization_msgs::Marker get_marker(int type, double sx, double sy, double sz,
     return m;
 }
 
+visualization_msgs::MarkerArray get_obs_trajectory_markers(const NamedTrajectory& trajectories)
+{
+    visualization_msgs::MarkerArray ma;
+    for(const auto& traj : trajectories){
+        ma.markers.push_back(traj.second);
+    }
+    return ma;
+}
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "trajectory_logger");
@@ -71,25 +83,17 @@ int main(int argc, char** argv)
 
     tf::TransformListener listener;
 
-    ros::Publisher robot_path_pub = nh.advertise<nav_msgs::Path>("/trajectory/robot", 1);
-    ros::Publisher obs_path_pub = nh.advertise<nav_msgs::Path>("/trajectory/obs", 1);
     ros::Publisher robot_viz_pub = nh.advertise<visualization_msgs::Marker>("/marker/robot", 1);
     ros::Publisher obs_viz_pub = nh.advertise<visualization_msgs::MarkerArray>("/marker/obs", 1);
-    ros::Publisher robot_viz_array_pub = nh.advertise<visualization_msgs::MarkerArray>("/markers/robot", 1);
-    ros::Publisher obs_viz_array_pub = nh.advertise<visualization_msgs::MarkerArray>("/markers/obs", 1);
     ros::Publisher robot_trajectory_viz_pub = nh.advertise<visualization_msgs::Marker>("/robot_passed_trajectory", 1);
+    ros::Publisher obs_trajectory_viz_pub = nh.advertise<visualization_msgs::MarkerArray>("/obs_passed_trajectory", 1);
 
     ros::Subscriber robot_path_sub = nh.subscribe("/robot_predicted_path", 1, path_callback);
     ros::Publisher robot_line_pub = nh.advertise<visualization_msgs::Marker>("/lines", 1);
 
-    nav_msgs::Path robot_path;
-    nav_msgs::Path obs_path;
     visualization_msgs::MarkerArray robot_viz;
     visualization_msgs::MarkerArray obs_viz;
     visualization_msgs::Marker robot_trajectory_viz;
-
-    robot_path.header.frame_id = WORLD_FRAME;
-    obs_path.header.frame_id = WORLD_FRAME;
 
     lines.type = visualization_msgs::Marker::LINE_LIST;
     lines.lifetime = ros::Duration(0.01);
@@ -103,10 +107,12 @@ int main(int argc, char** argv)
     robot_trajectory_viz.action = visualization_msgs::Marker::ADD;
     robot_trajectory_viz.header.frame_id = WORLD_FRAME;
     robot_trajectory_viz.ns = "robot_trajectory";
-    robot_trajectory_viz.scale.x = 0.02;
+    robot_trajectory_viz.scale.x = TRAJ_WIDTH;
     robot_trajectory_viz.color.b = 1.0;
     robot_trajectory_viz.color.a = 0.8;
     robot_trajectory_viz.pose.orientation.w = 1;
+
+    NamedTrajectory obs_trajectories;
 
     while(ros::ok()){
         static int count = 0;
@@ -126,6 +132,20 @@ int main(int argc, char** argv)
                     res.dot_graph.erase(0, double_quotation_pos);
                     std::cout << obs_name << std::endl;
                     obs_names.emplace_back(obs_name);
+                    if(obs_trajectories.find(obs_name) == obs_trajectories.end()){
+                        // obstacle with new name
+                        visualization_msgs::Marker obs_traj_marker;
+                        obs_traj_marker.type = visualization_msgs::Marker::LINE_STRIP;
+                        obs_traj_marker.lifetime = ros::Duration();
+                        obs_traj_marker.action = visualization_msgs::Marker::ADD;
+                        obs_traj_marker.header.frame_id = WORLD_FRAME;
+                        obs_traj_marker.scale.x = TRAJ_WIDTH;
+                        obs_traj_marker.color.r = 1.0;
+                        obs_traj_marker.color.a = 0.8;
+                        obs_traj_marker.pose.orientation.w = 1;
+                        obs_traj_marker.ns = obs_name;
+                        obs_trajectories[obs_name] = obs_traj_marker;
+                    }
                 }else{
                     std::cout << OBS_PREFIX << " was not found" << std::endl;
                     break;
@@ -135,10 +155,8 @@ int main(int argc, char** argv)
         try{
             tf::StampedTransform robot_transform;
             listener.lookupTransform(WORLD_FRAME, ROBOT_FRAME, ros::Time(0), robot_transform);
-            robot_path.header.stamp = robot_transform.stamp_;
             geometry_msgs::PoseStamped pose;
             tf::poseStampedTFToMsg(tf::Stamped<tf::Transform>(robot_transform, robot_transform.stamp_, robot_transform.frame_id_), pose);
-            robot_path.poses.push_back(pose);
             visualization_msgs::Marker viz;
             viz = get_marker(visualization_msgs::Marker::CUBE, 0.6, 0.6, 0.2, 0, 1, 0, pose.pose, WORLD_FRAME, "robot");
             viz.header.stamp = ros::Time::now();
@@ -149,14 +167,6 @@ int main(int argc, char** argv)
                 robot_viz_pub.publish(viz);
             }
             first_flag = false;
-            std::cout << viz << std::endl;
-            viz.lifetime = ros::Duration();
-            if(count == 0){
-                viz.id = count;
-                robot_viz.markers.push_back(viz);
-            }
-            robot_path_pub.publish(robot_path);
-            robot_viz_array_pub.publish(robot_viz);
             robot_line_pub.publish(lines);
             robot_trajectory_viz.points.push_back(pose.pose.position);
             robot_trajectory_viz_pub.publish(robot_trajectory_viz);
@@ -170,26 +180,25 @@ int main(int argc, char** argv)
                 listener.lookupTransform(WORLD_FRAME, obs_name, ros::Time(0), obs_transform);
                 geometry_msgs::PoseStamped pose;
                 tf::poseStampedTFToMsg(tf::Stamped<tf::Transform>(obs_transform, obs_transform.stamp_, obs_transform.frame_id_), pose);
-                obs_path.poses.push_back(pose);
                 visualization_msgs::Marker viz;
                 viz = get_marker(visualization_msgs::Marker::CUBE, 0.6, 0.6, 0.2, 1, 0, 0, pose.pose, WORLD_FRAME, obs_name);
                 viz.header.stamp = ros::Time::now();
                 viz.lifetime = ros::Duration();
                 std::cout << viz << std::endl;
                 obs_markers.markers.push_back(viz);
-                // obs_viz_pub.publish(viz);
-                viz.lifetime = ros::Duration();
-                if(count == 0){
-                    viz.id = count;
-                    obs_viz.markers.push_back(viz);
+                obs_trajectories[obs_name].points.push_back(pose.pose.position);
+                int size = obs_trajectories[obs_name].points.size();
+                const int TRAJ_LIMIT = 300;
+                if(size > TRAJ_LIMIT){
+                    // erase old trajectory
+                    obs_trajectories[obs_name].points.erase(obs_trajectories[obs_name].points.begin(), obs_trajectories[obs_name].points.begin() + (size - TRAJ_LIMIT));
                 }
-                obs_path_pub.publish(obs_path);
-                obs_viz_array_pub.publish(obs_viz);
             }catch(tf::TransformException ex){
                 std::cout << ex.what() << std::endl;
             }
         }
         obs_viz_pub.publish(obs_markers);
+        obs_trajectory_viz_pub.publish(get_obs_trajectory_markers(obs_trajectories));
         count++;
         count %= 10;
 
