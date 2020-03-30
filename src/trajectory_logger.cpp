@@ -74,7 +74,7 @@ int main(int argc, char** argv)
     local_nh.param("/dynamic_avoidance/ROBOT_FRAME", ROBOT_FRAME, {"base_link"});
     local_nh.param("/dynamic_avoidance/WORLD_FRAME", WORLD_FRAME, {"map"});
     local_nh.param("/dynamic_avoidance/PREDICTION_TIME", PREDICTION_TIME, {3.5});
-    local_nh.param("OBS_PREFIX", OBS_PREFIX, {"obs"});
+    local_nh.param("/dynamic_avoidance/OBSTACLES_FRAME", OBS_PREFIX, {"obs"});
     PREDICTION_STEP = PREDICTION_TIME / 0.1 + 1;
 
     std::cout << "=== trajectory_logger ===" << std::endl;
