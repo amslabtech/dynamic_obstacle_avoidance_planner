@@ -54,16 +54,16 @@ class Log4csv:
                     + '\n'
                     )
           f.write(sentence)
-          print sentence
+          print(sentence)
       except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-        print 'exception'
+        print('exception')
 
   def process(self):
     rospy.init_node('log4csv')
     self.vel_sub = rospy.Subscriber(VELOCITY_TOPIC_NAME, Twist, self.vel_callback, queue_size=1)
     self.listener = tf.TransformListener()
     self.first_time = rospy.get_time()
-    print '=== log4csv ==='
+    print('=== log4csv ===')
     rospy.spin()
 
 if __name__=='__main__':

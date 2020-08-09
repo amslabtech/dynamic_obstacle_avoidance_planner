@@ -17,7 +17,7 @@ def process():
   laser_pub = rospy.Publisher("/min_pooling_laser", LaserScan, queue_size=10)
   rospy.Subscriber('/scan', LaserScan, laser_callback)
 
-  print "=== sub laser ==="
+  print("=== sub laser ===")
 
   r = rospy.Rate(HZ)
 

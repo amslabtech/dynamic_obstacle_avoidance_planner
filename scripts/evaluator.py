@@ -36,10 +36,10 @@ def obs_callback(data):
   obs_num = int(_size / PREDICTION_STEP)
   for i in range(obs_num):
     obs_poses.poses.append(obs_paths.poses[i * PREDICTION_STEP])
-  print PREDICTION_TIME
-  print PREDICTION_STEP
-  print _size
-  print obs_num
+  print(PREDICTION_TIME)
+  print(PREDICTION_STEP)
+  print(_size)
+  print(obs_num)
 
 def velocity_callback(data):
   global last_velocity
@@ -49,11 +49,11 @@ def velocity_callback(data):
   last_velocity = data
 
 def path_callback(data):
-  #print "=== path_callback ==="
+  #print("=== path_callback ===")
   global intermediate_path
   intermediate_path = data
   _size = len(intermediate_path.poses)
-  print _size
+  print(_size)
   if(_size > 0):
     global goal
     goal = intermediate_path.poses[_size - 1]
@@ -70,7 +70,7 @@ def is_goal(x, y):
     return False
 
 def process():
-  print "=== evaluator ==="
+  print("=== evaluator ===")
 
   listener = tf.TransformListener()
 
@@ -112,8 +112,8 @@ def process():
       transformed = True
     except(tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
       continue
-    print transformed
-    print goal_subscribed
+    print(transformed)
+    print(goal_subscribed)
     if(transformed and goal_subscribed):
       robot_x = trans[0]
       robot_y = trans[1]
@@ -146,10 +146,10 @@ def process():
       obs_pub.publish(obs_poses)
       if(is_goal(robot_x, robot_y)):
         time_to_goal = rospy.get_time() - time_to_goal
-        print "time_to_goal=" + str(time_to_goal)
+        print("time_to_goal=" + str(time_to_goal))
         return
-    print "closest_distance=" + str(min_distance)
-    print "average_velocity=" + str(ave_velocity)
+    print("closest_distance=" + str(min_distance))
+    print("average_velocity=" + str(ave_velocity))
     r.sleep()
 
 if __name__=='__main__':

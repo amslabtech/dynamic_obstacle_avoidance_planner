@@ -21,10 +21,10 @@ MAX_D_YAWRATE = 0
 HZ = 20.0
 
 def velocity_callback(data):
-    # print "velocity callback"
+    # print("velocity callback")
     global velocity
     velocity = data
-    # print velocity
+    # print(velocity)
 
 def stop_callback(data):
     global stop_flag
@@ -43,12 +43,12 @@ def process():
     INIT_Y = rospy.get_param("~INIT_Y", 0)
     INIT_YAW = rospy.get_param("~INIT_YAW", 0)
 
-    print MAX_ACCELERATION
-    print MAX_YAWRATE
-    print MAX_D_YAWRATE
-    print INIT_X
-    print INIT_Y
-    print INIT_YAW
+    print(MAX_ACCELERATION)
+    print(MAX_YAWRATE)
+    print(MAX_D_YAWRATE)
+    print(INIT_X)
+    print(INIT_Y)
+    print(INIT_YAW)
 
     odom_pub = rospy.Publisher("/odom", Odometry, queue_size=1)
     pose_pub = rospy.Publisher("pose", PoseStamped, queue_size=1)
@@ -56,7 +56,7 @@ def process():
     rospy.Subscriber(VELOCITY_TOPIC_NAME, Twist, velocity_callback)
     rospy.Subscriber("/stop", Empty, stop_callback)
 
-    print "=== sim 3dof ==="
+    print("=== sim 3dof ===")
 
     br = tf.TransformBroadcaster()
 
@@ -78,23 +78,23 @@ def process():
             velocity.linear.x = 0
             velocity.linear.y = 0
 
-        print "velocity"
-        # print velocity
+        print("velocity")
+        # print(velocity)
         dt = 1. / HZ
         acc_x = (velocity.linear.x - cmd.linear.x) / dt
-        # print acc_x
+        # print(acc_x)
         acc_x = max(-MAX_ACCELERATION, min(MAX_ACCELERATION, acc_x))
-        # print acc_x
+        # print(acc_x)
         acc_y = (velocity.linear.y - cmd.linear.y) / dt
         acc_y = max(-MAX_ACCELERATION, min(MAX_ACCELERATION, acc_y))
         cmd.linear.x += acc_x * dt
         cmd.linear.y += acc_y * dt
         ang_acc_z = (velocity.angular.z - cmd.angular.z) / dt
-        # print ang_acc_z
+        # print(ang_acc_z)
         ang_acc_z = max(-MAX_D_YAWRATE, min(MAX_D_YAWRATE, ang_acc_z))
-        # print ang_acc_z
+        # print(ang_acc_z)
         cmd.angular.z += ang_acc_z * dt
-        print cmd
+        print(cmd)
         vel_pub.publish(cmd)
 
         q_list = [pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w]
@@ -115,7 +115,7 @@ def process():
         odom.twist.twist = cmd
         odom_pub.publish(odom)
         pose.header = odom.header
-        print pose
+        print(pose)
         pose_pub.publish(pose)
         r.sleep()
 

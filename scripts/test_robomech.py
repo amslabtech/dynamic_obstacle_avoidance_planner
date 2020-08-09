@@ -25,7 +25,7 @@ def process():
 
   vel_pub = rospy.Publisher(VELOCITY_TOPIC_NAME, Twist)
 
-  print "=== test robomech ==="
+  print("=== test robomech ===")
 
   velocity.linear.x = 0
   velocity.linear.y = 0
@@ -66,23 +66,23 @@ def process():
       dt = current_time - last_time
 
       if not first_flag:
-        print "process"
+        print("process")
         _, _, current_yaw = tf.transformations.euler_from_quaternion(np.reshape(current_orientation, (4)))
         _, _, last_yaw = tf.transformations.euler_from_quaternion(np.reshape(last_orientation, (4)))
         d_base = current_pose - last_pose
 
-        #print current_orientation, _last_orientation
-        #print current_quaternion
+        #print(current_orientation, _last_orientation)
+        #print(current_quaternion)
         d_quaternion = current_quaternion.inverse * last_quaternion
         d_quaternion = d_quaternion.normalised
         v_base = d_base / dt
-        #print v_base
+        #print(v_base)
         v_robot = last_quaternion.inverse.rotate(v_base)
         dyaw = current_yaw - last_yaw
         omega = dyaw / dt
-        print v_robot
-        print omega
-        #print d_quaternion.radians / dt
+        print(v_robot)
+        print(omega)
+        #print(d_quaternion.radians / dt)
         V_MAX = 0.5
         if ROBOT == "DD":
           velocity.linear.x = V_MAX
@@ -92,7 +92,7 @@ def process():
           elif vel_flag:
             time = rospy.get_time() - flag_time
             if time > 1.0:
-              print time, "[s]"
+              print(time, "[s]")
               W_MAX = 0.8
               DW = 1.0
               w += DW / HZ
@@ -102,8 +102,8 @@ def process():
                 w = W_MAX
               velocity.angular.z = w
           vel_pub.publish(velocity)
-          print velocity
-          print "DD"
+          print(velocity)
+          print("DD")
         elif ROBOT == "FWDIS":
           W_MAX = 3
           current_v = m.sqrt(v_robot[0] * v_robot[0] + v_robot[1] * v_robot[1])
@@ -114,7 +114,7 @@ def process():
           elif vel_flag:
             time = rospy.get_time() - flag_time
             if time > 1.0:
-              print time, "[s]"
+              print(time, "[s]")
               theta_n += W_MAX / HZ
               if theta_n < -theta_n_max:
                 theta_n = -theta_n_max
@@ -123,15 +123,15 @@ def process():
               velocity.linear.x = V_MAX * m.cos(theta_n)
               velocity.linear.y = V_MAX * m.sin(theta_n)
           vel_pub.publish(velocity)
-          print velocity
-          print theta_n
-          print "FWDIS"
+          print(velocity)
+          print(theta_n)
+          print("FWDIS")
       else:
         first_flag = False
-        print "first"
+        print("first")
 
     except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-      #print "exception"
+      #print("exception")
       continue
 
     r.sleep()
